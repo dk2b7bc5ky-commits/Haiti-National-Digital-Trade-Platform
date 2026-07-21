@@ -68,10 +68,6 @@ export default function HomePage() {
           Re-check
         </button>
       </section>
-
-      <footer className="text-center text-xs text-slate-400">
-        Rezo beta · MACCO LLC · orchestrator, not custodian
-      </footer>
     </main>
   );
 }
