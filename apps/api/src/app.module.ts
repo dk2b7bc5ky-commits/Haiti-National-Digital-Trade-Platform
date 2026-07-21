@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { UsersModule } from './users/users.module';
 import { ApiKeysModule } from './api-keys/api-keys.module';
+import { DataHubModule } from './data-hub/data-hub.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { PermissionsGuard } from './auth/permissions.guard';
 
@@ -22,6 +23,7 @@ import { PermissionsGuard } from './auth/permissions.guard';
     OrganizationsModule,
     UsersModule,
     ApiKeysModule,
+    DataHubModule,
   ],
   providers: [
     // Global auth: every route requires a valid JWT unless marked @Public().

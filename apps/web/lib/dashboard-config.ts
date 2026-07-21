@@ -1,10 +1,15 @@
 import type { Role } from '@rezo/shared-types';
 
+/** Highest build step delivered so far — modules at/below this are live. */
+export const CURRENT_STEP = 3;
+
 export interface ModuleCard {
   title: string;
   description: string;
   /** Build step where this module becomes functional (shells until then). */
   step: number;
+  /** Route for the module when it is live. */
+  href?: string;
 }
 
 export interface RoleConfig {
@@ -15,8 +20,8 @@ export interface RoleConfig {
 }
 
 const M = {
-  containers: { title: 'Containers', description: 'Consolidated container view — charges, payees, deadlines.', step: 5 },
-  manifests: { title: 'Manifest submission', description: 'Submit a manifest once; downstream parties read it.', step: 3 },
+  containers: { title: 'Containers', description: 'Container records shared from the manifest; charges & deadlines follow.', step: 3, href: '/dashboard/containers' },
+  manifests: { title: 'Manifest submission', description: 'Submit a manifest once; downstream parties read it.', step: 3, href: '/dashboard/manifests/new' },
   charges: { title: 'Charges', description: 'Fees grouped by payee with running totals.', step: 4 },
   payments: { title: 'Payments', description: 'Authorize one payment; routed directly to each payee.', step: 8 },
   verification: { title: 'Verification queue', description: 'Resolve low-confidence document extractions.', step: 7 },

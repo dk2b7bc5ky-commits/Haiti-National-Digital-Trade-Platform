@@ -99,10 +99,59 @@ async function main(): Promise<void> {
     console.log(`✓ ${s.type.padEnd(14)} ${s.legalName}  (${s.users.map((u) => u.email).join(', ')})`);
   }
 
+  await seedDemoManifest();
+
   const orgCount = await prisma.organization.count();
   const userCount = await prisma.user.count();
   console.log(`\nSeed complete: ${orgCount} organizations, ${userCount} users.`);
   console.log(`All seeded users share the dev password: "${DEV_PASSWORD}"`);
+}
+
+/**
+ * A small demo manifest so container views are non-empty out of the box
+ * (build step 3). Idempotent: skipped once any manifest exists. The full
+ * realistic dataset is build step 14.
+ */
+async function seedDemoManifest(): Promise<void> {
+  if ((await prisma.manifest.count()) > 0) {
+    console.log('• Demo manifest already present — skipping.');
+    return;
+  }
+
+  const line = await prisma.organization.findFirstOrThrow({ where: { type: 'SHIPPING_LINE' } });
+  const importer = await prisma.organization.findFirstOrThrow({ where: { type: 'IMPORTER' } });
+  const terminal = await prisma.organization.findFirstOrThrow({ where: { type: 'TERMINAL' } });
+
+  const eta = new Date('2026-08-05T09:00:00.000Z');
+  const vessel = await prisma.vessel.create({
+    data: { name: 'MV Kreyòl Star', imo: 'IMO9310001', lineOrgId: line.id },
+  });
+  const voyage = await prisma.voyage.create({
+    data: { vesselId: vessel.id, voyageNumber: 'VY-2026-014', eta, port: 'Port-au-Prince' },
+  });
+  const manifest = await prisma.manifest.create({
+    data: { voyageId: voyage.id, submittedByOrgId: line.id },
+  });
+
+  const bl = await prisma.billOfLading.create({
+    data: {
+      manifestId: manifest.id,
+      blNumber: 'BL-CMA-88231',
+      shipper: 'Shenzhen Trading Co.',
+      importerOrgId: importer.id,
+      description: 'Assorted consumer electronics',
+    },
+  });
+
+  await prisma.container.createMany({
+    data: [
+      { blId: bl.id, containerNumber: 'CMAU1234567', sizeType: 'FORTY', importerOrgId: importer.id, terminalOrgId: terminal.id, arrivalDate: eta },
+      { blId: bl.id, containerNumber: 'CMAU7654321', sizeType: 'TWENTY', importerOrgId: importer.id, terminalOrgId: terminal.id, arrivalDate: eta },
+      { blId: bl.id, containerNumber: 'CMAU9998887', sizeType: 'REEFER', importerOrgId: importer.id, arrivalDate: eta },
+    ],
+  });
+
+  console.log('• Demo manifest created: MV Kreyòl Star / VY-2026-014 (1 BL, 3 containers).');
 }
 
 main()

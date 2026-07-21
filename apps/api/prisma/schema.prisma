@@ -1,6 +1,7 @@
 // Rezo — Prisma schema
 //
-// Step 2: Identity, Tenancy & RBAC (spec §7, §1.1).
+// Step 2: Identity, Tenancy & RBAC.
+// Step 3: Data Hub core (Vessel/Voyage/Manifest/BillOfLading/Container).
 //
 // NON-NEGOTIABLE RULE #2 (spec §9 / §11): no model in this schema may ever
 // introduce a `balance`, `wallet`, `credit`, or `float` field. Rezo never
@@ -67,11 +68,31 @@ enum ApiKeyStatus {
   REVOKED
 }
 
+enum ManifestStatus {
+  SUBMITTED
+  PROCESSED
+}
+
+/// Container size/type (spec §7: 20/40/reefer).
+enum ContainerSize {
+  TWENTY
+  FORTY
+  REEFER
+}
+
+/// Container lifecycle (spec §7 / §2.5).
+enum ContainerStatus {
+  ARRIVED
+  CLEARED
+  RELEASED
+  GATED_OUT
+}
+
 // ---------------------------------------------------------------------------
-// Models
+// Identity & tenancy
 // ---------------------------------------------------------------------------
 
-/// A tenant. Every user and (later) every business record belongs to one org.
+/// A tenant. Every user and business record belongs to one org.
 model Organization {
   id        String    @id @default(uuid())
   type      OrgType
@@ -84,6 +105,13 @@ model Organization {
 
   users   User[]
   apiKeys ApiKey[]
+
+  // Data Hub back-relations
+  vessels            Vessel[]         @relation("VesselLine")
+  manifestsSubmitted Manifest[]       @relation("ManifestSubmitter")
+  billsAsConsignee   BillOfLading[]   @relation("BlConsignee")
+  containersImported Container[]      @relation("ContainerImporter")
+  containersTerminal Container[]      @relation("ContainerTerminal")
 
   @@map("organizations")
 }
@@ -105,13 +133,13 @@ model User {
   @@map("users")
 }
 
-/// API keys let API-connected orgs (e.g. large brokers, lines) exchange a key
-/// for a short-lived JWT. Only the hash is stored; the plaintext is shown once.
+/// API keys let API-connected orgs exchange a key for a short-lived JWT.
+/// Only the hash is stored; the plaintext is shown once.
 model ApiKey {
   id         String       @id @default(uuid())
   orgId      String       @map("org_id")
   name       String
-  prefix     String       @unique // human-visible identifier, e.g. "rzk_ab12"
+  prefix     String       @unique
   keyHash    String       @unique @map("key_hash")
   scopes     String[]     @default([])
   status     ApiKeyStatus @default(ACTIVE)
@@ -124,19 +152,108 @@ model ApiKey {
   @@map("api_keys")
 }
 
-/// Append-only audit trail (spec §11). Rows are only ever inserted, never
-/// updated or deleted. `before`/`after` capture the change for money and
-/// state mutations across the platform.
+// ---------------------------------------------------------------------------
+// Data Hub — the single source of truth (spec §7). Entered once, read by all.
+// ---------------------------------------------------------------------------
+
+model Vessel {
+  id        String @id @default(uuid())
+  name      String
+  imo       String @unique
+  lineOrgId String @map("line_org_id")
+
+  line    Organization @relation("VesselLine", fields: [lineOrgId], references: [id])
+  voyages Voyage[]
+
+  @@index([lineOrgId])
+  @@map("vessels")
+}
+
+model Voyage {
+  id           String   @id @default(uuid())
+  vesselId     String   @map("vessel_id")
+  voyageNumber String   @map("voyage_number")
+  eta          DateTime
+  port         String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  vessel    Vessel     @relation(fields: [vesselId], references: [id])
+  manifests Manifest[]
+
+  @@unique([vesselId, voyageNumber])
+  @@map("voyages")
+}
+
+/// A manifest is submitted ONCE by a shipping line (or admin); it creates the
+/// voyage's bills of lading and containers that everyone else then reads.
+model Manifest {
+  id               String         @id @default(uuid())
+  voyageId         String         @map("voyage_id")
+  submittedByOrgId String         @map("submitted_by_org_id")
+  status           ManifestStatus @default(SUBMITTED)
+  rawRef           String?        @map("raw_ref")
+  submittedAt      DateTime       @default(now()) @map("submitted_at")
+
+  voyage         Voyage         @relation(fields: [voyageId], references: [id])
+  submittedBy    Organization   @relation("ManifestSubmitter", fields: [submittedByOrgId], references: [id])
+  billsOfLading  BillOfLading[]
+
+  @@index([submittedByOrgId])
+  @@index([voyageId])
+  @@map("manifests")
+}
+
+model BillOfLading {
+  id            String  @id @default(uuid())
+  manifestId    String  @map("manifest_id")
+  blNumber      String  @unique @map("bl_number")
+  shipper       String
+  importerOrgId String  @map("importer_org_id")
+  description   String?
+
+  manifest   Manifest     @relation(fields: [manifestId], references: [id])
+  consignee  Organization @relation("BlConsignee", fields: [importerOrgId], references: [id])
+  containers Container[]
+
+  @@index([manifestId])
+  @@index([importerOrgId])
+  @@map("bills_of_lading")
+}
+
+model Container {
+  id              String          @id @default(uuid())
+  blId            String          @map("bl_id")
+  containerNumber String          @unique @map("container_number")
+  sizeType        ContainerSize   @map("size_type")
+  importerOrgId   String          @map("importer_org_id")
+  terminalOrgId   String?         @map("terminal_org_id")
+  arrivalDate     DateTime?       @map("arrival_date")
+  status          ContainerStatus @default(ARRIVED)
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  bl       BillOfLading  @relation(fields: [blId], references: [id])
+  importer Organization  @relation("ContainerImporter", fields: [importerOrgId], references: [id])
+  terminal Organization? @relation("ContainerTerminal", fields: [terminalOrgId], references: [id])
+
+  @@index([blId])
+  @@index([importerOrgId])
+  @@index([terminalOrgId])
+  @@index([status])
+  @@map("containers")
+}
+
+/// Append-only audit trail (spec §11). Rows are only ever inserted.
 model AuditLog {
-  id         String   @id @default(uuid())
-  actorUserId String? @map("actor_user_id")
-  actorOrgId String?  @map("actor_org_id")
-  action     String
-  entity     String
-  entityId   String?  @map("entity_id")
-  before     Json?
-  after      Json?
-  createdAt  DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  actorUserId String?  @map("actor_user_id")
+  actorOrgId  String?  @map("actor_org_id")
+  action      String
+  entity      String
+  entityId    String?  @map("entity_id")
+  before      Json?
+  after       Json?
+  createdAt   DateTime @default(now()) @map("created_at")
 
   @@index([entity, entityId])
   @@index([actorOrgId])

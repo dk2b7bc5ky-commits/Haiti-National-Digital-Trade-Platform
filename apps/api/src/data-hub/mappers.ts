@@ -1,0 +1,131 @@
+import {
+  ContainerSize,
+  ContainerStatus,
+  ManifestStatus,
+  Prisma,
+} from '@prisma/client';
+import type {
+  ContainerSize as ApiContainerSize,
+  ContainerStatus as ApiContainerStatus,
+  ManifestStatus as ApiManifestStatus,
+  ContainerSummary,
+  ContainerDetail,
+  ManifestSummary,
+  VoyageInfo,
+  DirectoryOrg,
+} from '@rezo/shared-types';
+
+// --- enum <-> API string maps (spec §7/§15) ---
+
+const SIZE_TO_API: Record<ContainerSize, ApiContainerSize> = {
+  TWENTY: '20',
+  FORTY: '40',
+  REEFER: 'reefer',
+};
+const API_TO_SIZE: Record<ApiContainerSize, ContainerSize> = {
+  '20': 'TWENTY',
+  '40': 'FORTY',
+  reefer: 'REEFER',
+};
+const STATUS_TO_API: Record<ContainerStatus, ApiContainerStatus> = {
+  ARRIVED: 'arrived',
+  CLEARED: 'cleared',
+  RELEASED: 'released',
+  GATED_OUT: 'gated_out',
+};
+const MANIFEST_STATUS_TO_API: Record<ManifestStatus, ApiManifestStatus> = {
+  SUBMITTED: 'submitted',
+  PROCESSED: 'processed',
+};
+
+export function sizeToApi(s: ContainerSize): ApiContainerSize {
+  return SIZE_TO_API[s];
+}
+export function apiToSize(s: ApiContainerSize): ContainerSize {
+  return API_TO_SIZE[s];
+}
+export function containerStatusToApi(s: ContainerStatus): ApiContainerStatus {
+  return STATUS_TO_API[s];
+}
+
+// --- typed Prisma includes so mappers get fully-typed rows ---
+
+export const voyageInclude = { vessel: true } as const;
+
+export const containerInclude = {
+  bl: { include: { manifest: { include: { voyage: { include: voyageInclude } } } } },
+} as const;
+
+export const containerDetailInclude = {
+  bl: { include: { manifest: { include: { voyage: { include: voyageInclude } } } } },
+  importer: true,
+  terminal: true,
+} as const;
+
+type ContainerWithRels = Prisma.ContainerGetPayload<{ include: typeof containerInclude }>;
+type ContainerDetailRow = Prisma.ContainerGetPayload<{ include: typeof containerDetailInclude }>;
+type ManifestWithRels = Prisma.ManifestGetPayload<{
+  include: {
+    voyage: { include: typeof voyageInclude };
+    billsOfLading: { include: { containers: true } };
+  };
+}>;
+
+function toVoyageInfo(v: ContainerWithRels['bl']['manifest']['voyage']): VoyageInfo {
+  return {
+    id: v.id,
+    voyage_number: v.voyageNumber,
+    eta: v.eta.toISOString(),
+    port: v.port,
+    vessel: { id: v.vessel.id, name: v.vessel.name, imo: v.vessel.imo },
+  };
+}
+
+export function toContainerSummary(c: ContainerWithRels): ContainerSummary {
+  return {
+    id: c.id,
+    container_number: c.containerNumber,
+    size_type: sizeToApi(c.sizeType),
+    status: containerStatusToApi(c.status),
+    importer_org_id: c.importerOrgId,
+    terminal_org_id: c.terminalOrgId,
+    arrival_date: c.arrivalDate?.toISOString() ?? null,
+    bl_number: c.bl.blNumber,
+    voyage: toVoyageInfo(c.bl.manifest.voyage),
+  };
+}
+
+function toDirectoryOrg(o: { id: string; legalName: string; type: DirectoryOrg['type'] }): DirectoryOrg {
+  return { id: o.id, legal_name: o.legalName, type: o.type };
+}
+
+export function toContainerDetail(c: ContainerDetailRow): ContainerDetail {
+  const summary = toContainerSummary(c);
+  return {
+    container: {
+      ...summary,
+      importer: toDirectoryOrg(c.importer),
+      terminal: c.terminal ? toDirectoryOrg(c.terminal) : null,
+      shipper: c.bl.shipper,
+      description: c.bl.description,
+      manifest_id: c.bl.manifestId,
+    },
+    // Populated in build steps 4–6 (Charge, Deadline).
+    charges: [],
+    total_owed: null,
+    deadlines: [],
+  };
+}
+
+export function toManifestSummary(m: ManifestWithRels): ManifestSummary {
+  const containerCount = m.billsOfLading.reduce((n, bl) => n + bl.containers.length, 0);
+  return {
+    id: m.id,
+    status: MANIFEST_STATUS_TO_API[m.status],
+    submitted_by_org_id: m.submittedByOrgId,
+    submitted_at: m.submittedAt.toISOString(),
+    voyage: toVoyageInfo(m.voyage),
+    bl_count: m.billsOfLading.length,
+    container_count: containerCount,
+  };
+}

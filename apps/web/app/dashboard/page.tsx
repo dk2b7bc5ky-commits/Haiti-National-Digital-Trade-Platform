@@ -1,13 +1,13 @@
 'use client';
 
+import Link from 'next/link';
+import type { OrgSummary } from '@rezo/shared-types';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import type { HealthStatus, OrgSummary } from '@rezo/shared-types';
 import { useAuth } from '../../lib/auth';
-import { apiFetch, apiFetchEnvelope } from '../../lib/api';
-import { roleConfig } from '../../lib/dashboard-config';
+import { apiFetchEnvelope } from '../../lib/api';
+import { roleConfig, CURRENT_STEP } from '../../lib/dashboard-config';
+import { Chrome, Loading, useRequireAuth } from '../../components/chrome';
 
-// Static accent classes so Tailwind's scanner keeps them (no dynamic class names).
 const ACCENT: Record<string, string> = {
   violet: 'bg-violet-100 text-violet-700',
   amber: 'bg-amber-100 text-amber-700',
@@ -22,96 +22,58 @@ const ACCENT: Record<string, string> = {
 };
 
 export default function DashboardPage() {
-  const { loading, token, auth, logout } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !token) router.replace('/login');
-  }, [loading, token, router]);
-
-  if (loading || !auth) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-slate-500">Loading…</p>
-      </main>
-    );
-  }
+  const { auth, ready } = useRequireAuth();
+  if (!ready || !auth) return <Loading />;
 
   const cfg = roleConfig(auth.user.role);
   const accent = ACCENT[cfg.accent] ?? ACCENT.slate;
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-3">
-            <span className="text-lg font-bold text-sky-600">Rezo</span>
-            <span className="hidden text-sm text-slate-400 sm:inline">National Digital Trade Platform</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <SystemStatus token={token} />
-            <div className="text-right">
-              <p className="text-sm font-medium text-slate-800">{auth.user.name}</p>
-              <p className="text-xs text-slate-500">{auth.org.legal_name}</p>
-            </div>
-            <button
-              onClick={() => { logout(); router.replace('/login'); }}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+    <Chrome auth={auth}>
+      <div className="flex flex-wrap items-center gap-3">
+        <h1 className="text-2xl font-bold">{cfg.label} dashboard</h1>
+        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${accent}`}>{auth.user.role}</span>
+      </div>
+      <p className="mt-1 text-slate-600">{cfg.tagline}</p>
+
+      <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {cfg.modules.map((m) => {
+          const available = m.step <= CURRENT_STEP;
+          const card = (
+            <div
+              className={`h-full rounded-xl border p-5 transition ${
+                available
+                  ? 'border-slate-200 bg-white shadow-sm ' + (m.href ? 'hover:border-sky-300 hover:shadow' : '')
+                  : 'border-dashed border-slate-300 bg-slate-50'
+              }`}
             >
-              Sign out
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold">{cfg.label} dashboard</h1>
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${accent}`}>{auth.user.role}</span>
-        </div>
-        <p className="mt-1 text-slate-600">{cfg.tagline}</p>
-
-        <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {cfg.modules.map((m) => {
-            const available = m.step <= 2;
-            return (
-              <div
-                key={m.title}
-                className={`rounded-xl border p-5 ${available ? 'border-slate-200 bg-white shadow-sm' : 'border-dashed border-slate-300 bg-slate-50'}`}
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-slate-800">{m.title}</h3>
-                  {available ? (
-                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Available</span>
-                  ) : (
-                    <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-500">Step {m.step}</span>
-                  )}
-                </div>
-                <p className="mt-2 text-sm text-slate-500">{m.description}</p>
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-slate-800">{m.title}</h3>
+                {available ? (
+                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                    {m.href ? 'Open →' : 'Available'}
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-500">Step {m.step}</span>
+                )}
               </div>
-            );
-          })}
-        </section>
+              <p className="mt-2 text-sm text-slate-500">{m.description}</p>
+            </div>
+          );
+          return available && m.href ? (
+            <Link key={m.title} href={m.href}>{card}</Link>
+          ) : (
+            <div key={m.title}>{card}</div>
+          );
+        })}
+      </section>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-3">
-          <TenantPanel token={token} auth={auth} />
-          <PermissionsPanel permissions={auth.permissions} />
-        </div>
-      </main>
-    </div>
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <TenantPanel />
+        <PermissionsPanel permissions={auth.permissions} />
+      </div>
+    </Chrome>
   );
-}
-
-function SystemStatus({ token }: { token: string | null }) {
-  const [ok, setOk] = useState<boolean | null>(null);
-  useEffect(() => {
-    apiFetch<HealthStatus>('/health', { token })
-      .then((h) => setOk(h.status === 'ok'))
-      .catch(() => setOk(false));
-  }, [token]);
-  const label = ok === null ? 'checking' : ok ? 'API ok' : 'API down';
-  const cls = ok === null ? 'bg-slate-100 text-slate-500' : ok ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
-  return <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${cls}`}>{label}</span>;
 }
 
 function PermissionsPanel({ permissions }: { permissions: string[] }) {
@@ -127,17 +89,15 @@ function PermissionsPanel({ permissions }: { permissions: string[] }) {
   );
 }
 
-function TenantPanel({ token, auth }: { token: string | null; auth: { permissions: string[]; org: OrgSummary } }) {
-  const crossTenant = auth.permissions.includes('tenant:read_all');
+function TenantPanel() {
+  const { token, auth } = useAuth();
+  const crossTenant = auth?.permissions.includes('tenant:read_all');
   const [orgs, setOrgs] = useState<OrgSummary[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     apiFetchEnvelope<OrgSummary[]>('/organizations?limit=50', { token })
-      .then(({ json }) => {
-        if (json.error) setErr(json.error.message);
-        else setOrgs(json.data ?? []);
-      })
+      .then(({ json }) => (json.error ? setErr(json.error.message) : setOrgs(json.data ?? [])))
       .catch(() => setErr('Could not load organizations.'));
   }, [token]);
 

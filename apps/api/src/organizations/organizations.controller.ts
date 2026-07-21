@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { OrgType } from '@prisma/client';
 import { OrganizationsService } from './organizations.service';
 import { CurrentUser, RequirePermissions } from '../auth/decorators';
 import { AuthPrincipal } from '../auth/auth-principal';
@@ -18,6 +19,14 @@ export class OrganizationsController {
     @Query('cursor') cursor?: string,
   ) {
     return this.orgs.list(principal, normalizeLimit(limit), cursor);
+  }
+
+  // Must be declared before ':id' so "directory" isn't captured as an id.
+  @Get('directory')
+  @RequirePermissions(Permission.ORG_READ)
+  directory(@Query('type') type?: string) {
+    const parsed = type && type in OrgType ? (type as OrgType) : undefined;
+    return this.orgs.directory(parsed);
   }
 
   @Get(':id')

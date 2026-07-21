@@ -17,11 +17,13 @@ one place**.
 This repository is being built in the exact 14-step order from the spec, one step
 at a time.
 
-**Current status: Step 2 — Identity, Tenancy & RBAC.** Organizations (tenants),
-Users, API keys, JWT login + API-key token exchange, a role→permission matrix
-enforced by global guards, tenant isolation, an append-only audit log, a seed of
-one org per role type, and a Next.js login + role-based dashboard shells. (Step 1
-delivered the monorepo, local infra, health round-trip, and Prisma wiring.)
+**Current status: Step 3 — Data Hub core.** Vessel / Voyage / Manifest /
+BillOfLading / Container models, **single manifest submission** (API + a
+shipping-line portal form) that creates the voyage, bills of lading, and
+containers in one call, and **role-scoped container list/detail views** so an
+importer reads what the line submitted once — no retyping (spec Flow A). (Steps
+1–2 delivered the monorepo + infra + health round-trip, and identity/tenancy/RBAC
+with login and role-based dashboards.)
 
 ---
 
@@ -129,6 +131,31 @@ Every non-public route requires `Authorization: Bearer <JWT>`; org context and
 role are derived from the token. Permissions are enforced by a global RBAC guard;
 non-Rezo/gov/customs callers are restricted to their own organization's data.
 
+## Data Hub endpoints (Step 3)
+
+```http
+POST /api/v1/manifests (manifest:submit)     # single submission -> creates voyage, BLs, containers
+  body: { voyage: { vessel_imo, vessel_name, voyage_number, eta, port },
+          bills_of_lading: [ { bl_number, shipper, consignee_org_id, description?,
+                               containers: [ { container_number, size_type } ] } ] }
+  -> 201 { data: { manifest_id, container_ids: [...] } }
+GET  /api/v1/manifests?limit=&cursor= (container:read)     # submitter-scoped
+GET  /api/v1/manifests/:id
+GET  /api/v1/containers?importer_org_id=&terminal_org_id=&status=&limit=&cursor= (container:read)
+GET  /api/v1/containers/:id                                # container + (charges/deadlines follow in steps 4–6)
+GET  /api/v1/organizations/directory?type=IMPORTER (org:read)   # minimal counterparty directory
+```
+
+**Container visibility (role-scoped):** importers see containers consigned to
+them; terminals see containers assigned to them; shipping lines see containers
+from manifests they submitted; Rezo/government/customs see all. Broker container
+views arrive with the broker portal (step 10).
+
+**Try Flow A:** sign in as `line@rezo.test`, open **Submit manifest**, pick
+`Import Ayiti S.A.` as consignee, submit; then sign in as `importer@rezo.test`
+and open **Containers** — the container is there, never retyped. The seed also
+includes a demo voyage (MV Kreyòl Star) so the views aren't empty.
+
 ## What you should see
 
 - **`curl http://localhost:4000/api/v1/health`** returns:
@@ -166,8 +193,8 @@ npm run build             # build all workspaces
 ## Roadmap (build order from the spec)
 
 1. ~~Scaffold~~ ✅
-2. **Identity & tenancy (orgs, users, RBAC, login)** ← *you are here*
-3. Data Hub core (vessel/voyage/manifest/BL/container + single submission)
+2. ~~Identity & tenancy (orgs, users, RBAC, login)~~ ✅
+3. **Data Hub core (vessel/voyage/manifest/BL/container + single submission)** ← *you are here*
 4. Payee & Charge model + Market/Config
 5. Consolidated container view
 6. Deadline & alert engine
