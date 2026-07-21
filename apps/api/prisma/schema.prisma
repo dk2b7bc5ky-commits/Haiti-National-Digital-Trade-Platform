@@ -1,0 +1,30 @@
+// Rezo — Prisma schema (Step 1 scaffold)
+//
+// Intentionally empty of business models for now. The Data Hub entities
+// (Organization, User, Vessel, Voyage, Manifest, BL, Container, Charge,
+// Payee, PaymentRequest, PaymentRouting, ...) arrive in later build steps
+// per spec §7. This step only proves the API can connect to Postgres.
+//
+// NOTE (spec non-negotiable rule #2): no model in this schema may ever
+// introduce a `balance`, `wallet`, `credit`, or `float` field. Rezo never
+// holds customer funds.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Scaffold-only placeholder. Prisma refuses to generate a client / create a
+// migration from a schema with zero models, so this single row lets Step 1's
+// `prisma generate` + `prisma migrate` succeed and prove DB connectivity.
+// It is NOT a business entity and will be removed when the real Data Hub
+// models (Organization, User, Container, ...) land in Step 2/3.
+model SchemaMarker {
+  id        String   @id @default(uuid())
+  note      String   @default("rezo scaffold marker — replaced by real models in step 2")
+  createdAt DateTime @default(now())
+}
