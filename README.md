@@ -17,10 +17,11 @@ one place**.
 This repository is being built in the exact 14-step order from the spec, one step
 at a time.
 
-**Current status: Step 1 — Scaffold.** Monorepo, local infra (Postgres / Redis /
-MinIO), NestJS API with a health endpoint, Prisma connected to Postgres, and a
-single Next.js status page that proves the frontend ↔ backend ↔ database
-round-trip. No auth, no business tables, no other UI yet.
+**Current status: Step 2 — Identity, Tenancy & RBAC.** Organizations (tenants),
+Users, API keys, JWT login + API-key token exchange, a role→permission matrix
+enforced by global guards, tenant isolation, an append-only audit log, a seed of
+one org per role type, and a Next.js login + role-based dashboard shells. (Step 1
+delivered the monorepo, local infra, health round-trip, and Prisma wiring.)
 
 ---
 
@@ -78,14 +79,55 @@ npm install
 
 # 4. Generate the Prisma client and apply migrations to Postgres
 npm run prisma:generate
-npm run prisma:migrate            # creates the initial (empty) migration
+npm run prisma:migrate            # applies migrations
 
-# 5. Start the API  (terminal 1)  ->  http://localhost:4000/api/v1
+# 5. Seed one organization per role type + a login user for each
+npm run prisma:seed --workspace @rezo/api
+
+# 6. Start the API  (terminal 1)  ->  http://localhost:4000/api/v1
 npm run dev:api
 
-# 6. Start the web app  (terminal 2)  ->  http://localhost:3000
+# 7. Start the web app  (terminal 2)  ->  http://localhost:3000
 npm run dev:web
 ```
+
+## Demo accounts (from the seed)
+
+Every seeded user shares the dev password **`password123`**. Sign in at
+http://localhost:3000/login (the login page also has one-click buttons for each).
+
+| Email | Role | Sees |
+|---|---|---|
+| `admin@rezo.test` | REZO_ADMIN | all tenants; can create orgs/users/keys |
+| `ops@rezo.test` | REZO_OPS | all tenants (verification focus) |
+| `line@rezo.test` | SHIPPING_LINE | own org |
+| `importer@rezo.test` | IMPORTER | own org |
+| `broker@rezo.test` | BROKER | own org; can issue API keys |
+| `trucker@rezo.test` | TRUCKER | own org |
+| `terminal@rezo.test` | TERMINAL | own org |
+| `customs@rezo.test` | CUSTOMS | all tenants (read) |
+| `bank@rezo.test` | BANK | own org |
+| `gov@rezo.test` | GOV_VIEWER | all tenants (read-only) |
+
+## Auth & identity endpoints (Step 2)
+
+```http
+POST /api/v1/auth/login    { email, password }        -> { token, user, org, permissions }
+POST /api/v1/auth/token    { api_key }                 -> { token }   # API-connected orgs
+GET  /api/v1/auth/me                                    -> { user, org, permissions }
+GET  /api/v1/organizations?limit=&cursor=               -> tenant-scoped list
+POST /api/v1/organizations (org:write)                  -> create tenant
+GET  /api/v1/organizations/:id
+GET  /api/v1/users?limit=&cursor= (user:read)
+POST /api/v1/users (user:write)
+GET  /api/v1/api-keys (apikey:manage)
+POST /api/v1/api-keys (apikey:manage)                   -> plaintext key returned ONCE
+DELETE /api/v1/api-keys/:id (apikey:manage)             -> revoke
+```
+
+Every non-public route requires `Authorization: Bearer <JWT>`; org context and
+role are derived from the token. Permissions are enforced by a global RBAC guard;
+non-Rezo/gov/customs callers are restricted to their own organization's data.
 
 ## What you should see
 
@@ -123,8 +165,8 @@ npm run build             # build all workspaces
 
 ## Roadmap (build order from the spec)
 
-1. **Scaffold** ← *you are here*
-2. Identity & tenancy (orgs, users, RBAC, login)
+1. ~~Scaffold~~ ✅
+2. **Identity & tenancy (orgs, users, RBAC, login)** ← *you are here*
 3. Data Hub core (vessel/voyage/manifest/BL/container + single submission)
 4. Payee & Charge model + Market/Config
 5. Consolidated container view

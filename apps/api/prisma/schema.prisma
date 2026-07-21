@@ -1,13 +1,10 @@
-// Rezo — Prisma schema (Step 1 scaffold)
+// Rezo — Prisma schema
 //
-// Intentionally empty of business models for now. The Data Hub entities
-// (Organization, User, Vessel, Voyage, Manifest, BL, Container, Charge,
-// Payee, PaymentRequest, PaymentRouting, ...) arrive in later build steps
-// per spec §7. This step only proves the API can connect to Postgres.
+// Step 2: Identity, Tenancy & RBAC (spec §7, §1.1).
 //
-// NOTE (spec non-negotiable rule #2): no model in this schema may ever
+// NON-NEGOTIABLE RULE #2 (spec §9 / §11): no model in this schema may ever
 // introduce a `balance`, `wallet`, `credit`, or `float` field. Rezo never
-// holds customer funds.
+// holds customer funds. This is enforced by an automated test.
 
 generator client {
   provider = "prisma-client-js"
@@ -18,13 +15,130 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Scaffold-only placeholder. Prisma refuses to generate a client / create a
-// migration from a schema with zero models, so this single row lets Step 1's
-// `prisma generate` + `prisma migrate` succeed and prove DB connectivity.
-// It is NOT a business entity and will be removed when the real Data Hub
-// models (Organization, User, Container, ...) land in Step 2/3.
-model SchemaMarker {
-  id        String   @id @default(uuid())
-  note      String   @default("rezo scaffold marker — replaced by real models in step 2")
-  createdAt DateTime @default(now())
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+/// The kind of party an Organization (tenant) represents.
+enum OrgType {
+  SHIPPING_LINE
+  IMPORTER
+  BROKER
+  TRUCKER
+  TERMINAL
+  CUSTOMS
+  BANK
+  GOV
+  REZO
+}
+
+enum KycStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum OrgStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+/// A user's role. Drives the RBAC permission matrix (see src/rbac).
+enum Role {
+  SHIPPING_LINE
+  IMPORTER
+  BROKER
+  TRUCKER
+  TERMINAL
+  CUSTOMS
+  BANK
+  GOV_VIEWER
+  REZO_OPS
+  REZO_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+/// A tenant. Every user and (later) every business record belongs to one org.
+model Organization {
+  id        String    @id @default(uuid())
+  type      OrgType
+  legalName String    @map("legal_name")
+  country   String    @default("HT")
+  kycStatus KycStatus @default(PENDING) @map("kyc_status")
+  status    OrgStatus @default(ACTIVE)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  users   User[]
+  apiKeys ApiKey[]
+
+  @@map("organizations")
+}
+
+model User {
+  id           String     @id @default(uuid())
+  orgId        String     @map("org_id")
+  name         String
+  email        String     @unique
+  role         Role
+  passwordHash String     @map("password_hash")
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  org Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@map("users")
+}
+
+/// API keys let API-connected orgs (e.g. large brokers, lines) exchange a key
+/// for a short-lived JWT. Only the hash is stored; the plaintext is shown once.
+model ApiKey {
+  id         String       @id @default(uuid())
+  orgId      String       @map("org_id")
+  name       String
+  prefix     String       @unique // human-visible identifier, e.g. "rzk_ab12"
+  keyHash    String       @unique @map("key_hash")
+  scopes     String[]     @default([])
+  status     ApiKeyStatus @default(ACTIVE)
+  createdAt  DateTime     @default(now()) @map("created_at")
+  lastUsedAt DateTime?    @map("last_used_at")
+
+  org Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@map("api_keys")
+}
+
+/// Append-only audit trail (spec §11). Rows are only ever inserted, never
+/// updated or deleted. `before`/`after` capture the change for money and
+/// state mutations across the platform.
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorUserId String? @map("actor_user_id")
+  actorOrgId String?  @map("actor_org_id")
+  action     String
+  entity     String
+  entityId   String?  @map("entity_id")
+  before     Json?
+  after      Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([entity, entityId])
+  @@index([actorOrgId])
+  @@map("audit_logs")
 }
