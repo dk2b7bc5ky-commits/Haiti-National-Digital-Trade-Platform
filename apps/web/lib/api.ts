@@ -18,6 +18,7 @@ interface RequestOptions {
   token?: string | null;
   method?: string;
   body?: unknown;
+  headers?: Record<string, string>;
 }
 
 /**
@@ -35,7 +36,7 @@ export async function apiFetchEnvelope<T>(
   path: string,
   opts: RequestOptions = {},
 ): Promise<{ json: ApiResponse<T> & { next_cursor?: string | null }; status: number }> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers ?? {}) };
   if (opts.token) headers.Authorization = `Bearer ${opts.token}`;
 
   const res = await fetch(`${API_BASE_URL}${path}`, {

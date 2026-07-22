@@ -355,6 +355,65 @@ export interface VerificationTaskSummary {
   resolved_at: string | null;
 }
 
+// ---------------------------------------------------------------------------
+// Payments (Step 8). Rezo orchestrates; it never holds funds.
+// ---------------------------------------------------------------------------
+
+export type PaymentRequestStatus =
+  | 'created'
+  | 'authorized'
+  | 'routing'
+  | 'partially_settled'
+  | 'settled'
+  | 'failed'
+  | 'reversing';
+
+export type PaymentRoutingStatus = 'pending' | 'settled' | 'failed' | 'reversed';
+
+export interface RoutingSummary {
+  id: string;
+  payee_org_id: string;
+  payee_name: string;
+  charge_currency: string;
+  charge_amount: number;
+  fx_rate: number;
+  settlement_amount: number;
+  rail: string;
+  rail_txn_ref: string | null;
+  status: PaymentRoutingStatus;
+  is_rezo_fee: boolean;
+}
+
+export interface PaymentRequestSummary {
+  id: string;
+  container_id: string;
+  importer_org_id: string;
+  settlement_currency: string;
+  gross_amount_settlement: number;
+  rezo_fee: number;
+  status: PaymentRequestStatus;
+  created_at: string;
+  authorized_at: string | null;
+  settled_at: string | null;
+  routings: RoutingSummary[];
+  covered_charge_ids: string[];
+  /** Charges whose routing failed — surfaced for a "retry these" new request. */
+  failed_charge_ids: string[];
+  /** True when every charge required for release is paid (spec §2.1/§2.5). */
+  release_eligible: boolean;
+}
+
+export interface CreatePaymentRequestBody {
+  container_id: string;
+  charge_ids: string[];
+  settlement_currency: string;
+}
+
+/** Beta/mock only: force per-payee rail outcomes to exercise partial failure. */
+export interface AuthorizePaymentBody {
+  simulate?: Record<string, PaymentRoutingStatus>;
+}
+
 /** Request body for POST /api/v1/manifests (spec §15). */
 export interface ManifestSubmitRequest {
   voyage: { vessel_imo: string; vessel_name: string; voyage_number: string; eta: string; port: string };

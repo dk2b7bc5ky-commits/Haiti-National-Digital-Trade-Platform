@@ -9,6 +9,7 @@ import { apiFetchEnvelope, apiFetch, ApiClientError } from '../../../../lib/api'
 import { apiUpload } from '../../../../lib/api';
 import { formatMoney, formatMoneyList, countdown, PAYMENT_STATUS_STYLE, COUNTDOWN_STYLE } from '../../../../lib/format';
 import { Chrome, Loading, useRequireAuth } from '../../../../components/chrome';
+import { PaymentPanel } from '../../../../components/payment-panel';
 
 const STATUS_STYLE: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-700',
@@ -166,6 +167,10 @@ export default function ContainerDetailPage() {
               </div>
             )}
           </div>
+
+          {auth.permissions.includes('payment:create') && (
+            <PaymentPanel detail={detail} token={token} onDone={load} />
+          )}
 
           {auth.permissions.includes('document:write') && (
             <DocumentUpload containerId={id} token={token} onDone={load} />

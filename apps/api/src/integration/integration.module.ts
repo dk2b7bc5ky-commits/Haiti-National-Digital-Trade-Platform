@@ -5,6 +5,8 @@ import { NOTIFICATION_ADAPTER } from './notification-adapter';
 import { MockNotificationAdapter } from './mock-notification.adapter';
 import { EXTRACTION_PROVIDER } from './extraction-provider';
 import { MockExtractionProvider } from './mock-extraction.provider';
+import { PAYMENT_RAIL } from './payment-rail';
+import { MockPaymentRail } from './mock-payment-rail.adapter';
 
 /**
  * Integration layer (spec §5). Every external system is bound to a DI token so
@@ -18,7 +20,8 @@ import { MockExtractionProvider } from './mock-extraction.provider';
     { provide: TERMINAL_ADAPTER, useClass: MockTerminalAdapter },
     { provide: NOTIFICATION_ADAPTER, useClass: MockNotificationAdapter },
     { provide: EXTRACTION_PROVIDER, useClass: MockExtractionProvider },
+    { provide: PAYMENT_RAIL, useClass: MockPaymentRail },
   ],
-  exports: [TERMINAL_ADAPTER, NOTIFICATION_ADAPTER, EXTRACTION_PROVIDER],
+  exports: [TERMINAL_ADAPTER, NOTIFICATION_ADAPTER, EXTRACTION_PROVIDER, PAYMENT_RAIL],
 })
 export class IntegrationModule {}

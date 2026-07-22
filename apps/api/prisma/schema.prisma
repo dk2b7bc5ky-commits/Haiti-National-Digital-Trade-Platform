@@ -187,6 +187,26 @@ enum VerificationTaskStatus {
   RESOLVED
 }
 
+/// PaymentRequest lifecycle (spec §2.1). Note the deliberate absence of any
+/// "held"/"settled-to-Rezo" state — Rezo orchestrates, never custodies.
+enum PaymentRequestStatus {
+  CREATED
+  AUTHORIZED
+  ROUTING
+  PARTIALLY_SETTLED
+  SETTLED
+  FAILED
+  REVERSING
+}
+
+/// A single payer→payee movement's state (spec §2.1). NEVER a Rezo balance.
+enum PaymentRoutingStatus {
+  PENDING
+  SETTLED
+  FAILED
+  REVERSED
+}
+
 // ---------------------------------------------------------------------------
 // Identity & tenancy
 // ---------------------------------------------------------------------------
@@ -336,10 +356,11 @@ model Container {
   bl        BillOfLading   @relation(fields: [blId], references: [id])
   importer  Organization   @relation("ContainerImporter", fields: [importerOrgId], references: [id])
   terminal  Organization?  @relation("ContainerTerminal", fields: [terminalOrgId], references: [id])
-  charges   Charge[]
-  deadlines Deadline[]
-  alerts    DeadlineAlert[]
-  documents Document[]
+  charges         Charge[]
+  deadlines       Deadline[]
+  alerts          DeadlineAlert[]
+  documents       Document[]
+  paymentRequests PaymentRequest[]
 
   @@index([blId])
   @@index([importerOrgId])
@@ -385,11 +406,15 @@ model Charge {
   status      ChargeStatus @default(PENDING)
   reviewState ReviewState  @default(NONE) @map("review_state")
   source      ChargeSource @default(MANUAL)
+  /// Set while a (non-terminal) PaymentRequest covers this charge; cleared if
+  /// its routing fails so the charge can be re-requested (spec §2.1).
+  paymentRequestId String? @map("payment_request_id")
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
-  container Container    @relation(fields: [containerId], references: [id])
-  payeeOrg  Organization @relation("ChargePayee", fields: [payeeOrgId], references: [id])
+  container      Container       @relation(fields: [containerId], references: [id])
+  payeeOrg       Organization    @relation("ChargePayee", fields: [payeeOrgId], references: [id])
+  paymentRequest PaymentRequest? @relation(fields: [paymentRequestId], references: [id])
 
   @@index([containerId])
   @@index([payeeOrgId])
@@ -520,6 +545,77 @@ model Market {
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@map("markets")
+}
+
+// ---------------------------------------------------------------------------
+// Payments (spec §2.1). Rezo ORCHESTRATES money; it NEVER holds it. There is
+// deliberately no balance/wallet/credit/float field anywhere below — money
+// moves payer → payee directly and we only record/confirm the movement.
+// ---------------------------------------------------------------------------
+
+/// FX rate used to convert a charge's currency → the payer's settlement
+/// currency. The rate in effect at authorization is frozen onto each routing.
+model FxRate {
+  id            String   @id @default(uuid())
+  baseCurrency  String   @map("base_currency")
+  quoteCurrency String   @map("quote_currency")
+  rate          Float // 1 base unit = `rate` quote units
+  source        String   @default("mock")
+  effectiveAt   DateTime @default(now()) @map("effective_at")
+
+  @@index([baseCurrency, quoteCurrency, effectiveAt])
+  @@map("fx_rates")
+}
+
+/// One aggregated, authorize-once request across a container's charges. Holds
+/// no funds; it is a record of what was requested and its routing outcomes.
+model PaymentRequest {
+  id                    String               @id @default(uuid())
+  idempotencyKey        String               @unique @map("idempotency_key")
+  containerId           String               @map("container_id")
+  importerOrgId         String               @map("importer_org_id")
+  settlementCurrency    String               @map("settlement_currency")
+  grossAmountSettlement Int                  @map("gross_amount_settlement") // minor units, incl. rezo fee
+  rezoFee               Int                  @map("rezo_fee") // minor units, settlement currency
+  status                PaymentRequestStatus @default(CREATED)
+  railRef               String?              @map("rail_ref")
+  createdByUserId       String?              @map("created_by_user_id")
+  createdAt             DateTime             @default(now()) @map("created_at")
+  authorizedAt          DateTime?            @map("authorized_at")
+  settledAt             DateTime?            @map("settled_at")
+
+  container Container        @relation(fields: [containerId], references: [id])
+  routings  PaymentRouting[]
+  charges   Charge[]
+
+  @@index([containerId])
+  @@index([importerOrgId])
+  @@map("payment_requests")
+}
+
+/// A single direct payer→payee movement (spec §2.1). `fxRate` is frozen at
+/// authorization. Every routing pays a real payee; the only routing that may
+/// target Rezo is the explicit rezo fee line (isRezoFee = true).
+model PaymentRouting {
+  id               String               @id @default(uuid())
+  paymentRequestId String               @map("payment_request_id")
+  payeeOrgId       String               @map("payee_org_id")
+  chargeCurrency   String               @map("charge_currency")
+  chargeAmount     Int                  @map("charge_amount") // minor units, payee's currency
+  fxRate           Float                @map("fx_rate") // frozen at authorization
+  settlementAmount Int                  @map("settlement_amount") // minor units, settlement currency
+  rail             String
+  railTxnRef       String?              @map("rail_txn_ref")
+  status           PaymentRoutingStatus @default(PENDING)
+  isRezoFee        Boolean              @default(false) @map("is_rezo_fee")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+
+  request PaymentRequest @relation(fields: [paymentRequestId], references: [id], onDelete: Cascade)
+
+  @@index([paymentRequestId])
+  @@index([status])
+  @@map("payment_routings")
 }
 
 /// Append-only audit trail (spec §11). Rows are only ever inserted.

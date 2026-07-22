@@ -115,6 +115,7 @@ async function main(): Promise<void> {
   }
 
   await seedMarketAndPayees();
+  await seedFxRates();
   await seedDemoManifest();
   await seedDemoCharges();
   await seedDeadlines();
@@ -123,6 +124,21 @@ async function main(): Promise<void> {
   const userCount = await prisma.user.count();
   console.log(`\nSeed complete: ${orgCount} organizations, ${userCount} users.`);
   console.log(`All seeded users share the dev password: "${DEV_PASSWORD}"`);
+}
+
+/** Mock FX rates (spec §7). USD is the base charge currency; HTG is the gourde. */
+async function seedFxRates(): Promise<void> {
+  if ((await prisma.fxRate.count()) > 0) {
+    console.log('• FX rates already present — skipping.');
+    return;
+  }
+  await prisma.fxRate.createMany({
+    data: [
+      { baseCurrency: 'USD', quoteCurrency: 'HTG', rate: 132.0, source: 'mock' },
+      { baseCurrency: 'HTG', quoteCurrency: 'USD', rate: 1 / 132.0, source: 'mock' },
+    ],
+  });
+  console.log('• FX rates seeded (USD↔HTG).');
 }
 
 /** Market config (HT) + the payee registry. Idempotent. */

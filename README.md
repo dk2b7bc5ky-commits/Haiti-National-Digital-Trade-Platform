@@ -17,16 +17,17 @@ one place**.
 This repository is being built in the exact 14-step order from the spec, one step
 at a time.
 
-**Current status: Step 7 — Document ingestion + verification queue. ✅ PHASE 1
-COMPLETE.** Documents are uploaded to object storage (MinIO), run through a mock
-`ExtractionProvider` (OCR/LLM stub) that returns fields with **confidence
-scores**; fields below the **0.85 threshold** become `pending_review` charges
-(excluded from the payable total) with a `VerificationTask` for the **Ops
-console** to correct. All five Phase 1 acceptance criteria (spec §8) are covered
-by a passing **automated e2e test suite**. (Steps 1–6 delivered infra + health,
-identity/tenancy/RBAC, the Data Hub with single manifest submission, the
-Charge/Payee/Market model with config-driven fees + mock TerminalAdapter, the
-consolidated container view, and the deadline & alert engine.)
+**Current status: Step 8 — Payment Orchestrator (Phase 2 begins).** From a
+container's charges, Rezo aggregates **one authorize-once `PaymentRequest`**
+across multiple payees; on authorization the **FX rate is frozen** onto each
+routing and each portion is routed **directly to its payee** via a mock
+`PaymentRail` (settle/delay/fail per routing). **Rezo never holds funds** — the
+only routing that pays Rezo is its explicit fee line, enforced in code and by a
+schema test. **Idempotency** (client key) prevents double requests/charges, and
+an explicit **partial-failure policy** pays what settled, leaves failures
+retryable as a new request, and never reverses a success. (Phase 1 — Steps 1–7 —
+delivered the Data Hub, config-driven charges, consolidated view, deadline/alert
+engine, and document ingestion + verification, all covered by passing tests.)
 
 ---
 
@@ -243,6 +244,44 @@ POST /api/v1/verification-tasks/:id/resolve (verification:resolve) # { field, co
 - Web: upload control on the container detail, and the **Verification** console
   (`ops@rezo.test`) to review/correct low-confidence fields.
 
+## Payment Orchestrator (Step 8 — Phase 2)
+
+```http
+POST /api/v1/payment-requests          # header: Idempotency-Key
+  body: { container_id, charge_ids: [...], settlement_currency }
+  -> 201 { payment_request_id, gross_amount_settlement, rezo_fee, routings: [...], status: "created" }
+POST /api/v1/payment-requests/:id/authorize   # freezes FX, routes each portion directly
+  body (mock only): { simulate: { "<payeeOrgId>": "settled"|"failed"|"pending" } }
+GET  /api/v1/payment-requests/:id             # poll status + routings + failed_charge_ids
+GET  /api/v1/fx-rates                          # current rates
+POST /api/v1/fx-rates (config:manage)          # override a rate (demonstrates FX freeze)
+```
+
+Non-negotiable rules enforced here:
+
+- **Rezo holds no funds.** Money moves payer → payee directly through the rail;
+  Rezo records the movement. No `balance`/`wallet`/`credit`/`float` field exists
+  anywhere (a test scans the Prisma schema and fails if one is added). The only
+  routing that may pay Rezo is the single explicit `rezo_fee` line.
+- **Idempotency.** `POST /payment-requests` requires a client `Idempotency-Key`;
+  a repeat key returns the existing request unchanged — never a second request,
+  never a double route. Each routing also carries a per-routing rail token.
+- **FX frozen at authorization.** The rate in effect when the importer authorizes
+  is frozen onto every routing; later rate changes never alter that request.
+- **Partial failure.** Routings are independent but the request is tracked as a
+  whole: all settle → `settled` (charges paid); some fail → `partially_settled`
+  (settled charges paid, **successful routings never reversed**, failed charges
+  return to payable and are surfaced as `failed_charge_ids` to retry as a **new**
+  request); unknown/timeout → routing stays `pending` and the request stays
+  `routing` for reconciliation. A charge is never marked paid without a confirmed
+  rail settlement. Release eligibility triggers only when every charge is paid.
+
+`PaymentRail` is a mock behind a DI token (like the other adapters); a real
+card/PSP/bank/mobile-money rail swaps in without changing the orchestrator.
+Web: the container detail has a **Pay charges** panel — pick a settlement
+currency, review per-payee routings + the frozen total (incl. Rezo fee),
+authorize once, and retry any failed portion.
+
 ## Broker ↔ importer links (minimal, for Phase 1)
 
 A `BrokerClient` row links a broker to the importers it clears for, so a broker
@@ -251,12 +290,17 @@ the demo seeds a link so `broker@rezo.test` sees the demo importer's containers.
 
 ## Testing (Phase 1 acceptance — spec §8/§16)
 
-One automated integration test per Phase 1 acceptance criterion:
+Automated integration tests (isolated `rezo_test` DB, created/migrated/seeded
+automatically):
 
 ```bash
 docker compose up -d                       # Postgres/Redis/MinIO must be running
-npm run test:e2e --workspace @rezo/api     # runs against an isolated rezo_test DB
+npm run test:e2e --workspace @rezo/api     # Phase 1 acceptance + payment danger-areas
 ```
+
+`apps/api/test/payments.e2e-spec.ts` adds the Step-8 danger-area checks (spec
+§16): idempotency, partial failure (no reversal + retry), FX freeze, RBAC, the
+Rezo-fee-only routing rule, and the schema **no-funds-held** scan. **All pass.**
 
 The suite (`apps/api/test/phase1.e2e-spec.ts`) creates + migrates + seeds a
 separate `rezo_test` database, then asserts: (1) single submission is shared with
@@ -308,7 +352,8 @@ npm run build             # build all workspaces
 4. ~~Payee & Charge model + Market/Config~~ ✅
 5. ~~Consolidated container view~~ ✅
 6. ~~Deadline & alert engine~~ ✅
-7. **Document ingestion + verification queue → Phase 1 complete** ✅ ← *you are here*
+7. ~~Document ingestion + verification queue → Phase 1 complete~~ ✅
+8. **Payment Orchestrator (mock rail, FX freeze, idempotency, partial failure, no held funds)** ← *you are here*
 8. Payment Orchestrator (mock rail, FX freeze, idempotency, partial failure, no held funds)
 9. Fee & billing engine
 10. Broker portal
