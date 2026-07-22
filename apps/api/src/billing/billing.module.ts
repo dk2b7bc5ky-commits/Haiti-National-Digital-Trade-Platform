@@ -5,6 +5,7 @@ import { PayeesController } from '../payees/payees.controller';
 import { PayeesService } from '../payees/payees.service';
 import { MarketsController } from '../markets/markets.controller';
 import { MarketsService } from '../markets/markets.service';
+import { DeadlinesModule } from '../deadlines/deadlines.module';
 
 /**
  * Charges, payees, and market configuration (build step 4). Fees are read from
@@ -12,6 +13,7 @@ import { MarketsService } from '../markets/markets.service';
  * through the mock TerminalAdapter (IntegrationModule, global).
  */
 @Module({
+  imports: [DeadlinesModule],
   controllers: [ChargesController, PayeesController, MarketsController],
   providers: [ChargesService, PayeesService, MarketsService],
   exports: [ChargesService, PayeesService],

@@ -1,6 +1,8 @@
 import { Global, Module } from '@nestjs/common';
 import { TERMINAL_ADAPTER } from './terminal-adapter';
 import { MockTerminalAdapter } from './mock-terminal.adapter';
+import { NOTIFICATION_ADAPTER } from './notification-adapter';
+import { MockNotificationAdapter } from './mock-notification.adapter';
 
 /**
  * Integration layer (spec §5). Every external system is bound to a DI token so
@@ -10,9 +12,10 @@ import { MockTerminalAdapter } from './mock-terminal.adapter';
 @Global()
 @Module({
   providers: [
-    // Swap MockTerminalAdapter for a real one here when a terminal API exists.
+    // Swap these for real adapters here when the external APIs exist.
     { provide: TERMINAL_ADAPTER, useClass: MockTerminalAdapter },
+    { provide: NOTIFICATION_ADAPTER, useClass: MockNotificationAdapter },
   ],
-  exports: [TERMINAL_ADAPTER],
+  exports: [TERMINAL_ADAPTER, NOTIFICATION_ADAPTER],
 })
 export class IntegrationModule {}

@@ -17,14 +17,15 @@ one place**.
 This repository is being built in the exact 14-step order from the spec, one step
 at a time.
 
-**Current status: Step 5 — Consolidated container view ("one screen").** Each
-container now shows, in one place (spec §1.4): charges **grouped by payee** with
-**who you pay** (payee kind + masked settlement token), **total owed**, a
-container-level **payment status** (none/pending/paid/overdue), and the **last
-free day + countdown** — surfaced both on the detail and as columns across the
-container list. (Steps 1–4 delivered infra + health, identity/tenancy/RBAC, the
-Data Hub with single manifest submission, and the Charge/Payee/Market model with
-config-driven fees and a mock TerminalAdapter.)
+**Current status: Step 6 — Deadline & alert engine.** A `Deadline` per container
+per payee (spec §1.5), **recomputed whenever charges change**, plus scheduled
+`DeadlineAlert`s fanned out to in-app + email (via a mock `NotificationAdapter`)
+at **config-driven offsets** (e.g. 30/14/7/3/1/0 days before). A cron dispatcher
+delivers due alerts every minute; delivery is **persisted and idempotent** so a
+missed tick sends late, never drops. (Steps 1–5 delivered infra + health,
+identity/tenancy/RBAC, the Data Hub with single manifest submission, the
+Charge/Payee/Market model with config-driven fees + mock TerminalAdapter, and the
+consolidated "one screen" container view.)
 
 ---
 
@@ -195,9 +196,30 @@ The container list and detail now carry the full "one screen" rollup (spec §1.4
 - The web **Containers** list shows total owed / payment status / last-free-day
   with a live countdown per row; the **detail** shows a payment-status badge, a
   last-free-day countdown chip, and per-payee "pay to …" routing.
-- Sign in as `importer@rezo.test` → **Containers** to see it. (The deadline
-  *engine* — recompute, alerts — is build step 6; here we surface the dates the
-  charges already carry.)
+- Sign in as `importer@rezo.test` → **Containers** to see it.
+
+## Deadline & alert engine (Step 6)
+
+```http
+GET  /api/v1/alerts?status=&limit= (container:read)   # in-app alert feed (org-scoped)
+POST /api/v1/alerts/:id/read (container:read)          # mark an in-app alert read
+POST /api/v1/alerts/dispatch (config:manage)           # run the dispatcher on demand
+GET  /api/v1/containers/:id                            # now includes `deadlines`
+```
+
+- A **`Deadline`** is tracked per container per payee (earliest last-free-day
+  among that payee's charges) and **recomputed** on every charge create /
+  terminal-sync (spec §1.5). Alert offsets and channels come from market config.
+- Each deadline schedules **`DeadlineAlert`** rows (one per offset × channel).
+  In-app alerts are served from the feed; email/SMS go through the mock
+  `NotificationAdapter` (swappable for SendGrid/Twilio via its DI token).
+- A **cron dispatcher** (`@Cron`, every minute) delivers alerts whose scheduled
+  time has passed. It only advances `PENDING`/`FAILED` → `SENT`, so it's
+  idempotent and reliable — **a missed run sends late, never double-sends or
+  drops** (spec §1.5: a missed alert is a real financial loss).
+- Web: the **Alerts** page shows delivered vs scheduled reminders (in-app +
+  email), and the container detail lists deadlines with countdowns. Sign in as
+  `importer@rezo.test` → **Alerts**.
 
 ## What you should see
 
@@ -239,8 +261,8 @@ npm run build             # build all workspaces
 2. ~~Identity & tenancy (orgs, users, RBAC, login)~~ ✅
 3. ~~Data Hub core (vessel/voyage/manifest/BL/container + single submission)~~ ✅
 4. ~~Payee & Charge model + Market/Config~~ ✅
-5. **Consolidated container view** ← *you are here*
-6. Deadline & alert engine
+5. ~~Consolidated container view~~ ✅
+6. **Deadline & alert engine** ← *you are here*
 7. Document ingestion + verification queue → **Phase 1 complete**
 8. Payment Orchestrator (mock rail, FX freeze, idempotency, partial failure, no held funds)
 9. Fee & billing engine

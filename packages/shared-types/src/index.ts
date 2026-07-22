@@ -189,7 +189,7 @@ export interface ContainerDetail {
    */
   total_owed: Money | null;
   totals_by_currency: Money[];
-  deadlines: unknown[];
+  deadlines: DeadlineSummary[];
 }
 
 export interface ManifestSummary {
@@ -274,6 +274,38 @@ export interface MarketConfig {
   languages: string[];
   enabled_modules: string[];
   tariff: Record<string, unknown>;
+}
+
+// ---------------------------------------------------------------------------
+// Deadlines & alerts (Step 6).
+// ---------------------------------------------------------------------------
+
+export type DeadlineType = 'last_free_day' | 'accrual_start';
+export type AlertChannel = 'in_app' | 'email' | 'sms';
+export type AlertStatus = 'pending' | 'sent' | 'failed';
+
+export interface DeadlineSummary {
+  id: string;
+  container_id: string;
+  payee_org_id: string;
+  payee_name: string;
+  type: DeadlineType;
+  datetime: string;
+  alert_schedule: number[];
+}
+
+export interface AlertSummary {
+  id: string;
+  container_id: string;
+  container_number: string;
+  deadline_type: DeadlineType;
+  channel: AlertChannel;
+  status: AlertStatus;
+  offset_days: number;
+  scheduled_for: string;
+  sent_at: string | null;
+  read_at: string | null;
+  message: string;
 }
 
 /** Request body for POST /api/v1/manifests (spec §15). */

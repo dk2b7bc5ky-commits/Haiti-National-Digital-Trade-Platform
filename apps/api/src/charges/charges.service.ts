@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { MarketConfigService } from '../config/market-config.service';
 import { PayeesService, payeeTypeForCharge } from '../payees/payees.service';
+import { DeadlineService } from '../deadlines/deadline.service';
 import { AuthPrincipal } from '../auth/auth-principal';
 import { containerScopeWhere } from '../data-hub/scoping';
 import { TERMINAL_ADAPTER, TerminalAdapter } from '../integration/terminal-adapter';
@@ -25,6 +26,7 @@ export class ChargesService {
     private readonly audit: AuditService,
     private readonly config: MarketConfigService,
     private readonly payees: PayeesService,
+    private readonly deadlines: DeadlineService,
     @Inject(TERMINAL_ADAPTER) private readonly terminal: TerminalAdapter,
   ) {}
 
@@ -72,6 +74,7 @@ export class ChargesService {
       include: chargeWithPayee,
     });
     await this.auditCharge(principal, charge.id, 'charge.create_manual', charge.type, charge.amount, charge.currency);
+    await this.deadlines.recomputeForContainer(containerId); // spec §1.5: recompute on new data
     return toChargeSummary(charge);
   }
 
@@ -138,6 +141,7 @@ export class ChargesService {
       entityId: containerId,
       after: { created: created.length, terminal_org_id: terminalOrgId },
     });
+    await this.deadlines.recomputeForContainer(containerId); // spec §1.5: recompute on new data
     return created.map(toChargeSummary);
   }
 

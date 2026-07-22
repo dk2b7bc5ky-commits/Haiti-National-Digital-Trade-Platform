@@ -5,7 +5,7 @@
  * Dev credentials (NEVER use in production):
  *   password for every seeded user = "password123"
  */
-import { PrismaClient, OrgType, Role, ChargeType, ChargeSource } from '@prisma/client';
+import { PrismaClient, OrgType, Role, ChargeType, ChargeSource, AlertChannel } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -117,6 +117,7 @@ async function main(): Promise<void> {
   await seedMarketAndPayees();
   await seedDemoManifest();
   await seedDemoCharges();
+  await seedDeadlines();
 
   const orgCount = await prisma.organization.count();
   const userCount = await prisma.user.count();
@@ -217,6 +218,63 @@ async function seedDemoCharges(): Promise<void> {
     }
   }
   console.log(`• Demo charges created: ${created} across ${containers.length} containers (from config tariff).`);
+}
+
+const ALERT_OFFSETS = [30, 14, 7, 3, 1, 0];
+const ALERT_CHANNELS: AlertChannel[] = ['IN_APP', 'EMAIL'];
+
+/**
+ * Deadlines + scheduled alerts for the demo containers (build step 6), mirroring
+ * DeadlineService.recomputeForContainer. Alerts whose scheduled time has already
+ * passed are PENDING and get delivered on the next dispatcher tick — so at least
+ * one alert fires before a deadline (Phase 1 acceptance #4). Idempotent.
+ */
+async function seedDeadlines(): Promise<void> {
+  if ((await prisma.deadline.count()) > 0) {
+    console.log('• Deadlines already present — skipping.');
+    return;
+  }
+  const containers = await prisma.container.findMany({
+    where: { charges: { some: { lastFreeDay: { not: null } } } },
+    include: { charges: true },
+  });
+  let deadlines = 0;
+  let alerts = 0;
+  for (const c of containers) {
+    const earliest = new Map<string, Date>();
+    for (const ch of c.charges) {
+      if (!ch.lastFreeDay) continue;
+      const cur = earliest.get(ch.payeeOrgId);
+      if (!cur || ch.lastFreeDay < cur) earliest.set(ch.payeeOrgId, ch.lastFreeDay);
+    }
+    for (const [payeeOrgId, datetime] of earliest) {
+      const payee = await prisma.organization.findUnique({ where: { id: payeeOrgId } });
+      const deadline = await prisma.deadline.create({
+        data: { containerId: c.id, payeeOrgId, type: 'LAST_FREE_DAY', datetime, alertSchedule: ALERT_OFFSETS },
+      });
+      deadlines++;
+      for (const offsetDays of ALERT_OFFSETS) {
+        const scheduledFor = new Date(datetime.getTime() - offsetDays * 86_400_000);
+        const day = datetime.toISOString().slice(0, 10);
+        const message = `Last free day for container ${c.containerNumber} (${payee?.legalName ?? 'payee'}) is in ${offsetDays} day(s) — ${day}. Settle charges to avoid storage/demurrage.`;
+        for (const channel of ALERT_CHANNELS) {
+          await prisma.deadlineAlert.create({
+            data: {
+              deadlineId: deadline.id,
+              containerId: c.id,
+              recipientOrgId: c.importerOrgId,
+              channel,
+              offsetDays,
+              scheduledFor,
+              message,
+            },
+          });
+          alerts++;
+        }
+      }
+    }
+  }
+  console.log(`• Deadlines: ${deadlines} created, ${alerts} alerts scheduled (from config offsets).`);
 }
 
 /**

@@ -138,6 +138,28 @@ enum PayeeType {
   OTHER
 }
 
+/// Deadline kind (spec §7).
+enum DeadlineType {
+  LAST_FREE_DAY
+  ACCRUAL_START
+}
+
+/// Alert delivery channel (spec §1.5). Email/SMS go through NotificationAdapter
+/// (mock in the beta); IN_APP is served from the alert record itself.
+enum AlertChannel {
+  IN_APP
+  EMAIL
+  SMS
+}
+
+/// Alert lifecycle. PENDING/FAILED with a past scheduledFor are (re)sent by the
+/// dispatcher — a missed tick sends late, never drops (spec §1.5 reliability).
+enum AlertStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
 // ---------------------------------------------------------------------------
 // Identity & tenancy
 // ---------------------------------------------------------------------------
@@ -284,10 +306,12 @@ model Container {
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
 
-  bl       BillOfLading  @relation(fields: [blId], references: [id])
-  importer Organization  @relation("ContainerImporter", fields: [importerOrgId], references: [id])
-  terminal Organization? @relation("ContainerTerminal", fields: [terminalOrgId], references: [id])
-  charges  Charge[]
+  bl        BillOfLading   @relation(fields: [blId], references: [id])
+  importer  Organization   @relation("ContainerImporter", fields: [importerOrgId], references: [id])
+  terminal  Organization?  @relation("ContainerTerminal", fields: [terminalOrgId], references: [id])
+  charges   Charge[]
+  deadlines Deadline[]
+  alerts    DeadlineAlert[]
 
   @@index([blId])
   @@index([importerOrgId])
@@ -343,6 +367,53 @@ model Charge {
   @@index([payeeOrgId])
   @@index([status])
   @@map("charges")
+}
+
+/// A tracked deadline per container per payee (spec §1.5/§7). Recomputed when
+/// charge data changes. `alertSchedule` is the days-before offsets to alert on.
+model Deadline {
+  id            String       @id @default(uuid())
+  containerId   String       @map("container_id")
+  payeeOrgId    String       @map("payee_org_id")
+  type          DeadlineType
+  datetime      DateTime
+  alertSchedule Int[]        @map("alert_schedule")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  container Container       @relation(fields: [containerId], references: [id])
+  alerts    DeadlineAlert[]
+
+  @@unique([containerId, payeeOrgId, type])
+  @@index([containerId])
+  @@map("deadlines")
+}
+
+/// A scheduled alert instance. Persisted so delivery is reliable and idempotent
+/// (spec §1.5): one row per (deadline, channel, offset); the dispatcher only
+/// advances PENDING/FAILED → SENT, so re-runs never double-send.
+model DeadlineAlert {
+  id             String      @id @default(uuid())
+  deadlineId     String      @map("deadline_id")
+  containerId    String      @map("container_id")
+  recipientOrgId String      @map("recipient_org_id")
+  channel        AlertChannel
+  offsetDays     Int         @map("offset_days")
+  scheduledFor   DateTime    @map("scheduled_for")
+  status         AlertStatus @default(PENDING)
+  message        String
+  attempts       Int         @default(0)
+  sentAt         DateTime?   @map("sent_at")
+  readAt         DateTime?   @map("read_at")
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  deadline  Deadline  @relation(fields: [deadlineId], references: [id], onDelete: Cascade)
+  container Container @relation(fields: [containerId], references: [id])
+
+  @@unique([deadlineId, channel, offsetDays])
+  @@index([status, scheduledFor])
+  @@index([recipientOrgId, status])
+  @@map("deadline_alerts")
 }
 
 /// Per-country configuration (spec §7 addendum). Fees, currencies, languages,

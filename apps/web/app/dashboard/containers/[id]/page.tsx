@@ -166,11 +166,32 @@ export default function ContainerDetailPage() {
             )}
           </div>
 
-          <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5">
-            <h3 className="mb-1 text-sm font-semibold text-slate-500">Deadlines</h3>
-            <p className="text-sm text-slate-500">
-              Last-free-day countdown and alerts arrive in build step 6 (charges already carry last-free-day dates).
-            </p>
+          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="mb-3 text-sm font-semibold text-slate-500">Deadlines</h3>
+            {detail.deadlines.length === 0 ? (
+              <p className="text-sm text-slate-500">No deadlines tracked yet (added when charges carry a last-free-day).</p>
+            ) : (
+              <div className="space-y-2">
+                {detail.deadlines.map((dl) => {
+                  const cd = countdown(dl.datetime);
+                  return (
+                    <div key={dl.id} className="flex items-center justify-between border-b border-slate-50 pb-2 text-sm">
+                      <div>
+                        <span className="font-medium text-slate-700">{dl.type.replace(/_/g, ' ')}</span>
+                        <span className="ml-2 text-slate-400">{dl.payee_name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-600">{new Date(dl.datetime).toLocaleDateString()}</span>
+                        {cd && <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${COUNTDOWN_STYLE[cd.tone]}`}>{cd.label}</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+                <p className="pt-1 text-xs text-slate-400">
+                  Reminders fire automatically (in-app + email) at {detail.deadlines[0].alert_schedule.join(', ')} days before. See <Link href="/dashboard/alerts" className="text-sky-700 hover:underline">Alerts</Link>.
+                </p>
+              </div>
+            )}
           </div>
         </>
       )}

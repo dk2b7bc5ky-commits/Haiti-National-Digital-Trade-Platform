@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuditModule } from './audit/audit.module';
@@ -12,6 +13,7 @@ import { DataHubModule } from './data-hub/data-hub.module';
 import { MarketConfigModule } from './config/config.module';
 import { IntegrationModule } from './integration/integration.module';
 import { BillingModule } from './billing/billing.module';
+import { DeadlinesModule } from './deadlines/deadlines.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { PermissionsGuard } from './auth/permissions.guard';
 
@@ -19,6 +21,7 @@ import { PermissionsGuard } from './auth/permissions.guard';
   imports: [
     // Loads the repo-root .env so API and infra share one source of config.
     ConfigModule.forRoot({ isGlobal: true, envFilePath: ['../../.env', '.env'] }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuditModule,
     AuthModule,
@@ -28,6 +31,7 @@ import { PermissionsGuard } from './auth/permissions.guard';
     ApiKeysModule,
     MarketConfigModule,
     IntegrationModule,
+    DeadlinesModule,
     DataHubModule,
     BillingModule,
   ],

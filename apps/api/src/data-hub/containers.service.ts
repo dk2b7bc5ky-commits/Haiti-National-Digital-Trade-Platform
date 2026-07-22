@@ -11,6 +11,7 @@ import {
   toContainerDetail,
 } from './mappers';
 import { PayeeMap } from '../charges/mappers';
+import { DeadlineService } from '../deadlines/deadline.service';
 import type { ContainerSummary, ContainerDetail, ContainerStatus as ApiStatus } from '@rezo/shared-types';
 
 const API_TO_STATUS: Record<ApiStatus, ContainerStatus> = {
@@ -28,7 +29,10 @@ export interface ContainerFilters {
 
 @Injectable()
 export class ContainersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly deadlines: DeadlineService,
+  ) {}
 
   async list(
     principal: AuthPrincipal,
@@ -61,7 +65,9 @@ export class ContainersService {
       include: containerDetailInclude,
     });
     if (!container) throw new NotFoundException('Container not found.');
-    return toContainerDetail(container, await this.loadPayeeMap());
+    const detail = toContainerDetail(container, await this.loadPayeeMap());
+    detail.deadlines = await this.deadlines.listDeadlinesForContainer(id);
+    return detail;
   }
 
   /** Payee registry keyed by org, for "who you pay" enrichment (spec §1.4). */
