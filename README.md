@@ -17,15 +17,21 @@ one place**.
 This repository is being built in the exact 14-step order from the spec, one step
 at a time.
 
-**Current status: Step 13 — Dashboards. ✅ PHASE 2 COMPLETE.** An operational
-read-model (containers by status, avg clearance time, payments processed,
-**revenue by fee type**, deadlines at risk) and a **government read-only view**
-(daily arrivals, collections, congestion proxy), computed from real platform
-activity. All six Phase 2 acceptance criteria (spec §9) are covered by a passing
-**automated e2e suite**. (Earlier: Phase 1 Data Hub → charges → consolidated view
-→ deadlines → document ingestion; Phase 2 Payment Orchestrator, Fee & billing
-engine, Broker portal, Trucker portal + gate appointments, and Container tracking
-& release.)
+**Current status: Step 14 — Seeded demo dataset. ✅ PHASE 1 & 2 BETA COMPLETE.**
+The full 14-step build order is finished. A single `prisma db seed` now stands up
+a realistic, self-contained scenario so the whole platform is demoable without any
+live integration: **one voyage (MV Kreyòl Star, VY-2026-014) carrying 10 containers
+across 3 bills of lading for two importers**, a broker clearing for both, config-driven
+charges/deadlines/alerts, a low-confidence document sitting in the Ops verification
+queue, trucking jobs and gate appointments across the lifecycle, and settled payment
+records that route money payer → payee directly (Rezo holds none). Containers are
+spread across every lifecycle stage (arrived → cleared → released → gated-out) so
+dashboards, alerts, the verification queue, trucker jobs, and container timelines
+are all populated on first load. All 25 automated e2e tests (7 suites, Phase 1 + 2
+acceptance criteria + danger areas) pass. (Earlier: Phase 1 Data Hub → charges →
+consolidated view → deadlines → document ingestion; Phase 2 Payment Orchestrator,
+Fee & billing engine, Broker portal, Trucker portal + gate appointments, Container
+tracking & release, and Dashboards.)
 
 ---
 
@@ -438,6 +444,30 @@ docker compose down       # stop infra (add -v to wipe volumes)
 npm run build             # build all workspaces
 ```
 
+## Demo dataset (Step 14)
+
+`npm run prisma:seed --workspace @rezo/api` stands up one org per role (each with a
+login user, password `password123`) plus a realistic, self-contained scenario so the
+platform is demoable with zero live integrations:
+
+- **One voyage** — `MV Kreyòl Star` / `VY-2026-014` into Port-au-Prince.
+- **10 containers across 3 bills of lading** for **two importers** (`Import Ayiti`,
+  `Import Nord Distribution`); a **broker** (`Cap Customs Brokers`) clears for both
+  under one login, and a **trucker** hauls for them.
+- **Config-driven charges** (from the HT market tariff — never hard-coded), **tracked
+  deadlines + scheduled alerts** on the boxes still in port, and one **low-confidence
+  terminal invoice** parked in the Ops **verification queue**.
+- **Containers spread across every lifecycle stage** — arrived → cleared → released →
+  gated-out — with **settled payment records** that route money **payer → payee
+  directly** (each payee + the explicit Rezo fee line; Rezo holds none).
+- **Trucking jobs and gate appointments** across the lifecycle: an open offer, an
+  accepted haul with an upcoming gate slot, and a delivered haul with proof-of-delivery,
+  GPS, and a completed gate move.
+
+The result: dashboards, alerts, the verification queue, trucker jobs, billing, and
+container timelines are all populated on first login. Extra demo logins:
+`importer2@rezo.test` (second importer). The seed is idempotent — safe to re-run.
+
 ## Roadmap (build order from the spec)
 
 1. ~~Scaffold~~ ✅
@@ -452,5 +482,5 @@ npm run build             # build all workspaces
 10. ~~Broker portal~~ ✅
 11. ~~Trucker portal + gate appointments~~ ✅
 12. ~~Container tracking & release~~ ✅
-13. **Dashboards → Phase 2 complete** ✅ ← *you are here*
-14. Seeded demo dataset
+13. ~~Dashboards → Phase 2 complete~~ ✅
+14. **Seeded demo dataset → Phase 1 & 2 beta complete** ✅ ← *you are here*
