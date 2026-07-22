@@ -3,7 +3,7 @@ import { ContainerStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthPrincipal } from '../auth/auth-principal';
 import { cursorArgs, splitPage, Paginated } from '../common/pagination';
-import { containerScopeWhere } from './scoping';
+import { resolveContainerScope } from './scoping';
 import {
   containerInclude,
   containerDetailInclude,
@@ -42,7 +42,7 @@ export class ContainersService {
   ): Promise<Paginated<ContainerSummary>> {
     // Start from the caller's role scope, then apply optional query filters
     // (intersection — a filter can never widen visibility).
-    const where: Prisma.ContainerWhereInput = { ...containerScopeWhere(principal) };
+    const where: Prisma.ContainerWhereInput = { ...(await resolveContainerScope(this.prisma, principal)) };
     if (filters.importerOrgId) where.importerOrgId = filters.importerOrgId;
     if (filters.terminalOrgId) where.terminalOrgId = filters.terminalOrgId;
     if (filters.status && filters.status in API_TO_STATUS) {
@@ -61,7 +61,7 @@ export class ContainersService {
 
   async getById(principal: AuthPrincipal, id: string): Promise<ContainerDetail> {
     const container = await this.prisma.container.findFirst({
-      where: { id, ...containerScopeWhere(principal) },
+      where: { id, ...(await resolveContainerScope(this.prisma, principal)) },
       include: containerDetailInclude,
     });
     if (!container) throw new NotFoundException('Container not found.');

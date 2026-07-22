@@ -27,6 +27,7 @@ const NAV: NavItem[] = [
   { href: '/dashboard', label: 'Overview' },
   { href: '/dashboard/containers', label: 'Containers', permission: 'container:read' },
   { href: '/dashboard/alerts', label: 'Alerts', permission: 'container:read' },
+  { href: '/dashboard/ops/verification', label: 'Verification', permission: 'verification:read' },
   { href: '/dashboard/manifests/new', label: 'Submit manifest', permission: 'manifest:submit' },
 ];
 

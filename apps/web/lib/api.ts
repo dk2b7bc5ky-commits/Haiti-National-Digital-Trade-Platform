@@ -53,3 +53,13 @@ export async function apiFetchEnvelope<T>(
   }
   return { json, status: res.status };
 }
+
+/** Multipart upload (documents). Does not set Content-Type — the browser adds the boundary. */
+export async function apiUpload<T>(path: string, form: FormData, token?: string | null): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE_URL}${path}`, { method: 'POST', headers, body: form });
+  const json = (await res.json()) as ApiResponse<T>;
+  if (json.error) throw new ApiClientError(json.error.code, json.error.message, res.status);
+  return json.data as T;
+}

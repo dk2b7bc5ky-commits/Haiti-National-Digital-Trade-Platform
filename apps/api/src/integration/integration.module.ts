@@ -3,6 +3,8 @@ import { TERMINAL_ADAPTER } from './terminal-adapter';
 import { MockTerminalAdapter } from './mock-terminal.adapter';
 import { NOTIFICATION_ADAPTER } from './notification-adapter';
 import { MockNotificationAdapter } from './mock-notification.adapter';
+import { EXTRACTION_PROVIDER } from './extraction-provider';
+import { MockExtractionProvider } from './mock-extraction.provider';
 
 /**
  * Integration layer (spec §5). Every external system is bound to a DI token so
@@ -15,7 +17,8 @@ import { MockNotificationAdapter } from './mock-notification.adapter';
     // Swap these for real adapters here when the external APIs exist.
     { provide: TERMINAL_ADAPTER, useClass: MockTerminalAdapter },
     { provide: NOTIFICATION_ADAPTER, useClass: MockNotificationAdapter },
+    { provide: EXTRACTION_PROVIDER, useClass: MockExtractionProvider },
   ],
-  exports: [TERMINAL_ADAPTER, NOTIFICATION_ADAPTER],
+  exports: [TERMINAL_ADAPTER, NOTIFICATION_ADAPTER, EXTRACTION_PROVIDER],
 })
 export class IntegrationModule {}

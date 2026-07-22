@@ -14,6 +14,8 @@ import { MarketConfigModule } from './config/config.module';
 import { IntegrationModule } from './integration/integration.module';
 import { BillingModule } from './billing/billing.module';
 import { DeadlinesModule } from './deadlines/deadlines.module';
+import { StorageModule } from './storage/storage.module';
+import { DocumentsModule } from './documents/documents.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { PermissionsGuard } from './auth/permissions.guard';
 
@@ -31,9 +33,11 @@ import { PermissionsGuard } from './auth/permissions.guard';
     ApiKeysModule,
     MarketConfigModule,
     IntegrationModule,
+    StorageModule,
     DeadlinesModule,
     DataHubModule,
     BillingModule,
+    DocumentsModule,
   ],
   providers: [
     // Global auth: every route requires a valid JWT unless marked @Public().

@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { AuthPrincipal } from '../auth/auth-principal';
 import { Permission } from '../rbac/permissions';
 
@@ -28,6 +28,26 @@ export function containerScopeWhere(principal: AuthPrincipal): Prisma.ContainerW
     default:
       return MATCH_NONE;
   }
+}
+
+/**
+ * Async scope resolver. Same as containerScopeWhere but also resolves BROKER
+ * visibility from the broker↔importer links (spec §2.3): a broker sees the
+ * containers of every importer it clears for.
+ */
+export async function resolveContainerScope(
+  prisma: Pick<PrismaClient, 'brokerClient'>,
+  principal: AuthPrincipal,
+): Promise<Prisma.ContainerWhereInput> {
+  if (principal.orgType === 'BROKER' && !principal.permissions.includes(Permission.TENANT_READ_ALL)) {
+    const links = await prisma.brokerClient.findMany({
+      where: { brokerOrgId: principal.orgId },
+      select: { importerOrgId: true },
+    });
+    const importerIds = links.map((l) => l.importerOrgId);
+    return importerIds.length ? { importerOrgId: { in: importerIds } } : MATCH_NONE;
+  }
+  return containerScopeWhere(principal);
 }
 
 /** Manifest visibility: submitter-scoped unless the caller has cross-tenant read. */

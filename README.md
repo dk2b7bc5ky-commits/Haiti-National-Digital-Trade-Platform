@@ -17,15 +17,16 @@ one place**.
 This repository is being built in the exact 14-step order from the spec, one step
 at a time.
 
-**Current status: Step 6 — Deadline & alert engine.** A `Deadline` per container
-per payee (spec §1.5), **recomputed whenever charges change**, plus scheduled
-`DeadlineAlert`s fanned out to in-app + email (via a mock `NotificationAdapter`)
-at **config-driven offsets** (e.g. 30/14/7/3/1/0 days before). A cron dispatcher
-delivers due alerts every minute; delivery is **persisted and idempotent** so a
-missed tick sends late, never drops. (Steps 1–5 delivered infra + health,
+**Current status: Step 7 — Document ingestion + verification queue. ✅ PHASE 1
+COMPLETE.** Documents are uploaded to object storage (MinIO), run through a mock
+`ExtractionProvider` (OCR/LLM stub) that returns fields with **confidence
+scores**; fields below the **0.85 threshold** become `pending_review` charges
+(excluded from the payable total) with a `VerificationTask` for the **Ops
+console** to correct. All five Phase 1 acceptance criteria (spec §8) are covered
+by a passing **automated e2e test suite**. (Steps 1–6 delivered infra + health,
 identity/tenancy/RBAC, the Data Hub with single manifest submission, the
-Charge/Payee/Market model with config-driven fees + mock TerminalAdapter, and the
-consolidated "one screen" container view.)
+Charge/Payee/Market model with config-driven fees + mock TerminalAdapter, the
+consolidated container view, and the deadline & alert engine.)
 
 ---
 
@@ -221,6 +222,50 @@ GET  /api/v1/containers/:id                            # now includes `deadlines
   email), and the container detail lists deadlines with countdowns. Sign in as
   `importer@rezo.test` → **Alerts**.
 
+## Document ingestion & verification (Step 7 — closes Phase 1)
+
+```http
+POST /api/v1/documents (document:write)                # multipart upload -> store + extract
+GET  /api/v1/containers/:containerId/documents (container:read)
+GET  /api/v1/verification-tasks?status=open (verification:read)   # Ops queue
+POST /api/v1/verification-tasks/:id/resolve (verification:resolve) # { field, corrected_value }
+```
+
+- Uploads are stored in **MinIO** (object storage); the file key is the
+  Document `file_ref`. The mock **`ExtractionProvider`** returns charge lines
+  with per-field **confidence**; a field below the **0.85** threshold (config-
+  driven) creates a `PENDING_REVIEW` charge — **excluded from `total_owed`** —
+  and an Ops **`VerificationTask`**. Resolving it moves the charge into the
+  payable total and records before/after in the audit log.
+- Adapters remain swappable: `ExtractionProvider` and `NotificationAdapter` are
+  bound by DI token in `IntegrationModule` — mocks today, real OCR/LLM/email
+  vendors later, with no change to business logic.
+- Web: upload control on the container detail, and the **Verification** console
+  (`ops@rezo.test`) to review/correct low-confidence fields.
+
+## Broker ↔ importer links (minimal, for Phase 1)
+
+A `BrokerClient` row links a broker to the importers it clears for, so a broker
+reads its importers' containers (spec §2.3). The full broker portal is step 10;
+the demo seeds a link so `broker@rezo.test` sees the demo importer's containers.
+
+## Testing (Phase 1 acceptance — spec §8/§16)
+
+One automated integration test per Phase 1 acceptance criterion:
+
+```bash
+docker compose up -d                       # Postgres/Redis/MinIO must be running
+npm run test:e2e --workspace @rezo/api     # runs against an isolated rezo_test DB
+```
+
+The suite (`apps/api/test/phase1.e2e-spec.ts`) creates + migrates + seeds a
+separate `rezo_test` database, then asserts: (1) single submission is shared with
+importer **and** broker with no re-entry; (2) an uploaded invoice extracts
+charges, a low-confidence field lands in the queue and Ops corrects it; (3) the
+consolidated view groups charges by payee with a correct total + last-free-day;
+(4) an alert fires before a deadline; (5) tenant isolation + RBAC hold and
+changes are audit-logged. **All 5 pass.**
+
 ## What you should see
 
 - **`curl http://localhost:4000/api/v1/health`** returns:
@@ -262,8 +307,8 @@ npm run build             # build all workspaces
 3. ~~Data Hub core (vessel/voyage/manifest/BL/container + single submission)~~ ✅
 4. ~~Payee & Charge model + Market/Config~~ ✅
 5. ~~Consolidated container view~~ ✅
-6. **Deadline & alert engine** ← *you are here*
-7. Document ingestion + verification queue → **Phase 1 complete**
+6. ~~Deadline & alert engine~~ ✅
+7. **Document ingestion + verification queue → Phase 1 complete** ✅ ← *you are here*
 8. Payment Orchestrator (mock rail, FX freeze, idempotency, partial failure, no held funds)
 9. Fee & billing engine
 10. Broker portal

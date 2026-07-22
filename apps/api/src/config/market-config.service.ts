@@ -21,10 +21,13 @@ export interface Tariff {
   alert_offsets_days?: number[];
   /** Channels each alert fans out to. */
   alert_channels?: ('in_app' | 'email' | 'sms')[];
+  /** Extraction confidence threshold (spec §1.3 default 0.85). */
+  extraction_confidence_threshold?: number;
 }
 
 const DEFAULT_ALERT_OFFSETS = [30, 14, 7, 3, 1, 0];
 const DEFAULT_ALERT_CHANNELS: ('in_app' | 'email' | 'sms')[] = ['in_app', 'email'];
+const DEFAULT_CONFIDENCE_THRESHOLD = 0.85;
 
 const DEFAULT_MARKET_CODE = process.env.MARKET_CODE ?? 'HT';
 
@@ -80,5 +83,11 @@ export class MarketConfigService {
   async alertChannels(code?: string): Promise<('in_app' | 'email' | 'sms')[]> {
     const tariff = await this.getTariff(code);
     return tariff.alert_channels ?? DEFAULT_ALERT_CHANNELS;
+  }
+
+  /** Extraction confidence threshold (spec §1.3, default 0.85). Config-driven. */
+  async confidenceThreshold(code?: string): Promise<number> {
+    const tariff = await this.getTariff(code);
+    return tariff.extraction_confidence_threshold ?? DEFAULT_CONFIDENCE_THRESHOLD;
   }
 }

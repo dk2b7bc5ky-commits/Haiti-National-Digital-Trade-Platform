@@ -145,6 +145,15 @@ async function seedMarketAndPayees(): Promise<void> {
   const terminal = await prisma.organization.findFirstOrThrow({ where: { type: 'TERMINAL' } });
   const rezo = await prisma.organization.findFirstOrThrow({ where: { type: 'REZO' } });
 
+  // Broker clears for the demo importer (spec §2.3) so it can see the containers.
+  const broker = await prisma.organization.findFirstOrThrow({ where: { type: 'BROKER' } });
+  const importerForBroker = await prisma.organization.findFirstOrThrow({ where: { type: 'IMPORTER' } });
+  await prisma.brokerClient.upsert({
+    where: { brokerOrgId_importerOrgId: { brokerOrgId: broker.id, importerOrgId: importerForBroker.id } },
+    update: {},
+    create: { brokerOrgId: broker.id, importerOrgId: importerForBroker.id },
+  });
+
   // Port authority (APN) as a GOV org, used as the port-dues payee.
   const apnName = 'Autorité Portuaire Nationale (APN) (Demo)';
   const apn =

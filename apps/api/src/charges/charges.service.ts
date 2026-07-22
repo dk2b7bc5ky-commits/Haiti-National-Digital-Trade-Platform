@@ -11,7 +11,7 @@ import { MarketConfigService } from '../config/market-config.service';
 import { PayeesService, payeeTypeForCharge } from '../payees/payees.service';
 import { DeadlineService } from '../deadlines/deadline.service';
 import { AuthPrincipal } from '../auth/auth-principal';
-import { containerScopeWhere } from '../data-hub/scoping';
+import { resolveContainerScope } from '../data-hub/scoping';
 import { TERMINAL_ADAPTER, TerminalAdapter } from '../integration/terminal-adapter';
 import { toChargeSummary, apiToChargeType } from './mappers';
 import { CreateChargeDto } from './dto';
@@ -33,7 +33,7 @@ export class ChargesService {
   /** Loads a container the caller is allowed to see, or throws 404. */
   private async requireVisibleContainer(principal: AuthPrincipal, containerId: string): Promise<Container> {
     const container = await this.prisma.container.findFirst({
-      where: { id: containerId, ...containerScopeWhere(principal) },
+      where: { id: containerId, ...(await resolveContainerScope(this.prisma, principal)) },
     });
     if (!container) throw new NotFoundException('Container not found.');
     return container;

@@ -79,6 +79,7 @@ export type Permission =
   | 'payment:authorize'
   | 'verification:read'
   | 'verification:resolve'
+  | 'document:write'
   | 'dashboard:view'
   | 'dashboard:gov';
 
@@ -306,6 +307,52 @@ export interface AlertSummary {
   sent_at: string | null;
   read_at: string | null;
   message: string;
+}
+
+// ---------------------------------------------------------------------------
+// Document ingestion & verification (Step 7).
+// ---------------------------------------------------------------------------
+
+export type DocumentSource = 'upload' | 'email';
+export type DocType = 'terminal_invoice' | 'customs_declaration' | 'bill_of_lading' | 'other';
+export type DocVerificationStatus = 'processing' | 'extracted' | 'needs_review' | 'verified';
+export type VerificationTaskStatus = 'open' | 'resolved';
+
+export interface DocumentSummary {
+  id: string;
+  container_id: string | null;
+  doc_type: DocType;
+  source: DocumentSource;
+  language: string;
+  file_name: string;
+  file_ref: string;
+  extraction_confidence: number | null;
+  verification_status: DocVerificationStatus;
+  created_at: string;
+}
+
+/** Result of POST /documents: the document plus what extraction produced. */
+export interface DocumentIngestResult {
+  document: DocumentSummary;
+  charges_created: number;
+  charges_pending_review: number;
+  verification_tasks: number;
+  matched_container_id: string | null;
+}
+
+export interface VerificationTaskSummary {
+  id: string;
+  document_id: string | null;
+  charge_id: string | null;
+  container_id: string | null;
+  container_number: string | null;
+  field: string;
+  confidence: number;
+  status: VerificationTaskStatus;
+  before_value: unknown;
+  after_value: unknown;
+  created_at: string;
+  resolved_at: string | null;
 }
 
 /** Request body for POST /api/v1/manifests (spec §15). */

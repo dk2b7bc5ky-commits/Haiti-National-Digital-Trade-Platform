@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import type { ContainerDetail } from '@rezo/shared-types';
 import { useAuth } from '../../../../lib/auth';
 import { apiFetchEnvelope, apiFetch, ApiClientError } from '../../../../lib/api';
+import { apiUpload } from '../../../../lib/api';
 import { formatMoney, formatMoneyList, countdown, PAYMENT_STATUS_STYLE, COUNTDOWN_STYLE } from '../../../../lib/format';
 import { Chrome, Loading, useRequireAuth } from '../../../../components/chrome';
 
@@ -166,6 +167,10 @@ export default function ContainerDetailPage() {
             )}
           </div>
 
+          {auth.permissions.includes('document:write') && (
+            <DocumentUpload containerId={id} token={token} onDone={load} />
+          )}
+
           <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="mb-3 text-sm font-semibold text-slate-500">Deadlines</h3>
             {detail.deadlines.length === 0 ? (
@@ -196,6 +201,59 @@ export default function ContainerDetailPage() {
         </>
       )}
     </Chrome>
+  );
+}
+
+function DocumentUpload({ containerId, token, onDone }: { containerId: string; token: string | null; onDone: () => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [docType, setDocType] = useState('terminal_invoice');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  async function submit() {
+    if (!file) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('container_id', containerId);
+      form.append('doc_type', docType);
+      const res = await apiUpload<{ charges_created: number; charges_pending_review: number; verification_tasks: number }>(
+        '/documents',
+        form,
+        token,
+      );
+      setMsg(`Extracted ${res.charges_created} charge(s); ${res.charges_pending_review} need review (→ Ops queue).`);
+      setFile(null);
+      onDone();
+    } catch {
+      setMsg('Upload failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h3 className="mb-3 text-sm font-semibold text-slate-500">Upload document</h3>
+      <p className="mb-3 text-xs text-slate-400">
+        A terminal invoice or declaration is stored and run through extraction (mock OCR/LLM). Low-confidence fields go to the Ops verification queue and are excluded from the total until confirmed.
+      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="text-sm" />
+        <select value={docType} onChange={(e) => setDocType(e.target.value)} className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm">
+          <option value="terminal_invoice">Terminal invoice</option>
+          <option value="customs_declaration">Customs declaration</option>
+          <option value="bill_of_lading">Bill of lading</option>
+          <option value="other">Other</option>
+        </select>
+        <button onClick={submit} disabled={!file || busy} className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50">
+          {busy ? 'Uploading…' : 'Upload & extract'}
+        </button>
+      </div>
+      {msg && <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">{msg}</p>}
+    </div>
   );
 }
 

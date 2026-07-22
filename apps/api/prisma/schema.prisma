@@ -160,6 +160,33 @@ enum AlertStatus {
   FAILED
 }
 
+/// How a document reached Rezo (spec §7/§1.3).
+enum DocumentSource {
+  UPLOAD
+  EMAIL
+}
+
+enum DocType {
+  TERMINAL_INVOICE
+  CUSTOMS_DECLARATION
+  BILL_OF_LADING
+  OTHER
+}
+
+/// Document processing state. NEEDS_REVIEW when any extracted field fell below
+/// the confidence threshold (spec §1.3).
+enum DocVerificationStatus {
+  PROCESSING
+  EXTRACTED
+  NEEDS_REVIEW
+  VERIFIED
+}
+
+enum VerificationTaskStatus {
+  OPEN
+  RESOLVED
+}
+
 // ---------------------------------------------------------------------------
 // Identity & tenancy
 // ---------------------------------------------------------------------------
@@ -312,6 +339,7 @@ model Container {
   charges   Charge[]
   deadlines Deadline[]
   alerts    DeadlineAlert[]
+  documents Document[]
 
   @@index([blId])
   @@index([importerOrgId])
@@ -389,6 +417,53 @@ model Deadline {
   @@map("deadlines")
 }
 
+/// An ingested document (spec §7/§1.3). Files live in object storage (MinIO);
+/// `fileRef` is the storage key. `extractionConfidence` is the overall score;
+/// per-field confidence drives verification tasks.
+model Document {
+  id                   String                @id @default(uuid())
+  containerId          String?               @map("container_id")
+  uploadedByOrgId      String                @map("uploaded_by_org_id")
+  source               DocumentSource        @default(UPLOAD)
+  docType              DocType               @default(OTHER) @map("doc_type")
+  language             String                @default("fr")
+  fileRef              String                @map("file_ref")
+  fileName             String                @map("file_name")
+  rawText              String?               @map("raw_text")
+  extractionConfidence Float?                @map("extraction_confidence")
+  verificationStatus   DocVerificationStatus @default(PROCESSING) @map("verification_status")
+  createdAt            DateTime              @default(now()) @map("created_at")
+
+  container         Container?         @relation(fields: [containerId], references: [id])
+  verificationTasks VerificationTask[]
+
+  @@index([containerId])
+  @@map("documents")
+}
+
+/// A human-verification task for a low-confidence extracted field (spec §1.3/§7).
+/// Ops corrects the value; before/after are recorded for the audit trail.
+model VerificationTask {
+  id               String                 @id @default(uuid())
+  documentId       String?                @map("document_id")
+  chargeId         String?                @map("charge_id")
+  containerId      String?                @map("container_id")
+  field            String
+  confidence       Float
+  status           VerificationTaskStatus @default(OPEN)
+  beforeValue      Json?                  @map("before_value")
+  afterValue       Json?                  @map("after_value")
+  resolvedByUserId String?                @map("resolved_by_user_id")
+  createdAt        DateTime               @default(now()) @map("created_at")
+  resolvedAt       DateTime?              @map("resolved_at")
+
+  document Document? @relation(fields: [documentId], references: [id])
+
+  @@index([status])
+  @@index([documentId])
+  @@map("verification_tasks")
+}
+
 /// A scheduled alert instance. Persisted so delivery is reliable and idempotent
 /// (spec §1.5): one row per (deadline, channel, offset); the dispatcher only
 /// advances PENDING/FAILED → SENT, so re-runs never double-send.
@@ -414,6 +489,20 @@ model DeadlineAlert {
   @@index([status, scheduledFor])
   @@index([recipientOrgId, status])
   @@map("deadline_alerts")
+}
+
+/// Links a broker to the importers it clears for (spec §2.3: one broker login
+/// manages many importers). Introduced minimally here so brokers can read their
+/// importers' containers; the full broker portal is build step 10.
+model BrokerClient {
+  id            String   @id @default(uuid())
+  brokerOrgId   String   @map("broker_org_id")
+  importerOrgId String   @map("importer_org_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@unique([brokerOrgId, importerOrgId])
+  @@index([brokerOrgId])
+  @@map("broker_clients")
 }
 
 /// Per-country configuration (spec §7 addendum). Fees, currencies, languages,
