@@ -523,6 +523,38 @@ export interface GateAppointmentSummary {
   created_at: string;
 }
 
+// ---------------------------------------------------------------------------
+// Dashboards / intelligence read-model (Step 13, spec §2.6).
+// ---------------------------------------------------------------------------
+
+export interface FeeTypeRevenue {
+  type: ChargeType;
+  currency: string;
+  amount: number;
+  count: number;
+}
+
+export interface OperationalDashboard {
+  containers_total: number;
+  by_status: Record<ContainerStatus, number>;
+  released: number;
+  gated_out: number;
+  avg_clearance_days: number | null;
+  payments_processed: number;
+  amount_processed: Money[];
+  revenue_by_fee_type: FeeTypeRevenue[];
+  rezo_fee_revenue: Money[];
+  deadlines_at_risk: number;
+}
+
+export interface GovernmentDashboard {
+  containers_total: number;
+  arrivals_by_day: { date: string; count: number }[];
+  collections: Money[];
+  customs_collections: Money[];
+  congestion_in_port: number;
+}
+
 /** Request body for POST /api/v1/manifests (spec §15). */
 export interface ManifestSubmitRequest {
   voyage: { vessel_imo: string; vessel_name: string; voyage_number: string; eta: string; port: string };

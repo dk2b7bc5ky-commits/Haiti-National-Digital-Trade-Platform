@@ -19,6 +19,7 @@ import { DocumentsModule } from './documents/documents.module';
 import { PaymentsModule } from './payments/payments.module';
 import { BrokerModule } from './broker/broker.module';
 import { TransportModule } from './transport/transport.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { PermissionsGuard } from './auth/permissions.guard';
 
@@ -44,6 +45,7 @@ import { PermissionsGuard } from './auth/permissions.guard';
     PaymentsModule,
     BrokerModule,
     TransportModule,
+    AnalyticsModule,
   ],
   providers: [
     // Global auth: every route requires a valid JWT unless marked @Public().

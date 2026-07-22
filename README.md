@@ -17,14 +17,15 @@ one place**.
 This repository is being built in the exact 14-step order from the spec, one step
 at a time.
 
-**Current status: Step 12 — Container tracking & release.** The end-to-end
-lifecycle (spec §2.5): **arrived → charges settled → customs cleared → release
-authorized → gate appointment → gated out**, shown as a status timeline on the
-container view. Customs clearance runs through a mock **`AsycudaAdapter`**;
-release requires all charges paid **and** customs cleared; completing the gate
-appointment gates the container out. (Earlier: Phase 1 Data Hub → charges →
-consolidated view → deadlines → document ingestion; Phase 2 Payment Orchestrator,
-Fee & billing engine, Broker portal, and Trucker portal + gate appointments.)
+**Current status: Step 13 — Dashboards. ✅ PHASE 2 COMPLETE.** An operational
+read-model (containers by status, avg clearance time, payments processed,
+**revenue by fee type**, deadlines at risk) and a **government read-only view**
+(daily arrivals, collections, congestion proxy), computed from real platform
+activity. All six Phase 2 acceptance criteria (spec §9) are covered by a passing
+**automated e2e suite**. (Earlier: Phase 1 Data Hub → charges → consolidated view
+→ deadlines → document ingestion; Phase 2 Payment Orchestrator, Fee & billing
+engine, Broker portal, Trucker portal + gate appointments, and Container tracking
+& release.)
 
 ---
 
@@ -298,6 +299,22 @@ GET  /api/v1/billing/summary (config:manage)     # rezo fee collected + active s
 - Web: a **Billing** page — plan catalogue, subscriptions (scoped), admin
   create/renew/cancel, and the summary tiles. Sign in as `admin@rezo.test`.
 
+## Dashboards (Step 13 — closes Phase 2)
+
+```http
+GET /api/v1/dashboard/operational (dashboard:view)   # scoped to caller (all for Rezo/gov)
+GET /api/v1/dashboard/government  (dashboard:gov)     # platform-wide read-only
+```
+
+- **Operational**: containers total + by status, released/gated-out, average
+  clearance time, payments processed + amount routed, **revenue by fee type**
+  (paid charges grouped), Rezo fee revenue, and deadlines at risk — all from
+  real platform data (scoped to the caller's containers unless cross-tenant).
+- **Government**: daily arrivals (last 7 days), collections routed to payees,
+  customs collections, and an in-port congestion proxy.
+- Web: a **Dashboards** page with KPI tiles, the revenue-by-fee-type table, and
+  (for government/admin) the government section. Sign in as `admin@rezo.test`.
+
 ## Container tracking & release (Step 12)
 
 ```http
@@ -370,7 +387,14 @@ npm run test:e2e --workspace @rezo/api     # Phase 1 acceptance + payment danger
 
 `apps/api/test/payments.e2e-spec.ts` adds the Step-8 danger-area checks (spec
 §16): idempotency, partial failure (no reversal + retry), FX freeze, RBAC, the
-Rezo-fee-only routing rule, and the schema **no-funds-held** scan. **All pass.**
+Rezo-fee-only routing rule, and the schema **no-funds-held** scan.
+
+`apps/api/test/phase2.e2e-spec.ts` covers the Phase 2 acceptance criteria (§9):
+one payment routed to 3+ payees (Rezo holds none), the Rezo fee attached +
+reported, a broker paying two importers under one login, the trucker flow
+advancing a container to gated-out, the dashboard's counts + revenue-by-fee-type,
+and full audit-logging. Plus `broker`/`transport`/`tracking`/`billing` suites.
+**All 25 tests across 7 suites pass** (Phase 1 + Phase 2 + danger areas).
 
 The suite (`apps/api/test/phase1.e2e-spec.ts`) creates + migrates + seeds a
 separate `rezo_test` database, then asserts: (1) single submission is shared with
@@ -427,6 +451,6 @@ npm run build             # build all workspaces
 9. ~~Fee & billing engine~~ ✅
 10. ~~Broker portal~~ ✅
 11. ~~Trucker portal + gate appointments~~ ✅
-12. **Container tracking & release** ← *you are here*
-13. Dashboards → **Phase 2 complete**
+12. ~~Container tracking & release~~ ✅
+13. **Dashboards → Phase 2 complete** ✅ ← *you are here*
 14. Seeded demo dataset
