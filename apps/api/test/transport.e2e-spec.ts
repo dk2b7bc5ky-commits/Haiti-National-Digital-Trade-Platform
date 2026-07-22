@@ -1,9 +1,8 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { ResponseInterceptor } from '../src/common/response.interceptor';
-import { AllExceptionsFilter } from '../src/common/all-exceptions.filter';
+import { configureApp } from '../src/common/configure-app';
 
 /** Step 11: trucker accepts a job, books a gate slot, captures POD (spec §2.4). */
 describe('Trucker portal + gate appointments (Step 11)', () => {
@@ -21,10 +20,7 @@ describe('Trucker portal + gate appointments (Step 11)', () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
-    app.setGlobalPrefix('api/v1');
-    app.useGlobalInterceptors(new ResponseInterceptor());
-    app.useGlobalFilters(new AllExceptionsFilter());
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    configureApp(app);
     await app.init();
     http = () => request(app.getHttpServer());
     for (const [k, e] of Object.entries({ line: 'line@rezo.test', importer: 'importer@rezo.test', trucker: 'trucker@rezo.test', terminal: 'terminal@rezo.test' }))

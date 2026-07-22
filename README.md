@@ -410,6 +410,28 @@ consolidated view groups charges by payee with a correct total + last-free-day;
 (4) an alert fires before a deadline; (5) tenant isolation + RBAC hold and
 changes are audit-logged. **All 5 pass.**
 
+The web app additionally has **15 unit tests** (`apps/web/lib/*.test.ts`)
+covering money formatting, deadline countdowns, and API-envelope/error handling.
+
+## Continuous integration & hardening
+
+- **CI** (`.github/workflows/ci.yml`): on every push/PR — install → Prisma
+  generate → build (typechecks all workspaces) → lint → web unit tests → API
+  e2e, with Postgres + MinIO provisioned as services. The e2e DB is provisioned
+  portably (no dependency on a specific container name), so the suite runs the
+  same locally and in CI.
+- **Lint**: ESLint for the API (correctness = error, style = warning), `next
+  lint` for the web app, `tsc --noEmit` for shared types. `npm run lint` runs
+  all three.
+- **Security hardening**: `helmet` headers; CORS restricted via `CORS_ORIGINS`;
+  strict validation (`forbidNonWhitelisted`); `JWT_SECRET` required in
+  production; Prisma errors mapped to proper HTTP codes with no internal leakage.
+  The production and test apps share one middleware stack
+  (`src/common/configure-app.ts`) so tests exercise exactly what ships.
+
+See **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)** for the full engineering
+handoff (architecture, RBAC, payment orchestration, adapters, and next steps).
+
 ## What you should see
 
 - **`curl http://localhost:4000/api/v1/health`** returns:

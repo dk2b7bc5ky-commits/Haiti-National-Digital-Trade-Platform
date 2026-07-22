@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { Response } from 'express';
 import type { ApiFailure } from '@rezo/shared-types';
 
@@ -33,16 +34,39 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = res;
       } else if (res && typeof res === 'object') {
         const r = res as Record<string, unknown>;
-        message = (r.message as string) ?? exception.message;
+        // class-validator returns `message` as a string[] of failures; flatten it.
+        message = Array.isArray(r.message) ? (r.message as string[]).join('; ') : (r.message as string) ?? exception.message;
       }
       code = this.statusToCode(status);
+    } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
+      // Map the common database errors to sensible HTTP statuses instead of a
+      // blanket 500, without leaking column/constraint internals to the client.
+      const mapped = this.mapPrismaError(exception);
+      status = mapped.status;
+      code = mapped.code;
+      message = mapped.message;
+      this.logger.warn(`Prisma ${exception.code}: ${exception.message}`);
     } else if (exception instanceof Error) {
-      message = exception.message;
+      // Unknown/unexpected error: log the details server-side, return a generic
+      // message so we never leak stack traces or internals to the caller.
       this.logger.error(exception.stack ?? exception.message);
     }
 
     const body: ApiFailure = { data: null, error: { code, message } };
     response.status(status).json(body);
+  }
+
+  private mapPrismaError(e: Prisma.PrismaClientKnownRequestError): { status: number; code: string; message: string } {
+    switch (e.code) {
+      case 'P2002': // unique constraint violation
+        return { status: HttpStatus.CONFLICT, code: 'conflict', message: 'A record with these values already exists.' };
+      case 'P2025': // record not found for the operation
+        return { status: HttpStatus.NOT_FOUND, code: 'not_found', message: 'The requested record was not found.' };
+      case 'P2003': // foreign key constraint failed
+        return { status: HttpStatus.BAD_REQUEST, code: 'bad_request', message: 'A referenced record does not exist.' };
+      default:
+        return { status: HttpStatus.INTERNAL_SERVER_ERROR, code: 'internal_error', message: 'A database error occurred.' };
+    }
   }
 
   private statusToCode(status: number): string {

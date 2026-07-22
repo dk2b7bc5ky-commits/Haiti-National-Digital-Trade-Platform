@@ -1,9 +1,8 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { ResponseInterceptor } from '../src/common/response.interceptor';
-import { AllExceptionsFilter } from '../src/common/all-exceptions.filter';
+import { configureApp } from '../src/common/configure-app';
 import { PrismaService } from '../src/prisma/prisma.service';
 
 /**
@@ -46,10 +45,7 @@ describe('Phase 2 acceptance criteria', () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
-    app.setGlobalPrefix('api/v1');
-    app.useGlobalInterceptors(new ResponseInterceptor());
-    app.useGlobalFilters(new AllExceptionsFilter());
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    configureApp(app);
     await app.init();
     prisma = app.get(PrismaService);
     http = () => request(app.getHttpServer());

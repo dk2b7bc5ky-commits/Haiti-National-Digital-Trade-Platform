@@ -9,10 +9,18 @@ import { AuthService } from './auth.service';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') ?? 'dev_only_insecure_secret',
-        signOptions: { expiresIn: config.get<string>('JWT_EXPIRES_IN') ?? '1d' },
-      }),
+      useFactory: (config: ConfigService) => {
+        const secret = config.get<string>('JWT_SECRET');
+        // Fail fast in production rather than silently signing tokens with a
+        // well-known development secret (anyone could forge a valid JWT).
+        if (!secret && config.get<string>('NODE_ENV') === 'production') {
+          throw new Error('JWT_SECRET must be set in production.');
+        }
+        return {
+          secret: secret ?? 'dev_only_insecure_secret',
+          signOptions: { expiresIn: config.get<string>('JWT_EXPIRES_IN') ?? '1d' },
+        };
+      },
     }),
   ],
   controllers: [AuthController],

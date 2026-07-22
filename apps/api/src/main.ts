@@ -1,22 +1,19 @@
 import { NestFactory } from '@nestjs/core';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { ResponseInterceptor } from './common/response.interceptor';
-import { AllExceptionsFilter } from './common/all-exceptions.filter';
+import { configureApp } from './common/configure-app';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
 
-  // Spec §15: every endpoint lives under /api/v1.
-  app.setGlobalPrefix('api/v1');
+  // Shared middleware stack (prefix, security headers, envelope, validation).
+  configureApp(app);
 
-  // Standard Rezo response envelope, applied globally.
-  app.useGlobalInterceptors(new ResponseInterceptor());
-  app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-
-  // Allow the Next.js web app (and later partner clients) to call the API.
-  app.enableCors({ origin: true, credentials: true });
+  // Allow the web app (and later partner clients) to call the API. Restrict to
+  // an explicit allowlist via CORS_ORIGINS (comma-separated) when set; otherwise
+  // reflect the request origin (convenient for local dev).
+  const origins = process.env.CORS_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean);
+  app.enableCors({ origin: origins && origins.length > 0 ? origins : true, credentials: true });
 
   const port = Number(process.env.API_PORT ?? 4000);
   await app.listen(port);

@@ -1,9 +1,8 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
-import { ResponseInterceptor } from '../src/common/response.interceptor';
-import { AllExceptionsFilter } from '../src/common/all-exceptions.filter';
+import { configureApp } from '../src/common/configure-app';
 
 /** Step 9: subscription pricing is config-driven; renew extends the term; RBAC. */
 describe('Fee & billing engine (Step 9)', () => {
@@ -19,10 +18,7 @@ describe('Fee & billing engine (Step 9)', () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
-    app.setGlobalPrefix('api/v1');
-    app.useGlobalInterceptors(new ResponseInterceptor());
-    app.useGlobalFilters(new AllExceptionsFilter());
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    configureApp(app);
     await app.init();
     http = () => request(app.getHttpServer());
     tokens.admin = await login('admin@rezo.test');

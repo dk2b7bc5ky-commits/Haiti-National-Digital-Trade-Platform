@@ -15,13 +15,19 @@ export default async function globalSetup(): Promise<void> {
   const apiDir = path.resolve(__dirname, '..');
   const env = { ...process.env, TS_NODE_TRANSPILE_ONLY: '1' };
 
-  // Create the test database (ignore "already exists").
+  // Ensure the test database exists. Connect to the "postgres" maintenance
+  // database (derived from DATABASE_URL) and CREATE it; ignore "already exists".
+  // Portable: works against a local Docker Postgres and against a CI service
+  // container (which may already provide the database), with no dependency on
+  // any specific container name.
   try {
-    execSync(`docker exec rezo-postgres psql -U rezo -d postgres -c "CREATE DATABASE rezo_test"`, {
-      stdio: 'ignore',
-    });
+    const maint = new URL(url);
+    const dbName = maint.pathname.replace(/^\//, '') || 'rezo_test';
+    maint.pathname = '/postgres';
+    maint.search = ''; // psql doesn't understand Prisma's ?schema=public
+    execSync(`psql "${maint.toString()}" -c "CREATE DATABASE ${dbName}"`, { stdio: 'ignore' });
   } catch {
-    /* already exists */
+    /* already exists, or psql unavailable and the database is provided by the environment */
   }
 
   execSync('npx prisma migrate deploy', { cwd: apiDir, stdio: 'inherit', env });

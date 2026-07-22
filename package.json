@@ -14,9 +14,16 @@
     "dev:web": "npm run dev --workspace @rezo/web",
     "build": "npm run build --workspaces --if-present",
     "prisma:generate": "npm run prisma:generate --workspace @rezo/api",
-    "prisma:migrate": "npm run prisma:migrate --workspace @rezo/api"
+    "prisma:migrate": "npm run prisma:migrate --workspace @rezo/api",
+    "lint": "npm run lint --workspaces --if-present"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.15"
   }
 }
