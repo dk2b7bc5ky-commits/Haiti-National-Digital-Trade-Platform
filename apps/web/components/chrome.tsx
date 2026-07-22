@@ -45,39 +45,44 @@ export function Chrome({ auth, children }: { auth: AuthContext; children: React.
   const items = NAV.filter((n) => !n.permission || auth.permissions.includes(n.permission as never));
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-lg font-bold text-sky-600">Rezo</Link>
-            <nav className="hidden gap-1 sm:flex">
-              {items.map((n) => {
-                const active = pathname === n.href;
-                return (
-                  <Link
-                    key={n.href}
-                    href={n.href}
-                    className={`rounded-lg px-3 py-1.5 text-sm ${active ? 'bg-slate-100 font-medium text-slate-900' : 'text-slate-600 hover:bg-slate-50'}`}
-                  >
-                    {n.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-          <div className="flex items-center gap-3">
-            <SystemStatus />
-            <div className="text-right">
-              <p className="text-sm font-medium text-slate-800">{auth.user.name}</p>
-              <p className="text-xs text-slate-500">{auth.org.legal_name}</p>
+    <div className="min-h-screen bg-slate-50">
+      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur">
+        <div className="mx-auto max-w-6xl px-6">
+          {/* Top row: brand + system status + sign out */}
+          <div className="flex items-center justify-between py-3">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <span className="grid h-7 w-7 place-items-center rounded-lg bg-sky-600 text-sm font-bold text-white">R</span>
+              <span className="text-lg font-bold tracking-tight text-slate-900">Rezo</span>
+            </Link>
+            <div className="flex items-center gap-3">
+              <SystemStatus />
+              <button
+                onClick={() => { logout(); router.replace('/login'); }}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+              >
+                Sign out
+              </button>
             </div>
-            <button
-              onClick={() => { logout(); router.replace('/login'); }}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
-            >
-              Sign out
-            </button>
           </div>
+          {/* Nav row: scrollable pill tabs */}
+          <nav className="-mb-px flex gap-1 overflow-x-auto pb-2">
+            {items.map((n) => {
+              const active = pathname === n.href;
+              return (
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm transition-colors ${
+                    active
+                      ? 'bg-sky-600 font-medium text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  {n.label}
+                </Link>
+              );
+            })}
+          </nav>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
