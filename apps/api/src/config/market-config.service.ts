@@ -15,6 +15,7 @@ export interface Tariff {
   customs_fee: { flat: number };
   port_dues: { flat: number };
   scanning: { flat: number };
+  inspection: { flat: number };
   terminal_handling: Record<ContainerSize, number>;
   storage_per_day: Record<ContainerSize, number>;
   /** Days-before-deadline to fire alerts (spec §1.5). Configurable per market. */
@@ -66,8 +67,11 @@ export class MarketConfigService {
     return market.tariff as unknown as Tariff;
   }
 
-  /** Flat config fee (rezo_fee, customs_fee, port_dues, scanning). */
-  async flatFee(kind: 'rezo_fee' | 'customs_fee' | 'port_dues' | 'scanning', code?: string): Promise<Money> {
+  /** Flat config fee (rezo_fee, customs_fee, port_dues, scanning, inspection). */
+  async flatFee(
+    kind: 'rezo_fee' | 'customs_fee' | 'port_dues' | 'scanning' | 'inspection',
+    code?: string,
+  ): Promise<Money> {
     const tariff = await this.getTariff(code);
     return { amount: tariff[kind].flat, currency: tariff.currency };
   }

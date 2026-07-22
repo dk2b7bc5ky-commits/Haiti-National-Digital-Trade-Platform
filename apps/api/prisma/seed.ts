@@ -23,6 +23,7 @@ const HT_TARIFF = {
   customs_fee: { flat: 2500 }, // $25.00
   port_dues: { flat: 5000 }, // $50.00
   scanning: { flat: 3500 }, // $35.00
+  inspection: { flat: 7500 }, // $75.00 (customs inspection)
   terminal_handling: { TWENTY: 15000, FORTY: 25000, REEFER: 40000 },
   storage_per_day: { TWENTY: 2000, FORTY: 3000, REEFER: 6000 },
   subscription_plans: {

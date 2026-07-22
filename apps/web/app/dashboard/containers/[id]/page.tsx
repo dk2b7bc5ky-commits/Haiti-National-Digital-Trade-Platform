@@ -52,6 +52,19 @@ export default function ContainerDetailPage() {
     }
   }
 
+  async function requestInspection() {
+    setBusy(true);
+    setErr(null);
+    try {
+      await apiFetch(`/containers/${id}/request-inspection`, { method: 'POST', token });
+      load();
+    } catch (e) {
+      setErr(e instanceof ApiClientError ? e.message : 'Inspection request failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!ready || !auth) return <Loading />;
 
   return (
@@ -110,15 +123,26 @@ export default function ContainerDetailPage() {
           <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-500">Charges by payee</h3>
-              {canWrite && (
-                <button
-                  onClick={syncTerminal}
-                  disabled={busy}
-                  className="rounded-lg border border-sky-300 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-50 disabled:opacity-50"
-                >
-                  {busy ? 'Syncing…' : 'Sync terminal charges'}
-                </button>
-              )}
+              <div className="flex gap-2">
+                {auth.permissions.includes('inspection:request') && (
+                  <button
+                    onClick={requestInspection}
+                    disabled={busy}
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Request inspection
+                  </button>
+                )}
+                {canWrite && (
+                  <button
+                    onClick={syncTerminal}
+                    disabled={busy}
+                    className="rounded-lg border border-sky-300 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-50 disabled:opacity-50"
+                  >
+                    {busy ? 'Syncing…' : 'Sync terminal charges'}
+                  </button>
+                )}
+              </div>
             </div>
 
             {detail.charge_groups.length === 0 && (

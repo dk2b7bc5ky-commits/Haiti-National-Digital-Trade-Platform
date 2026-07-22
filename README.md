@@ -17,14 +17,13 @@ one place**.
 This repository is being built in the exact 14-step order from the spec, one step
 at a time.
 
-**Current status: Step 9 — Fee & billing engine.** The per-transaction Rezo fee
-is attached to every payment from config (Step 8); this step adds
-**subscriptions** — create / renew / cancel across tiers (small/large broker,
-line, terminal, trucker, importer) with **all pricing read from the market
-tariff** (never hard-coded) — plus a **billing summary** (Rezo fee collected +
-subscription MRR). (Earlier: Phase 1 Data Hub → charges → consolidated view →
-deadline/alert engine → document ingestion, and Step 8's Payment Orchestrator —
-authorize-once, FX-frozen, idempotent, partial-failure-safe, no funds held.)
+**Current status: Step 10 — Broker portal.** One broker login manages **many
+importers** (spec §2.3): manage the importers it clears for, then see and pay
+every container consigned to them, upload documents, and **request inspection**.
+Large brokers integrate by **API** instead of the portal — issue a key and
+exchange it for a token. (Earlier: Phase 1 Data Hub → charges → consolidated
+view → deadlines → document ingestion; Phase 2 Payment Orchestrator and the
+Fee & billing engine with config-driven subscriptions.)
 
 ---
 
@@ -298,11 +297,27 @@ GET  /api/v1/billing/summary (config:manage)     # rezo fee collected + active s
 - Web: a **Billing** page — plan catalogue, subscriptions (scoped), admin
   create/renew/cancel, and the summary tiles. Sign in as `admin@rezo.test`.
 
-## Broker ↔ importer links (minimal, for Phase 1)
+## Broker portal (Step 10)
 
-A `BrokerClient` row links a broker to the importers it clears for, so a broker
-reads its importers' containers (spec §2.3). The full broker portal is step 10;
-the demo seeds a link so `broker@rezo.test` sees the demo importer's containers.
+```http
+GET    /api/v1/broker/clients (broker:manage)     # importers this broker clears for
+POST   /api/v1/broker/clients (broker:manage)     # { importer_org_id }
+DELETE /api/v1/broker/clients/:id (broker:manage)
+POST   /api/v1/containers/:id/request-inspection (inspection:request)  # adds a config-priced inspection charge
+```
+
+- A `BrokerClient` row links a broker to the importers it clears for. Container
+  visibility for those importers flows through the scope resolver, so **one
+  broker login sees and pays every container consigned to any of its importers**
+  (spec §2.3) — verified by cross-importer payment in Step 8's flow.
+- **API path for large brokers**: issue a key (`POST /api/v1/api-keys`),
+  exchange it for a token (`POST /api/v1/auth/token`), then call the API
+  directly — no portal needed.
+- **Request inspection** records a config-priced `INSPECTION` charge payable to
+  customs (source `asycuda`) and recomputes deadlines.
+- Web: **My importers** (add/remove clients, container counts), **API keys**
+  (create/revoke, plaintext shown once), and a **Request inspection** action on
+  the container detail. Sign in as `broker@rezo.test`.
 
 ## Testing (Phase 1 acceptance — spec §8/§16)
 
@@ -370,8 +385,8 @@ npm run build             # build all workspaces
 6. ~~Deadline & alert engine~~ ✅
 7. ~~Document ingestion + verification queue → Phase 1 complete~~ ✅
 8. ~~Payment Orchestrator (mock rail, FX freeze, idempotency, partial failure, no held funds)~~ ✅
-9. **Fee & billing engine** ← *you are here*
-10. Broker portal
+9. ~~Fee & billing engine~~ ✅
+10. **Broker portal** ← *you are here*
 11. Trucker portal + gate appointments
 12. Container tracking & release
 13. Dashboards → **Phase 2 complete**

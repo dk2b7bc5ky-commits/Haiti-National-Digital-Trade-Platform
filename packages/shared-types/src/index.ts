@@ -80,6 +80,8 @@ export type Permission =
   | 'verification:read'
   | 'verification:resolve'
   | 'document:write'
+  | 'broker:manage'
+  | 'inspection:request'
   | 'dashboard:view'
   | 'dashboard:gov';
 
@@ -455,6 +457,19 @@ export interface BillingSummary {
   active_subscriptions: number;
   /** Monthly-recurring revenue from active subscriptions (annual ÷ 12). */
   subscription_mrr: Money;
+}
+
+// ---------------------------------------------------------------------------
+// Broker portal (Step 10).
+// ---------------------------------------------------------------------------
+
+export interface BrokerClientSummary {
+  id: string;
+  broker_org_id: string;
+  importer_org_id: string;
+  importer_name: string;
+  container_count: number;
+  created_at: string;
 }
 
 /** Request body for POST /api/v1/manifests (spec §15). */

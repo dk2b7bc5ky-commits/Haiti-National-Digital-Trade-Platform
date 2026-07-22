@@ -17,6 +17,7 @@ import { DeadlinesModule } from './deadlines/deadlines.module';
 import { StorageModule } from './storage/storage.module';
 import { DocumentsModule } from './documents/documents.module';
 import { PaymentsModule } from './payments/payments.module';
+import { BrokerModule } from './broker/broker.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { PermissionsGuard } from './auth/permissions.guard';
 
@@ -40,6 +41,7 @@ import { PermissionsGuard } from './auth/permissions.guard';
     BillingModule,
     DocumentsModule,
     PaymentsModule,
+    BrokerModule,
   ],
   providers: [
     // Global auth: every route requires a valid JWT unless marked @Public().

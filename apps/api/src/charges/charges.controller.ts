@@ -5,6 +5,19 @@ import { AuthPrincipal } from '../auth/auth-principal';
 import { Permission } from '../rbac/permissions';
 import { CreateChargeDto } from './dto';
 
+/** Container-level actions that create charges (e.g. requesting inspection). */
+@Controller('containers/:containerId')
+export class ContainerActionsController {
+  constructor(private readonly charges: ChargesService) {}
+
+  @Post('request-inspection')
+  @HttpCode(201)
+  @RequirePermissions(Permission.INSPECTION_REQUEST)
+  requestInspection(@CurrentUser() principal: AuthPrincipal, @Param('containerId') containerId: string) {
+    return this.charges.requestInspection(principal, containerId);
+  }
+}
+
 /** Charges are nested under a container (spec §7: a charge belongs to one). */
 @Controller('containers/:containerId/charges')
 export class ChargesController {

@@ -145,6 +145,39 @@ export class ChargesService {
     return created.map(toChargeSummary);
   }
 
+  /**
+   * Broker/importer requests a customs inspection (spec §2.3). Records an
+   * INSPECTION charge (fee from config, payable to customs) and recomputes
+   * deadlines. In production this would also notify customs via AsycudaAdapter.
+   */
+  async requestInspection(principal: AuthPrincipal, containerId: string): Promise<ChargeSummary> {
+    await this.requireVisibleContainer(principal, containerId);
+    const fee = await this.config.flatFee('inspection');
+    const payeeOrgId = await this.resolvePayeeOrgId('INSPECTION');
+    const charge = await this.prisma.charge.create({
+      data: {
+        containerId,
+        payeeOrgId,
+        type: 'INSPECTION',
+        amount: fee.amount,
+        currency: fee.currency,
+        status: 'PENDING',
+        source: 'ASYCUDA',
+      },
+      include: chargeWithPayee,
+    });
+    await this.audit.record({
+      actorUserId: principal.userId,
+      actorOrgId: principal.orgId,
+      action: 'inspection.request',
+      entity: 'Container',
+      entityId: containerId,
+      after: { charge_id: charge.id, amount: fee.amount, currency: fee.currency },
+    });
+    await this.deadlines.recomputeForContainer(containerId);
+    return toChargeSummary(charge);
+  }
+
   private async resolvePayeeOrgId(type: ChargeType, explicit?: string): Promise<string> {
     if (explicit) {
       const org = await this.prisma.organization.findUnique({ where: { id: explicit } });

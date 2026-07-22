@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ChargesController } from '../charges/charges.controller';
+import { ChargesController, ContainerActionsController } from '../charges/charges.controller';
 import { ChargesService } from '../charges/charges.service';
 import { PayeesController } from '../payees/payees.controller';
 import { PayeesService } from '../payees/payees.service';
@@ -22,6 +22,7 @@ import { DeadlinesModule } from '../deadlines/deadlines.module';
   imports: [DeadlinesModule],
   controllers: [
     ChargesController,
+    ContainerActionsController,
     PayeesController,
     MarketsController,
     SubscriptionsController,
