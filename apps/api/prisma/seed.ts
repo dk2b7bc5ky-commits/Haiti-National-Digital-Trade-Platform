@@ -25,6 +25,14 @@ const HT_TARIFF = {
   scanning: { flat: 3500 }, // $35.00
   terminal_handling: { TWENTY: 15000, FORTY: 25000, REEFER: 40000 },
   storage_per_day: { TWENTY: 2000, FORTY: 3000, REEFER: 6000 },
+  subscription_plans: {
+    small_broker: { monthly: 5000, annual: 50000 },
+    large_broker: { monthly: 25000, annual: 250000 },
+    line: { monthly: 100000, annual: 1000000 },
+    terminal: { monthly: 100000, annual: 1000000 },
+    trucker: { monthly: 2000, annual: 20000 },
+    importer: { monthly: 3000, annual: 30000 },
+  },
 };
 
 interface SeedOrg {
@@ -119,11 +127,31 @@ async function main(): Promise<void> {
   await seedDemoManifest();
   await seedDemoCharges();
   await seedDeadlines();
+  await seedSubscriptions();
 
   const orgCount = await prisma.organization.count();
   const userCount = await prisma.user.count();
   console.log(`\nSeed complete: ${orgCount} organizations, ${userCount} users.`);
   console.log(`All seeded users share the dev password: "${DEV_PASSWORD}"`);
+}
+
+/** Demo subscriptions (spec §2.2), priced from the tariff. Idempotent. */
+async function seedSubscriptions(): Promise<void> {
+  if ((await prisma.subscription.count()) > 0) {
+    console.log('• Subscriptions already present — skipping.');
+    return;
+  }
+  const broker = await prisma.organization.findFirstOrThrow({ where: { type: 'BROKER' } });
+  const line = await prisma.organization.findFirstOrThrow({ where: { type: 'SHIPPING_LINE' } });
+  const plans = HT_TARIFF.subscription_plans;
+  const renewal = new Date('2026-08-22T00:00:00.000Z');
+  await prisma.subscription.createMany({
+    data: [
+      { orgId: broker.id, plan: 'LARGE_BROKER', term: 'MONTHLY', price: plans.large_broker.monthly, currency: HT_TARIFF.currency, renewalDate: renewal },
+      { orgId: line.id, plan: 'LINE', term: 'ANNUAL', price: plans.line.annual, currency: HT_TARIFF.currency, renewalDate: new Date('2027-07-22T00:00:00.000Z') },
+    ],
+  });
+  console.log('• Subscriptions seeded (broker + line).');
 }
 
 /** Mock FX rates (spec §7). USD is the base charge currency; HTG is the gourde. */

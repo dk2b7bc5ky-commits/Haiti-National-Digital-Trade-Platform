@@ -207,6 +207,27 @@ enum PaymentRoutingStatus {
   REVERSED
 }
 
+/// Subscription plan/tier (spec §2.2/§7). Prices come from market config.
+enum SubscriptionPlan {
+  SMALL_BROKER
+  LARGE_BROKER
+  LINE
+  TERMINAL
+  TRUCKER
+  IMPORTER
+}
+
+enum SubscriptionTerm {
+  MONTHLY
+  ANNUAL
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+}
+
 // ---------------------------------------------------------------------------
 // Identity & tenancy
 // ---------------------------------------------------------------------------
@@ -233,6 +254,7 @@ model Organization {
   containersTerminal Container[]      @relation("ContainerTerminal")
   payees             Payee[]          @relation("OrgPayees")
   chargesAsPayee     Charge[]         @relation("ChargePayee")
+  subscriptions      Subscription[]   @relation("OrgSubscriptions")
 
   @@map("organizations")
 }
@@ -514,6 +536,29 @@ model DeadlineAlert {
   @@index([status, scheduledFor])
   @@index([recipientOrgId, status])
   @@map("deadline_alerts")
+}
+
+/// A recurring plan subscription (spec §2.2/§7). `price` is captured from the
+/// market tariff at purchase (config-driven, never hard-coded).
+model Subscription {
+  id          String             @id @default(uuid())
+  orgId       String             @map("org_id")
+  plan        SubscriptionPlan
+  term        SubscriptionTerm
+  price       Int // minor units
+  currency    String
+  status      SubscriptionStatus @default(ACTIVE)
+  startedAt   DateTime           @default(now()) @map("started_at")
+  renewalDate DateTime           @map("renewal_date")
+  cancelledAt DateTime?          @map("cancelled_at")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  org Organization @relation("OrgSubscriptions", fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@index([status])
+  @@map("subscriptions")
 }
 
 /// Links a broker to the importers it clears for (spec §2.3: one broker login

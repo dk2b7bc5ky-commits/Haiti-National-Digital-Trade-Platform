@@ -17,17 +17,14 @@ one place**.
 This repository is being built in the exact 14-step order from the spec, one step
 at a time.
 
-**Current status: Step 8 — Payment Orchestrator (Phase 2 begins).** From a
-container's charges, Rezo aggregates **one authorize-once `PaymentRequest`**
-across multiple payees; on authorization the **FX rate is frozen** onto each
-routing and each portion is routed **directly to its payee** via a mock
-`PaymentRail` (settle/delay/fail per routing). **Rezo never holds funds** — the
-only routing that pays Rezo is its explicit fee line, enforced in code and by a
-schema test. **Idempotency** (client key) prevents double requests/charges, and
-an explicit **partial-failure policy** pays what settled, leaves failures
-retryable as a new request, and never reverses a success. (Phase 1 — Steps 1–7 —
-delivered the Data Hub, config-driven charges, consolidated view, deadline/alert
-engine, and document ingestion + verification, all covered by passing tests.)
+**Current status: Step 9 — Fee & billing engine.** The per-transaction Rezo fee
+is attached to every payment from config (Step 8); this step adds
+**subscriptions** — create / renew / cancel across tiers (small/large broker,
+line, terminal, trucker, importer) with **all pricing read from the market
+tariff** (never hard-coded) — plus a **billing summary** (Rezo fee collected +
+subscription MRR). (Earlier: Phase 1 Data Hub → charges → consolidated view →
+deadline/alert engine → document ingestion, and Step 8's Payment Orchestrator —
+authorize-once, FX-frozen, idempotent, partial-failure-safe, no funds held.)
 
 ---
 
@@ -282,6 +279,25 @@ Web: the container detail has a **Pay charges** panel — pick a settlement
 currency, review per-payee routings + the frozen total (incl. Rezo fee),
 authorize once, and retry any failed portion.
 
+## Fee & billing engine (Step 9)
+
+```http
+GET  /api/v1/subscription-plans                 # plan catalogue + prices (from config)
+GET  /api/v1/subscriptions                       # scoped: own org, or all (Rezo/gov)
+POST /api/v1/subscriptions (config:manage)       # { org_id, plan, term } — priced from config
+POST /api/v1/subscriptions/:id/renew (config:manage)
+POST /api/v1/subscriptions/:id/cancel (config:manage)
+GET  /api/v1/billing/summary (config:manage)     # rezo fee collected + active subs + MRR
+```
+
+- **Prices are configuration, not code** (spec §14): `subscription_plans` live in
+  the market tariff; creating/renewing a subscription reads the price from there.
+- The **per-transaction Rezo fee** is attached to each `PaymentRequest` from the
+  same config (Step 8). The billing summary reports fee collected (from settled
+  rezo-fee routings) and subscription MRR.
+- Web: a **Billing** page — plan catalogue, subscriptions (scoped), admin
+  create/renew/cancel, and the summary tiles. Sign in as `admin@rezo.test`.
+
 ## Broker ↔ importer links (minimal, for Phase 1)
 
 A `BrokerClient` row links a broker to the importers it clears for, so a broker
@@ -353,9 +369,8 @@ npm run build             # build all workspaces
 5. ~~Consolidated container view~~ ✅
 6. ~~Deadline & alert engine~~ ✅
 7. ~~Document ingestion + verification queue → Phase 1 complete~~ ✅
-8. **Payment Orchestrator (mock rail, FX freeze, idempotency, partial failure, no held funds)** ← *you are here*
-8. Payment Orchestrator (mock rail, FX freeze, idempotency, partial failure, no held funds)
-9. Fee & billing engine
+8. ~~Payment Orchestrator (mock rail, FX freeze, idempotency, partial failure, no held funds)~~ ✅
+9. **Fee & billing engine** ← *you are here*
 10. Broker portal
 11. Trucker portal + gate appointments
 12. Container tracking & release

@@ -23,11 +23,21 @@ export interface Tariff {
   alert_channels?: ('in_app' | 'email' | 'sms')[];
   /** Extraction confidence threshold (spec §1.3 default 0.85). */
   extraction_confidence_threshold?: number;
+  /** Subscription plan pricing (spec §2.2). Minor units, per plan/term. */
+  subscription_plans?: Record<string, { monthly: number; annual: number }>;
 }
 
 const DEFAULT_ALERT_OFFSETS = [30, 14, 7, 3, 1, 0];
 const DEFAULT_ALERT_CHANNELS: ('in_app' | 'email' | 'sms')[] = ['in_app', 'email'];
 const DEFAULT_CONFIDENCE_THRESHOLD = 0.85;
+const DEFAULT_SUBSCRIPTION_PLANS: Record<string, { monthly: number; annual: number }> = {
+  small_broker: { monthly: 5000, annual: 50000 },
+  large_broker: { monthly: 25000, annual: 250000 },
+  line: { monthly: 100000, annual: 1000000 },
+  terminal: { monthly: 100000, annual: 1000000 },
+  trucker: { monthly: 2000, annual: 20000 },
+  importer: { monthly: 3000, annual: 30000 },
+};
 
 const DEFAULT_MARKET_CODE = process.env.MARKET_CODE ?? 'HT';
 
@@ -89,5 +99,20 @@ export class MarketConfigService {
   async confidenceThreshold(code?: string): Promise<number> {
     const tariff = await this.getTariff(code);
     return tariff.extraction_confidence_threshold ?? DEFAULT_CONFIDENCE_THRESHOLD;
+  }
+
+  /** All subscription plans + prices (spec §2.2) — config-driven, never hard-coded. */
+  async subscriptionPlans(code?: string): Promise<Record<string, { monthly: number; annual: number }>> {
+    const tariff = await this.getTariff(code);
+    return tariff.subscription_plans ?? DEFAULT_SUBSCRIPTION_PLANS;
+  }
+
+  /** Price for one plan/term as Money (minor units of the market currency). */
+  async subscriptionPrice(planKey: string, term: 'monthly' | 'annual', code?: string): Promise<Money> {
+    const tariff = await this.getTariff(code);
+    const plans = tariff.subscription_plans ?? DEFAULT_SUBSCRIPTION_PLANS;
+    const plan = plans[planKey];
+    if (!plan) throw new Error(`No subscription plan "${planKey}" configured.`);
+    return { amount: plan[term], currency: tariff.currency };
   }
 }

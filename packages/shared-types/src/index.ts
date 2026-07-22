@@ -414,6 +414,49 @@ export interface AuthorizePaymentBody {
   simulate?: Record<string, PaymentRoutingStatus>;
 }
 
+// ---------------------------------------------------------------------------
+// Fee & billing engine (Step 9).
+// ---------------------------------------------------------------------------
+
+export type SubscriptionPlan =
+  | 'small_broker'
+  | 'large_broker'
+  | 'line'
+  | 'terminal'
+  | 'trucker'
+  | 'importer';
+export type SubscriptionTerm = 'monthly' | 'annual';
+export type SubscriptionStatus = 'active' | 'cancelled' | 'expired';
+
+export interface PlanPrice {
+  plan: SubscriptionPlan;
+  currency: string;
+  monthly: number;
+  annual: number;
+}
+
+export interface SubscriptionSummary {
+  id: string;
+  org_id: string;
+  org_name: string;
+  plan: SubscriptionPlan;
+  term: SubscriptionTerm;
+  price: number;
+  currency: string;
+  status: SubscriptionStatus;
+  started_at: string;
+  renewal_date: string;
+  cancelled_at: string | null;
+}
+
+export interface BillingSummary {
+  /** Rezo per-transaction fee collected (settled rezo-fee routings). */
+  rezo_fee_collected: Money[];
+  active_subscriptions: number;
+  /** Monthly-recurring revenue from active subscriptions (annual ÷ 12). */
+  subscription_mrr: Money;
+}
+
 /** Request body for POST /api/v1/manifests (spec §15). */
 export interface ManifestSubmitRequest {
   voyage: { vessel_imo: string; vessel_name: string; voyage_number: string; eta: string; port: string };
