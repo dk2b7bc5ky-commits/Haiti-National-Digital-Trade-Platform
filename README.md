@@ -458,10 +458,34 @@ Every endpoint returns:
 This is applied globally (a response interceptor + an exception filter), so
 individual controllers just return their plain payload.
 
+## Quick start (one command)
+
+Prerequisites: **[Docker Desktop](https://www.docker.com/products/docker-desktop)**
+(running), **[Node.js 20+](https://nodejs.org)**, and **[Git](https://git-scm.com)**.
+Then:
+
+```bash
+git clone https://github.com/dk2b7bc5ky-commits/Haiti-National-Digital-Trade-Platform.git
+cd Haiti-National-Digital-Trade-Platform
+npm install
+npm run demo
+```
+
+`npm run demo` creates `.env`, starts Postgres/Redis/MinIO, migrates + seeds the
+database, then runs the API and web together. When it's ready, open
+**http://localhost:3000** and sign in — the form is pre-filled with the admin
+demo account (`admin@rezo.test` / `password123`). The same commands work on
+macOS, Windows, and Linux.
+
+(One-time setup only: `npm run setup`. Run servers only: `npm run start:all`.)
+
 ## Handy commands
 
 ```bash
-docker compose up -d      # start infra
+npm run demo              # one-shot: setup + run everything (see Quick start)
+npm run setup             # one-time: .env, infra, migrate, seed
+npm run start:all         # run API + web together
+docker compose up -d      # start infra only
 docker compose down       # stop infra (add -v to wipe volumes)
 npm run build             # build all workspaces
 ```
