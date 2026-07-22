@@ -82,6 +82,9 @@ export type Permission =
   | 'document:write'
   | 'broker:manage'
   | 'inspection:request'
+  | 'transport:manage'
+  | 'transport:drive'
+  | 'gate:manage'
   | 'dashboard:view'
   | 'dashboard:gov';
 
@@ -469,6 +472,40 @@ export interface BrokerClientSummary {
   importer_org_id: string;
   importer_name: string;
   container_count: number;
+  created_at: string;
+}
+
+// ---------------------------------------------------------------------------
+// Trucker portal & gate appointments (Step 11).
+// ---------------------------------------------------------------------------
+
+export type TransportJobStatus = 'offered' | 'accepted' | 'in_transit' | 'delivered' | 'cancelled';
+export type GateAppointmentStatus = 'requested' | 'confirmed' | 'completed' | 'cancelled';
+
+export interface TransportJobSummary {
+  id: string;
+  container_id: string;
+  container_number: string;
+  trucker_org_id: string | null;
+  pickup: string;
+  dropoff: string;
+  price: number;
+  currency: string;
+  status: TransportJobStatus;
+  insurance_ref: string | null;
+  pod_ref: string | null;
+  gps: { lat: number; lng: number; at: string } | null;
+  created_at: string;
+}
+
+export interface GateAppointmentSummary {
+  id: string;
+  container_id: string;
+  container_number: string;
+  trucker_org_id: string;
+  terminal_org_id: string | null;
+  slot_time: string;
+  status: GateAppointmentStatus;
   created_at: string;
 }
 

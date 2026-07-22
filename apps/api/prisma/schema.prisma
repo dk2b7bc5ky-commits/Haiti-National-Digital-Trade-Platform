@@ -228,6 +228,23 @@ enum SubscriptionStatus {
   EXPIRED
 }
 
+/// Transport job lifecycle (spec §2.4).
+enum TransportJobStatus {
+  OFFERED
+  ACCEPTED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+/// Gate appointment lifecycle (spec §2.4/§7).
+enum GateAppointmentStatus {
+  REQUESTED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
 // ---------------------------------------------------------------------------
 // Identity & tenancy
 // ---------------------------------------------------------------------------
@@ -378,11 +395,13 @@ model Container {
   bl        BillOfLading   @relation(fields: [blId], references: [id])
   importer  Organization   @relation("ContainerImporter", fields: [importerOrgId], references: [id])
   terminal  Organization?  @relation("ContainerTerminal", fields: [terminalOrgId], references: [id])
-  charges         Charge[]
-  deadlines       Deadline[]
-  alerts          DeadlineAlert[]
-  documents       Document[]
-  paymentRequests PaymentRequest[]
+  charges          Charge[]
+  deadlines        Deadline[]
+  alerts           DeadlineAlert[]
+  documents        Document[]
+  paymentRequests  PaymentRequest[]
+  transportJobs    TransportJob[]
+  gateAppointments GateAppointment[]
 
   @@index([blId])
   @@index([importerOrgId])
@@ -559,6 +578,53 @@ model Subscription {
   @@index([orgId])
   @@index([status])
   @@map("subscriptions")
+}
+
+/// A trucking job for a container (spec §2.4/§7). The built-in module for
+/// haulers with no software of their own: accept, capture POD + GPS, get paid.
+model TransportJob {
+  id            String             @id @default(uuid())
+  containerId   String             @map("container_id")
+  createdByOrgId String            @map("created_by_org_id")
+  truckerOrgId  String?            @map("trucker_org_id") // null = open offer until accepted
+  pickup        String
+  dropoff       String
+  price         Int // minor units
+  currency      String
+  status        TransportJobStatus @default(OFFERED)
+  insuranceRef  String?            @map("insurance_ref")
+  podRef        String?            @map("pod_ref")
+  gpsLat        Float?             @map("gps_lat")
+  gpsLng        Float?             @map("gps_lng")
+  gpsAt         DateTime?          @map("gps_at")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  container Container @relation(fields: [containerId], references: [id])
+
+  @@index([containerId])
+  @@index([truckerOrgId])
+  @@index([status])
+  @@map("transport_jobs")
+}
+
+/// A gate appointment slot at a terminal (spec §2.4/§7).
+model GateAppointment {
+  id            String                @id @default(uuid())
+  containerId   String                @map("container_id")
+  truckerOrgId  String                @map("trucker_org_id")
+  terminalOrgId String?               @map("terminal_org_id")
+  slotTime      DateTime              @map("slot_time")
+  status        GateAppointmentStatus @default(REQUESTED)
+  createdAt     DateTime              @default(now()) @map("created_at")
+  updatedAt     DateTime              @updatedAt @map("updated_at")
+
+  container Container @relation(fields: [containerId], references: [id])
+
+  @@index([containerId])
+  @@index([terminalOrgId])
+  @@index([truckerOrgId])
+  @@map("gate_appointments")
 }
 
 /// Links a broker to the importers it clears for (spec §2.3: one broker login

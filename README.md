@@ -17,13 +17,13 @@ one place**.
 This repository is being built in the exact 14-step order from the spec, one step
 at a time.
 
-**Current status: Step 10 — Broker portal.** One broker login manages **many
-importers** (spec §2.3): manage the importers it clears for, then see and pay
-every container consigned to them, upload documents, and **request inspection**.
-Large brokers integrate by **API** instead of the portal — issue a key and
-exchange it for a token. (Earlier: Phase 1 Data Hub → charges → consolidated
-view → deadlines → document ingestion; Phase 2 Payment Orchestrator and the
-Fee & billing engine with config-driven subscriptions.)
+**Current status: Step 11 — Trucker portal + gate appointments.** The built-in
+module for haulers with no software of their own (spec §2.4): transport jobs
+(create/offer → **accept**), **gate-appointment** slot booking (terminal
+confirms/completes), **insurance + POD** upload to object storage, a **GPS**
+last-position field, and per-job pricing. (Earlier: Phase 1 Data Hub → charges →
+consolidated view → deadlines → document ingestion; Phase 2 Payment Orchestrator,
+Fee & billing engine, and the Broker portal.)
 
 ---
 
@@ -297,6 +297,26 @@ GET  /api/v1/billing/summary (config:manage)     # rezo fee collected + active s
 - Web: a **Billing** page — plan catalogue, subscriptions (scoped), admin
   create/renew/cancel, and the summary tiles. Sign in as `admin@rezo.test`.
 
+## Trucker portal + gate appointments (Step 11)
+
+```http
+GET  /api/v1/transport-jobs (container:read)                     # scoped: trucker sees own + open offers
+POST /api/v1/transport-jobs (transport:manage)                   # importer/broker create/offer a job
+POST /api/v1/transport-jobs/:id/accept (transport:drive)         # trucker accepts
+POST /api/v1/transport-jobs/:id/insurance|pod (transport:drive)  # multipart -> object storage; POD => delivered
+POST /api/v1/transport-jobs/:id/gps (transport:drive)            # { lat, lng } last position
+POST /api/v1/gate-appointments (transport:drive)                 # { container_id, slot_time }
+POST /api/v1/gate-appointments/:id/confirm|complete (gate:manage)  # terminal
+POST /api/v1/gate-appointments/:id/cancel (container:read)
+```
+
+- A trucker sees **open offers + its own jobs**; an importer/broker sees jobs for
+  their containers; a terminal sees gate appointments at its terminal. Insurance
+  and POD files go to MinIO; capturing POD marks the job `delivered`.
+- Web: **Trucking** (accept, insurance/POD upload, GPS, book gate), **Gate**
+  (terminal confirms/completes), and an **Arrange trucking** panel on the
+  container detail. Sign in as `trucker@rezo.test` / `terminal@rezo.test`.
+
 ## Broker portal (Step 10)
 
 ```http
@@ -386,8 +406,8 @@ npm run build             # build all workspaces
 7. ~~Document ingestion + verification queue → Phase 1 complete~~ ✅
 8. ~~Payment Orchestrator (mock rail, FX freeze, idempotency, partial failure, no held funds)~~ ✅
 9. ~~Fee & billing engine~~ ✅
-10. **Broker portal** ← *you are here*
-11. Trucker portal + gate appointments
+10. ~~Broker portal~~ ✅
+11. **Trucker portal + gate appointments** ← *you are here*
 12. Container tracking & release
 13. Dashboards → **Phase 2 complete**
 14. Seeded demo dataset

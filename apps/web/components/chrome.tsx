@@ -29,6 +29,8 @@ const NAV: NavItem[] = [
   { href: '/dashboard/alerts', label: 'Alerts', permission: 'container:read' },
   { href: '/dashboard/ops/verification', label: 'Verification', permission: 'verification:read' },
   { href: '/dashboard/broker/clients', label: 'My importers', permission: 'broker:manage' },
+  { href: '/dashboard/jobs', label: 'Trucking', permission: 'transport:drive' },
+  { href: '/dashboard/gate', label: 'Gate', permission: 'gate:manage' },
   { href: '/dashboard/api-keys', label: 'API keys', permission: 'apikey:manage' },
   { href: '/dashboard/billing', label: 'Billing', permission: 'org:read' },
   { href: '/dashboard/manifests/new', label: 'Submit manifest', permission: 'manifest:submit' },

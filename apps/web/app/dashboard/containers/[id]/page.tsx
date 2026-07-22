@@ -200,6 +200,10 @@ export default function ContainerDetailPage() {
             <DocumentUpload containerId={id} token={token} onDone={load} />
           )}
 
+          {auth.permissions.includes('transport:manage') && (
+            <ArrangeTrucking containerId={id} token={token} />
+          )}
+
           <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="mb-3 text-sm font-semibold text-slate-500">Deadlines</h3>
             {detail.deadlines.length === 0 ? (
@@ -282,6 +286,66 @@ function DocumentUpload({ containerId, token, onDone }: { containerId: string; t
         </button>
       </div>
       {msg && <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">{msg}</p>}
+    </div>
+  );
+}
+
+function ArrangeTrucking({ containerId, token }: { containerId: string; token: string | null }) {
+  const [truckers, setTruckers] = useState<{ id: string; legal_name: string }[]>([]);
+  const [truckerId, setTruckerId] = useState('');
+  const [pickup, setPickup] = useState('Port-au-Prince Terminal');
+  const [dropoff, setDropoff] = useState('');
+  const [price, setPrice] = useState('15000');
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    apiFetch<{ id: string; legal_name: string }[]>('/organizations/directory?type=TRUCKER', { token })
+      .then(setTruckers).catch(() => {});
+  }, [token]);
+
+  async function create() {
+    setBusy(true); setMsg(null);
+    try {
+      await apiFetch('/transport-jobs', {
+        method: 'POST', token,
+        body: { container_id: containerId, trucker_org_id: truckerId || undefined, pickup, dropoff, price: Number(price) },
+      });
+      setMsg('Transport job created — visible to the trucker under Trucking.');
+      setDropoff('');
+    } catch (e) {
+      setMsg(e instanceof ApiClientError ? e.message : 'Could not create job.');
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h3 className="mb-3 text-sm font-semibold text-slate-500">Arrange trucking</h3>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className="block text-xs text-slate-400">Trucker (optional — open offer if blank)</label>
+          <select value={truckerId} onChange={(e) => setTruckerId(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            <option value="">Open offer</option>
+            {truckers.map((t) => <option key={t.id} value={t.id}>{t.legal_name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-slate-400">Price (minor units)</label>
+          <input value={price} onChange={(e) => setPrice(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label className="block text-xs text-slate-400">Pickup</label>
+          <input value={pickup} onChange={(e) => setPickup(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label className="block text-xs text-slate-400">Dropoff</label>
+          <input value={dropoff} onChange={(e) => setDropoff(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        </div>
+      </div>
+      <button onClick={create} disabled={busy || !dropoff} className="mt-3 rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50">
+        {busy ? 'Creating…' : 'Create transport job'}
+      </button>
+      {msg && <p className="mt-3 text-sm text-slate-600">{msg}</p>}
     </div>
   );
 }
