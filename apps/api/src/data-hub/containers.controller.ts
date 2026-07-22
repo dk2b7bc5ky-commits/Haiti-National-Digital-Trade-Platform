@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
 import { ContainersService } from './containers.service';
 import { CurrentUser, RequirePermissions } from '../auth/decorators';
 import { AuthPrincipal } from '../auth/auth-principal';
@@ -31,5 +31,21 @@ export class ContainersController {
   @RequirePermissions(Permission.CONTAINER_READ)
   getById(@CurrentUser() principal: AuthPrincipal, @Param('id') id: string) {
     return this.containers.getById(principal, id);
+  }
+
+  /** Customs clearance via the (mock) AsycudaAdapter (spec §2.5). */
+  @Post(':id/customs-clear')
+  @HttpCode(200)
+  @RequirePermissions(Permission.CUSTOMS_CLEAR)
+  customsClear(@CurrentUser() principal: AuthPrincipal, @Param('id') id: string) {
+    return this.containers.customsClear(principal, id);
+  }
+
+  /** Authorize release (requires all charges paid + customs cleared). */
+  @Post(':id/authorize-release')
+  @HttpCode(200)
+  @RequirePermissions(Permission.RELEASE_AUTHORIZE)
+  authorizeRelease(@CurrentUser() principal: AuthPrincipal, @Param('id') id: string) {
+    return this.containers.authorizeRelease(principal, id);
   }
 }

@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { ContainerStatus, Prisma } from '@prisma/client';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Container, ContainerStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { AuthPrincipal } from '../auth/auth-principal';
 import { cursorArgs, splitPage, Paginated } from '../common/pagination';
 import { resolveContainerScope } from './scoping';
@@ -12,7 +13,8 @@ import {
 } from './mappers';
 import { PayeeMap } from '../charges/mappers';
 import { DeadlineService } from '../deadlines/deadline.service';
-import type { ContainerSummary, ContainerDetail, ContainerStatus as ApiStatus } from '@rezo/shared-types';
+import { ASYCUDA_ADAPTER, AsycudaAdapter } from '../integration/asycuda-adapter';
+import type { ContainerSummary, ContainerDetail, ContainerStatus as ApiStatus, TimelineStep } from '@rezo/shared-types';
 
 const API_TO_STATUS: Record<ApiStatus, ContainerStatus> = {
   arrived: 'ARRIVED',
@@ -32,6 +34,8 @@ export class ContainersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly deadlines: DeadlineService,
+    private readonly audit: AuditService,
+    @Inject(ASYCUDA_ADAPTER) private readonly asycuda: AsycudaAdapter,
   ) {}
 
   async list(
@@ -67,7 +71,86 @@ export class ContainersService {
     if (!container) throw new NotFoundException('Container not found.');
     const detail = toContainerDetail(container, await this.loadPayeeMap());
     detail.deadlines = await this.deadlines.listDeadlinesForContainer(id);
+    detail.timeline = await this.buildTimeline(container);
     return detail;
+  }
+
+  /** End-to-end lifecycle milestones (spec §2.5). */
+  private async buildTimeline(container: Container): Promise<TimelineStep[]> {
+    const [total, outstanding, lastSettled, gate] = await Promise.all([
+      this.prisma.charge.count({ where: { containerId: container.id } }),
+      this.prisma.charge.count({
+        where: { containerId: container.id, status: { in: ['PENDING', 'OVERDUE', 'REQUESTED', 'PENDING_REVIEW'] } },
+      }),
+      this.prisma.paymentRequest.findFirst({
+        where: { containerId: container.id, status: 'SETTLED' },
+        orderBy: { settledAt: 'desc' },
+        select: { settledAt: true },
+      }),
+      this.prisma.gateAppointment.findFirst({
+        where: { containerId: container.id, status: { in: ['CONFIRMED', 'COMPLETED'] } },
+        orderBy: { slotTime: 'asc' },
+        select: { slotTime: true },
+      }),
+    ]);
+    const chargesSettled = total > 0 && outstanding === 0;
+    const iso = (d: Date | null | undefined) => d?.toISOString() ?? null;
+    return [
+      { key: 'arrived', label: 'Arrived', reached: true, at: iso(container.arrivalDate ?? container.createdAt) },
+      { key: 'charges_settled', label: 'Charges settled', reached: chargesSettled, at: chargesSettled ? iso(lastSettled?.settledAt ?? null) : null },
+      { key: 'customs_cleared', label: 'Customs cleared', reached: !!container.clearedAt, at: iso(container.clearedAt) },
+      { key: 'released', label: 'Release authorized', reached: !!container.releasedAt, at: iso(container.releasedAt) },
+      { key: 'gate_booked', label: 'Gate appointment', reached: !!gate, at: iso(gate?.slotTime ?? null) },
+      { key: 'gated_out', label: 'Gated out', reached: !!container.gatedOutAt, at: iso(container.gatedOutAt) },
+    ];
+  }
+
+  /** Customs clearance via the (mock) AsycudaAdapter (spec §1.6/§2.5). */
+  async customsClear(principal: AuthPrincipal, id: string): Promise<ContainerDetail> {
+    const container = await this.prisma.container.findFirst({
+      where: { id, ...(await resolveContainerScope(this.prisma, principal)) },
+    });
+    if (!container) throw new NotFoundException('Container not found.');
+    const clearance = await this.asycuda.getClearance({ containerNumber: container.containerNumber });
+    if (!clearance.cleared) throw new BadRequestException(`Customs status: ${clearance.status}.`);
+    await this.prisma.container.update({
+      where: { id },
+      data: { clearedAt: new Date(), status: container.status === 'ARRIVED' ? 'CLEARED' : container.status },
+    });
+    await this.audit.record({
+      actorUserId: principal.userId, actorOrgId: principal.orgId,
+      action: 'container.customs_clear', entity: 'Container', entityId: id,
+      after: { declaration_ref: clearance.declarationRef, status: clearance.status },
+    });
+    return this.getById(principal, id);
+  }
+
+  /**
+   * Authorize release (spec §2.5). Only when every charge is paid AND customs
+   * has cleared — mirrors the payment orchestrator's release-eligibility rule.
+   */
+  async authorizeRelease(principal: AuthPrincipal, id: string): Promise<ContainerDetail> {
+    const container = await this.prisma.container.findFirst({
+      where: { id, ...(await resolveContainerScope(this.prisma, principal)) },
+    });
+    if (!container) throw new NotFoundException('Container not found.');
+    if (!container.clearedAt) throw new BadRequestException('Container is not customs-cleared yet.');
+    const total = await this.prisma.charge.count({ where: { containerId: id } });
+    const outstanding = await this.prisma.charge.count({
+      where: { containerId: id, status: { in: ['PENDING', 'OVERDUE', 'REQUESTED', 'PENDING_REVIEW'] } },
+    });
+    if (!(total > 0 && outstanding === 0)) {
+      throw new BadRequestException('All charges must be paid before release.');
+    }
+    await this.prisma.container.update({
+      where: { id },
+      data: { releasedAt: new Date(), status: container.status === 'GATED_OUT' ? 'GATED_OUT' : 'RELEASED' },
+    });
+    await this.audit.record({
+      actorUserId: principal.userId, actorOrgId: principal.orgId,
+      action: 'container.release_authorize', entity: 'Container', entityId: id,
+    });
+    return this.getById(principal, id);
   }
 
   /** Payee registry keyed by org, for "who you pay" enrichment (spec §1.4). */

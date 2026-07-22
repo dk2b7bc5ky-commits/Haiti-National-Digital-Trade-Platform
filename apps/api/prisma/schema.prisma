@@ -389,6 +389,10 @@ model Container {
   terminalOrgId   String?         @map("terminal_org_id")
   arrivalDate     DateTime?       @map("arrival_date")
   status          ContainerStatus @default(ARRIVED)
+  // Release lifecycle milestones (spec §2.5).
+  clearedAt       DateTime?       @map("cleared_at")
+  releasedAt      DateTime?       @map("released_at")
+  gatedOutAt      DateTime?       @map("gated_out_at")
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
 

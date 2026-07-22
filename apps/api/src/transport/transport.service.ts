@@ -188,6 +188,19 @@ export class TransportService {
       throw new ForbiddenException('Only the terminal can confirm or complete a slot.');
     }
     const updated = await this.prisma.gateAppointment.update({ where: { id }, data: { status }, include: jobWithContainer });
+
+    // Completing the gate = the truck passed through → gated out, but only once
+    // release has been authorized (spec §2.5).
+    if (status === 'COMPLETED') {
+      const container = await this.prisma.container.findUnique({ where: { id: appt.containerId } });
+      if (container?.status === 'RELEASED') {
+        await this.prisma.container.update({
+          where: { id: container.id },
+          data: { status: 'GATED_OUT', gatedOutAt: new Date() },
+        });
+      }
+    }
+
     await this.audit.record({ actorUserId: principal.userId, actorOrgId: principal.orgId, action: `gate.${status.toLowerCase()}`, entity: 'GateAppointment', entityId: id });
     return this.toAppt(updated);
   }

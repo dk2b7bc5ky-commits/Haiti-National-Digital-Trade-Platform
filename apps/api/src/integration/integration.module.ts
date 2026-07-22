@@ -7,6 +7,8 @@ import { EXTRACTION_PROVIDER } from './extraction-provider';
 import { MockExtractionProvider } from './mock-extraction.provider';
 import { PAYMENT_RAIL } from './payment-rail';
 import { MockPaymentRail } from './mock-payment-rail.adapter';
+import { ASYCUDA_ADAPTER } from './asycuda-adapter';
+import { MockAsycudaAdapter } from './mock-asycuda.adapter';
 
 /**
  * Integration layer (spec §5). Every external system is bound to a DI token so
@@ -21,7 +23,8 @@ import { MockPaymentRail } from './mock-payment-rail.adapter';
     { provide: NOTIFICATION_ADAPTER, useClass: MockNotificationAdapter },
     { provide: EXTRACTION_PROVIDER, useClass: MockExtractionProvider },
     { provide: PAYMENT_RAIL, useClass: MockPaymentRail },
+    { provide: ASYCUDA_ADAPTER, useClass: MockAsycudaAdapter },
   ],
-  exports: [TERMINAL_ADAPTER, NOTIFICATION_ADAPTER, EXTRACTION_PROVIDER, PAYMENT_RAIL],
+  exports: [TERMINAL_ADAPTER, NOTIFICATION_ADAPTER, EXTRACTION_PROVIDER, PAYMENT_RAIL, ASYCUDA_ADAPTER],
 })
 export class IntegrationModule {}

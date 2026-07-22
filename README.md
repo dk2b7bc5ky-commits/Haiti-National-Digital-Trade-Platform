@@ -17,13 +17,14 @@ one place**.
 This repository is being built in the exact 14-step order from the spec, one step
 at a time.
 
-**Current status: Step 11 — Trucker portal + gate appointments.** The built-in
-module for haulers with no software of their own (spec §2.4): transport jobs
-(create/offer → **accept**), **gate-appointment** slot booking (terminal
-confirms/completes), **insurance + POD** upload to object storage, a **GPS**
-last-position field, and per-job pricing. (Earlier: Phase 1 Data Hub → charges →
+**Current status: Step 12 — Container tracking & release.** The end-to-end
+lifecycle (spec §2.5): **arrived → charges settled → customs cleared → release
+authorized → gate appointment → gated out**, shown as a status timeline on the
+container view. Customs clearance runs through a mock **`AsycudaAdapter`**;
+release requires all charges paid **and** customs cleared; completing the gate
+appointment gates the container out. (Earlier: Phase 1 Data Hub → charges →
 consolidated view → deadlines → document ingestion; Phase 2 Payment Orchestrator,
-Fee & billing engine, and the Broker portal.)
+Fee & billing engine, Broker portal, and Trucker portal + gate appointments.)
 
 ---
 
@@ -297,6 +298,24 @@ GET  /api/v1/billing/summary (config:manage)     # rezo fee collected + active s
 - Web: a **Billing** page — plan catalogue, subscriptions (scoped), admin
   create/renew/cancel, and the summary tiles. Sign in as `admin@rezo.test`.
 
+## Container tracking & release (Step 12)
+
+```http
+POST /api/v1/containers/:id/customs-clear (customs:clear)        # mock AsycudaAdapter -> cleared
+POST /api/v1/containers/:id/authorize-release (release:authorize) # requires all charges paid + cleared
+GET  /api/v1/containers/:id                                       # now includes a `timeline`
+```
+
+- Container status advances **arrived → cleared → released → gated_out**; the
+  detail returns a `timeline` of six milestones (arrived, charges settled,
+  customs cleared, release authorized, gate appointment, gated out) each with a
+  reached flag + timestamp.
+- **Release authorization** mirrors the payment orchestrator's rule: it is only
+  allowed once every charge on the container is paid **and** customs has cleared.
+- Completing a **gate appointment** (terminal) on a released container sets it
+  `gated_out`. Web: a status-timeline strip on the container detail, plus
+  **Customs clear** / **Authorize release** actions for the right roles.
+
 ## Trucker portal + gate appointments (Step 11)
 
 ```http
@@ -407,7 +426,7 @@ npm run build             # build all workspaces
 8. ~~Payment Orchestrator (mock rail, FX freeze, idempotency, partial failure, no held funds)~~ ✅
 9. ~~Fee & billing engine~~ ✅
 10. ~~Broker portal~~ ✅
-11. **Trucker portal + gate appointments** ← *you are here*
-12. Container tracking & release
+11. ~~Trucker portal + gate appointments~~ ✅
+12. **Container tracking & release** ← *you are here*
 13. Dashboards → **Phase 2 complete**
 14. Seeded demo dataset

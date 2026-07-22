@@ -65,6 +65,19 @@ export default function ContainerDetailPage() {
     }
   }
 
+  async function containerAction(path: string) {
+    setBusy(true);
+    setErr(null);
+    try {
+      await apiFetch(`/containers/${id}/${path}`, { method: 'POST', token });
+      load();
+    } catch (e) {
+      setErr(e instanceof ApiClientError ? e.message : 'Action failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!ready || !auth) return <Loading />;
 
   return (
@@ -117,6 +130,41 @@ export default function ContainerDetailPage() {
               <Field label="Vessel" value={`${detail.container.voyage.vessel.name} (IMO ${detail.container.voyage.vessel.imo})`} />
               <Field label="Voyage / port" value={`${detail.container.voyage.voyage_number} · ${detail.container.voyage.port}`} />
             </Panel>
+          </div>
+
+          {/* Lifecycle timeline (spec §2.5) */}
+          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-slate-500">Status timeline</h3>
+              <div className="flex gap-2">
+                {auth.permissions.includes('customs:clear') && !detail.container.cleared_at && (
+                  <button onClick={() => containerAction('customs-clear')} disabled={busy}
+                    className="rounded-lg border border-rose-300 px-3 py-1.5 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50">
+                    Customs clear
+                  </button>
+                )}
+                {auth.permissions.includes('release:authorize') && !detail.container.released_at && (
+                  <button onClick={() => containerAction('authorize-release')} disabled={busy}
+                    className="rounded-lg border border-emerald-300 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">
+                    Authorize release
+                  </button>
+                )}
+              </div>
+            </div>
+            <ol className="flex flex-wrap gap-x-2 gap-y-3">
+              {detail.timeline.map((s, i) => (
+                <li key={s.key} className="flex items-center">
+                  <div className="flex flex-col items-center text-center">
+                    <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${s.reached ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-400'}`}>
+                      {s.reached ? '✓' : i + 1}
+                    </span>
+                    <span className={`mt-1 max-w-[7rem] text-xs ${s.reached ? 'font-medium text-slate-700' : 'text-slate-400'}`}>{s.label}</span>
+                    {s.at && <span className="text-[10px] text-slate-400">{new Date(s.at).toLocaleDateString()}</span>}
+                  </div>
+                  {i < detail.timeline.length - 1 && <span className={`mx-1 h-0.5 w-6 ${s.reached ? 'bg-green-400' : 'bg-slate-200'}`} />}
+                </li>
+              ))}
+            </ol>
           </div>
 
           {/* Charges grouped by payee (spec §1.4) */}

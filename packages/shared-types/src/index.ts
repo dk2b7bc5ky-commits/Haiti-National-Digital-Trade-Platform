@@ -85,6 +85,8 @@ export type Permission =
   | 'transport:manage'
   | 'transport:drive'
   | 'gate:manage'
+  | 'customs:clear'
+  | 'release:authorize'
   | 'dashboard:view'
   | 'dashboard:gov';
 
@@ -178,6 +180,14 @@ export interface ContainerSummary {
  * and `deadlines` are part of the shape now but stay empty/null until the
  * Charge and Deadline models arrive (build steps 4–6).
  */
+/** A milestone in the container's end-to-end lifecycle (spec §2.5). */
+export interface TimelineStep {
+  key: 'arrived' | 'charges_settled' | 'customs_cleared' | 'released' | 'gate_booked' | 'gated_out';
+  label: string;
+  reached: boolean;
+  at: string | null;
+}
+
 export interface ContainerDetail {
   container: ContainerSummary & {
     importer: DirectoryOrg;
@@ -185,7 +195,11 @@ export interface ContainerDetail {
     shipper: string;
     description: string | null;
     manifest_id: string;
+    cleared_at: string | null;
+    released_at: string | null;
+    gated_out_at: string | null;
   };
+  timeline: TimelineStep[];
   charges: ChargeSummary[];
   /** Charges grouped by payee (spec §1.4). Populated from build step 4. */
   charge_groups: PayeeChargeGroup[];
