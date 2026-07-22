@@ -10,6 +10,7 @@ import {
   toContainerSummary,
   toContainerDetail,
 } from './mappers';
+import { PayeeMap } from '../charges/mappers';
 import type { ContainerSummary, ContainerDetail, ContainerStatus as ApiStatus } from '@rezo/shared-types';
 
 const API_TO_STATUS: Record<ApiStatus, ContainerStatus> = {
@@ -60,6 +61,16 @@ export class ContainersService {
       include: containerDetailInclude,
     });
     if (!container) throw new NotFoundException('Container not found.');
-    return toContainerDetail(container);
+    return toContainerDetail(container, await this.loadPayeeMap());
+  }
+
+  /** Payee registry keyed by org, for "who you pay" enrichment (spec §1.4). */
+  private async loadPayeeMap(): Promise<PayeeMap> {
+    const payees = await this.prisma.payee.findMany();
+    const map: PayeeMap = new Map();
+    for (const p of payees) {
+      if (!map.has(p.orgId)) map.set(p.orgId, { type: p.type, settlementRef: p.settlementRef });
+    }
+    return map;
   }
 }

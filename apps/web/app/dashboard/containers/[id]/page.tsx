@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import type { ContainerDetail } from '@rezo/shared-types';
 import { useAuth } from '../../../../lib/auth';
 import { apiFetchEnvelope, apiFetch, ApiClientError } from '../../../../lib/api';
-import { formatMoney, formatMoneyList } from '../../../../lib/format';
+import { formatMoney, formatMoneyList, countdown, PAYMENT_STATUS_STYLE, COUNTDOWN_STYLE } from '../../../../lib/format';
 import { Chrome, Loading, useRequireAuth } from '../../../../components/chrome';
 
 const STATUS_STYLE: Record<string, string> = {
@@ -59,22 +59,35 @@ export default function ContainerDetailPage() {
 
       {detail && (
         <>
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <h1 className="font-mono text-2xl font-bold">{detail.container.container_number}</h1>
-              <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
-                {detail.container.status}
-              </span>
-            </div>
-            {detail.total_owed && (
-              <div className="text-right">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Total owed</p>
-                <p className="text-2xl font-bold text-slate-900">
-                  {formatMoney(detail.total_owed.amount, detail.total_owed.currency)}
-                </p>
+          {(() => {
+            const cd = countdown(detail.container.last_free_day);
+            return (
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="font-mono text-2xl font-bold">{detail.container.container_number}</h1>
+                  <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
+                    {detail.container.status}
+                  </span>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${PAYMENT_STATUS_STYLE[detail.container.payment_status]}`}>
+                    {detail.container.payment_status}
+                  </span>
+                  {cd && (
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${COUNTDOWN_STYLE[cd.tone]}`}>
+                      last free day · {cd.label}
+                    </span>
+                  )}
+                </div>
+                {detail.total_owed && (
+                  <div className="text-right">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Total owed</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {formatMoney(detail.total_owed.amount, detail.total_owed.currency)}
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })()}
 
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <Panel title="Container">
@@ -115,8 +128,16 @@ export default function ContainerDetailPage() {
             <div className="space-y-5">
               {detail.charge_groups.map((g) => (
                 <div key={g.payee_org_id}>
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-1">
-                    <span className="text-sm font-semibold text-slate-700">{g.payee_name}</span>
+                  <div className="flex items-end justify-between border-b border-slate-100 pb-1">
+                    <div>
+                      <span className="text-sm font-semibold text-slate-700">{g.payee_name}</span>
+                      {(g.payee_type || g.settlement_hint) && (
+                        <span className="ml-2 text-xs text-slate-400">
+                          pay to{g.payee_type ? ` ${g.payee_type}` : ''}
+                          {g.settlement_hint ? ` · ${g.settlement_hint}` : ''}
+                        </span>
+                      )}
+                    </div>
                     <span className="text-sm font-semibold text-slate-900">{formatMoneyList(g.subtotals)}</span>
                   </div>
                   <table className="mt-2 w-full text-left text-sm">

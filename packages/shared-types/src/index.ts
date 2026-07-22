@@ -147,6 +147,9 @@ export interface VoyageInfo {
   vessel: { id: string; name: string; imo: string };
 }
 
+/** Container-level payment rollup derived from its charges (spec §1.4). */
+export type PaymentStatus = 'none' | 'pending' | 'paid' | 'overdue';
+
 export interface ContainerSummary {
   id: string;
   container_number: string;
@@ -157,6 +160,11 @@ export interface ContainerSummary {
   arrival_date: string | null;
   bl_number: string;
   voyage: VoyageInfo;
+  // Consolidated rollup (spec §1.4): shown across the list and on the detail.
+  total_owed: Money | null;
+  payment_status: PaymentStatus;
+  /** Earliest last-free-day across the container's charges (the binding one). */
+  last_free_day: string | null;
 }
 
 /**
@@ -243,6 +251,9 @@ export interface ChargeSummary {
 export interface PayeeChargeGroup {
   payee_org_id: string;
   payee_name: string;
+  /** "Who you pay" — payee kind + masked settlement routing (opaque token). */
+  payee_type: PayeeType | null;
+  settlement_hint: string | null;
   charges: ChargeSummary[];
   subtotals: Money[];
 }

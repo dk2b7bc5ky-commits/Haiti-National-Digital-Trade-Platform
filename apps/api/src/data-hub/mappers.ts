@@ -4,7 +4,16 @@ import {
   ManifestStatus,
   Prisma,
 } from '@prisma/client';
-import { toChargeSummary, groupByPayee, totalOwed, sumByCurrency } from '../charges/mappers';
+import {
+  toChargeSummary,
+  groupByPayee,
+  totalOwed,
+  sumByCurrency,
+  paymentStatus,
+  totalOwedFrom,
+  earliestLastFreeDay,
+  PayeeMap,
+} from '../charges/mappers';
 import type {
   ContainerSize as ApiContainerSize,
   ContainerStatus as ApiContainerStatus,
@@ -55,6 +64,7 @@ export const voyageInclude = { vessel: true } as const;
 
 export const containerInclude = {
   bl: { include: { manifest: { include: { voyage: { include: voyageInclude } } } } },
+  charges: { select: { amount: true, currency: true, status: true, lastFreeDay: true } },
 } as const;
 
 export const containerDetailInclude = {
@@ -84,6 +94,7 @@ function toVoyageInfo(v: ContainerWithRels['bl']['manifest']['voyage']): VoyageI
 }
 
 export function toContainerSummary(c: ContainerWithRels): ContainerSummary {
+  const charges = c.charges;
   return {
     id: c.id,
     container_number: c.containerNumber,
@@ -94,6 +105,9 @@ export function toContainerSummary(c: ContainerWithRels): ContainerSummary {
     arrival_date: c.arrivalDate?.toISOString() ?? null,
     bl_number: c.bl.blNumber,
     voyage: toVoyageInfo(c.bl.manifest.voyage),
+    total_owed: totalOwedFrom(charges),
+    payment_status: paymentStatus(charges),
+    last_free_day: earliestLastFreeDay(charges),
   };
 }
 
@@ -101,7 +115,7 @@ function toDirectoryOrg(o: { id: string; legalName: string; type: DirectoryOrg['
   return { id: o.id, legal_name: o.legalName, type: o.type };
 }
 
-export function toContainerDetail(c: ContainerDetailRow): ContainerDetail {
+export function toContainerDetail(c: ContainerDetailRow, payees?: PayeeMap): ContainerDetail {
   const summary = toContainerSummary(c);
   const charges = c.charges;
   return {
@@ -114,7 +128,7 @@ export function toContainerDetail(c: ContainerDetailRow): ContainerDetail {
       manifest_id: c.bl.manifestId,
     },
     charges: charges.map(toChargeSummary),
-    charge_groups: groupByPayee(charges),
+    charge_groups: groupByPayee(charges, payees),
     total_owed: totalOwed(charges),
     totals_by_currency: sumByCurrency(charges),
     // Deadlines populated in build step 6.

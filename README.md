@@ -17,14 +17,14 @@ one place**.
 This repository is being built in the exact 14-step order from the spec, one step
 at a time.
 
-**Current status: Step 4 — Payee & Charge model + Market/Config.** Charges (money
-as integer minor units + ISO currency), a payee registry, and per-country
-`Market` config whose tariff is the **only** source of fee amounts (never
-hard-coded). Charges are created manually or pulled via a **mock `TerminalAdapter`**
-(behind a documented interface, swappable for a real one). The container detail
-now shows **charges grouped by payee with subtotals and a total owed**. (Steps
-1–3 delivered infra + health, identity/tenancy/RBAC, and the Data Hub with single
-manifest submission and role-scoped container views.)
+**Current status: Step 5 — Consolidated container view ("one screen").** Each
+container now shows, in one place (spec §1.4): charges **grouped by payee** with
+**who you pay** (payee kind + masked settlement token), **total owed**, a
+container-level **payment status** (none/pending/paid/overdue), and the **last
+free day + countdown** — surfaced both on the detail and as columns across the
+container list. (Steps 1–4 delivered infra + health, identity/tenancy/RBAC, the
+Data Hub with single manifest submission, and the Charge/Payee/Market model with
+config-driven fees and a mock TerminalAdapter.)
 
 ---
 
@@ -182,6 +182,23 @@ POST /api/v1/containers/:containerId/charges/sync-terminal (charge:write)  # moc
   is excluded per spec §1.3). Try **Sync terminal charges** on a container as
   `admin@rezo.test` or `terminal@rezo.test`.
 
+## Consolidated view (Step 5)
+
+The container list and detail now carry the full "one screen" rollup (spec §1.4):
+
+- **`GET /containers`** and **`GET /containers/:id`** include, per container:
+  `total_owed`, `payment_status` (`none`/`pending`/`paid`/`overdue`, derived
+  from charge statuses), and `last_free_day` (earliest across payable charges).
+- **`GET /containers/:id`** charge groups add `payee_type` and a masked
+  `settlement_hint` — **who you pay** and how money will route (the opaque
+  settlement token is never shown in full).
+- The web **Containers** list shows total owed / payment status / last-free-day
+  with a live countdown per row; the **detail** shows a payment-status badge, a
+  last-free-day countdown chip, and per-payee "pay to …" routing.
+- Sign in as `importer@rezo.test` → **Containers** to see it. (The deadline
+  *engine* — recompute, alerts — is build step 6; here we surface the dates the
+  charges already carry.)
+
 ## What you should see
 
 - **`curl http://localhost:4000/api/v1/health`** returns:
@@ -221,8 +238,8 @@ npm run build             # build all workspaces
 1. ~~Scaffold~~ ✅
 2. ~~Identity & tenancy (orgs, users, RBAC, login)~~ ✅
 3. ~~Data Hub core (vessel/voyage/manifest/BL/container + single submission)~~ ✅
-4. **Payee & Charge model + Market/Config** ← *you are here*
-5. Consolidated container view
+4. ~~Payee & Charge model + Market/Config~~ ✅
+5. **Consolidated container view** ← *you are here*
 6. Deadline & alert engine
 7. Document ingestion + verification queue → **Phase 1 complete**
 8. Payment Orchestrator (mock rail, FX freeze, idempotency, partial failure, no held funds)
