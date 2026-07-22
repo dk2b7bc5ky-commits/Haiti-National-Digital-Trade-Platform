@@ -5,12 +5,27 @@
  * Dev credentials (NEVER use in production):
  *   password for every seeded user = "password123"
  */
-import { PrismaClient, OrgType, Role } from '@prisma/client';
+import { PrismaClient, OrgType, Role, ChargeType, ChargeSource } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 const DEV_PASSWORD = 'password123';
+
+/**
+ * Haiti tariff schedule — integer minor units (USD cents). This is the SAME
+ * data the Market.tariff row holds; fees are config, never hard-coded in app
+ * logic (spec §14).
+ */
+const HT_TARIFF = {
+  currency: 'USD',
+  rezo_fee: { flat: 500 }, // $5.00 convenience fee (attached at payment time, step 9)
+  customs_fee: { flat: 2500 }, // $25.00
+  port_dues: { flat: 5000 }, // $50.00
+  scanning: { flat: 3500 }, // $35.00
+  terminal_handling: { TWENTY: 15000, FORTY: 25000, REEFER: 40000 },
+  storage_per_day: { TWENTY: 2000, FORTY: 3000, REEFER: 6000 },
+};
 
 interface SeedOrg {
   type: OrgType;
@@ -99,12 +114,109 @@ async function main(): Promise<void> {
     console.log(`✓ ${s.type.padEnd(14)} ${s.legalName}  (${s.users.map((u) => u.email).join(', ')})`);
   }
 
+  await seedMarketAndPayees();
   await seedDemoManifest();
+  await seedDemoCharges();
 
   const orgCount = await prisma.organization.count();
   const userCount = await prisma.user.count();
   console.log(`\nSeed complete: ${orgCount} organizations, ${userCount} users.`);
   console.log(`All seeded users share the dev password: "${DEV_PASSWORD}"`);
+}
+
+/** Market config (HT) + the payee registry. Idempotent. */
+async function seedMarketAndPayees(): Promise<void> {
+  await prisma.market.upsert({
+    where: { code: 'HT' },
+    update: { tariff: HT_TARIFF },
+    create: {
+      code: 'HT',
+      name: 'Haiti',
+      baseCurrency: 'USD',
+      currencies: ['USD', 'HTG'],
+      languages: ['fr', 'ht', 'es', 'en'],
+      enabledModules: ['data_hub', 'charges', 'deadlines'],
+      tariff: HT_TARIFF,
+    },
+  });
+
+  const customs = await prisma.organization.findFirstOrThrow({ where: { type: 'CUSTOMS' } });
+  const terminal = await prisma.organization.findFirstOrThrow({ where: { type: 'TERMINAL' } });
+  const rezo = await prisma.organization.findFirstOrThrow({ where: { type: 'REZO' } });
+
+  // Port authority (APN) as a GOV org, used as the port-dues payee.
+  const apnName = 'Autorité Portuaire Nationale (APN) (Demo)';
+  const apn =
+    (await prisma.organization.findFirst({ where: { legalName: apnName } })) ??
+    (await prisma.organization.create({
+      data: { type: 'GOV', legalName: apnName, country: 'HT', kycStatus: 'VERIFIED' },
+    }));
+
+  const payees: { orgId: string; name: string; type: 'CUSTOMS' | 'PORT' | 'TERMINAL' | 'REZO'; ref: string }[] = [
+    { orgId: customs.id, name: 'AGD — Customs duties & fees', type: 'CUSTOMS', ref: 'stlm_agd_ht' },
+    { orgId: apn.id, name: 'APN — Port dues & scanning', type: 'PORT', ref: 'stlm_apn_ht' },
+    { orgId: terminal.id, name: 'CPS — Terminal charges', type: 'TERMINAL', ref: 'stlm_cps_ht' },
+    { orgId: rezo.id, name: 'Rezo — platform fee', type: 'REZO', ref: 'stlm_rezo_ht' },
+  ];
+  for (const p of payees) {
+    await prisma.payee.upsert({
+      where: { orgId_type: { orgId: p.orgId, type: p.type } },
+      update: { name: p.name, settlementRef: p.ref },
+      create: { orgId: p.orgId, name: p.name, type: p.type, settlementRef: p.ref },
+    });
+  }
+  console.log('• Market HT + payees (customs/port/terminal/rezo) ready.');
+}
+
+/**
+ * Config-driven charges on the demo containers so the consolidated view has
+ * content. Amounts come from HT_TARIFF (never hard-coded in app logic).
+ * Idempotent: skipped once any charge exists.
+ */
+async function seedDemoCharges(): Promise<void> {
+  if ((await prisma.charge.count()) > 0) {
+    console.log('• Demo charges already present — skipping.');
+    return;
+  }
+  const customs = await prisma.payee.findFirstOrThrow({ where: { type: 'CUSTOMS' } });
+  const port = await prisma.payee.findFirstOrThrow({ where: { type: 'PORT' } });
+  const terminal = await prisma.payee.findFirstOrThrow({ where: { type: 'TERMINAL' } });
+
+  const containers = await prisma.container.findMany({ take: 3, orderBy: { createdAt: 'asc' } });
+  let created = 0;
+  for (const [i, c] of containers.entries()) {
+    const lfd = c.arrivalDate ? new Date(c.arrivalDate) : new Date();
+    lfd.setUTCDate(lfd.getUTCDate() + 5);
+    const th = HT_TARIFF.terminal_handling[c.sizeType as keyof typeof HT_TARIFF.terminal_handling];
+    type Row = { payeeOrgId: string; type: ChargeType; amount: number; source: ChargeSource; dueDate: Date; lastFreeDay?: Date };
+    const rows: Row[] = [
+      { payeeOrgId: terminal.orgId, type: 'TERMINAL_HANDLING', amount: th, source: 'OCTOPI', lastFreeDay: lfd, dueDate: lfd },
+      { payeeOrgId: port.orgId, type: 'PORT_DUES', amount: HT_TARIFF.port_dues.flat, source: 'OCTOPI', dueDate: lfd },
+      { payeeOrgId: port.orgId, type: 'SCANNING', amount: HT_TARIFF.scanning.flat, source: 'OCTOPI', dueDate: lfd },
+    ];
+    // A customs duty on the first container (manual entry from a declaration).
+    if (i === 0) {
+      rows.push({ payeeOrgId: customs.orgId, type: 'CUSTOMS_DUTY', amount: 120000, source: 'MANUAL', dueDate: lfd });
+      rows.push({ payeeOrgId: customs.orgId, type: 'CUSTOMS_FEE', amount: HT_TARIFF.customs_fee.flat, source: 'MANUAL', dueDate: lfd });
+    }
+    for (const r of rows) {
+      await prisma.charge.create({
+        data: {
+          containerId: c.id,
+          payeeOrgId: r.payeeOrgId,
+          type: r.type,
+          amount: r.amount,
+          currency: HT_TARIFF.currency,
+          status: 'PENDING',
+          source: r.source,
+          dueDate: r.dueDate,
+          lastFreeDay: r.lastFreeDay ?? null,
+        },
+      });
+      created++;
+    }
+  }
+  console.log(`• Demo charges created: ${created} across ${containers.length} containers (from config tariff).`);
 }
 
 /**

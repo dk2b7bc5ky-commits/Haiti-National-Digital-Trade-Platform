@@ -1,12 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { ContainerDetail } from '@rezo/shared-types';
 import { useAuth } from '../../../../lib/auth';
-import { apiFetchEnvelope } from '../../../../lib/api';
+import { apiFetchEnvelope, apiFetch, ApiClientError } from '../../../../lib/api';
+import { formatMoney, formatMoneyList } from '../../../../lib/format';
 import { Chrome, Loading, useRequireAuth } from '../../../../components/chrome';
+
+const STATUS_STYLE: Record<string, string> = {
+  pending: 'bg-amber-100 text-amber-700',
+  pending_review: 'bg-orange-100 text-orange-700',
+  requested: 'bg-sky-100 text-sky-700',
+  paid: 'bg-green-100 text-green-700',
+  overdue: 'bg-red-100 text-red-700',
+};
 
 export default function ContainerDetailPage() {
   const { auth, ready } = useRequireAuth();
@@ -15,62 +24,132 @@ export default function ContainerDetailPage() {
   const id = params.id as string;
   const [detail, setDetail] = useState<ContainerDetail | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (!token) return;
     apiFetchEnvelope<ContainerDetail>(`/containers/${id}`, { token })
       .then(({ json }) => (json.error ? setErr(json.error.message) : setDetail(json.data)))
       .catch(() => setErr('Could not load container.'));
   }, [token, id]);
 
+  useEffect(() => { load(); }, [load]);
+
+  const canWrite = auth?.permissions.includes('charge:write');
+
+  async function syncTerminal() {
+    setBusy(true);
+    setErr(null);
+    try {
+      await apiFetch(`/containers/${id}/charges/sync-terminal`, { method: 'POST', token });
+      load();
+    } catch (e) {
+      setErr(e instanceof ApiClientError ? e.message : 'Sync failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!ready || !auth) return <Loading />;
 
   return (
     <Chrome auth={auth}>
       <Link href="/dashboard/containers" className="text-sm text-sky-700 hover:underline">← All containers</Link>
-
-      {err && <p className="mt-4 text-sm text-red-600">{err}</p>}
+      {err && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{err}</p>}
 
       {detail && (
         <>
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            <h1 className="font-mono text-2xl font-bold">{detail.container.container_number}</h1>
-            <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
-              {detail.container.status}
-            </span>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <h1 className="font-mono text-2xl font-bold">{detail.container.container_number}</h1>
+              <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
+                {detail.container.status}
+              </span>
+            </div>
+            {detail.total_owed && (
+              <div className="text-right">
+                <p className="text-xs uppercase tracking-wide text-slate-400">Total owed</p>
+                <p className="text-2xl font-bold text-slate-900">
+                  {formatMoney(detail.total_owed.amount, detail.total_owed.currency)}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <Panel title="Container">
-              <Field label="Container no." value={detail.container.container_number} mono />
               <Field label="Size / type" value={detail.container.size_type} />
               <Field label="Arrival date" value={detail.container.arrival_date ? new Date(detail.container.arrival_date).toLocaleString() : '—'} />
               <Field label="Importer" value={detail.container.importer.legal_name} />
               <Field label="Terminal" value={detail.container.terminal?.legal_name ?? 'Not yet assigned'} />
             </Panel>
-
             <Panel title="Bill of lading & voyage">
               <Field label="BL number" value={detail.container.bl_number} mono />
               <Field label="Shipper" value={detail.container.shipper} />
-              <Field label="Description" value={detail.container.description ?? '—'} />
               <Field label="Vessel" value={`${detail.container.voyage.vessel.name} (IMO ${detail.container.voyage.vessel.imo})`} />
-              <Field label="Voyage" value={detail.container.voyage.voyage_number} />
-              <Field label="Port / ETA" value={`${detail.container.voyage.port} · ${new Date(detail.container.voyage.eta).toLocaleDateString()}`} />
+              <Field label="Voyage / port" value={`${detail.container.voyage.voyage_number} · ${detail.container.voyage.port}`} />
             </Panel>
           </div>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <Panel title="Charges">
-              <p className="text-sm text-slate-500">
-                Charges grouped by payee, totals, and last-free-day tracking arrive in
-                build steps 4–6. This container currently has no charges recorded.
+          {/* Charges grouped by payee (spec §1.4) */}
+          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-500">Charges by payee</h3>
+              {canWrite && (
+                <button
+                  onClick={syncTerminal}
+                  disabled={busy}
+                  className="rounded-lg border border-sky-300 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-50 disabled:opacity-50"
+                >
+                  {busy ? 'Syncing…' : 'Sync terminal charges'}
+                </button>
+              )}
+            </div>
+
+            {detail.charge_groups.length === 0 && (
+              <p className="py-6 text-center text-sm text-slate-500">
+                No charges yet.{canWrite ? ' Use “Sync terminal charges” to pull them from the terminal (mock).' : ''}
               </p>
-            </Panel>
-            <Panel title="Deadlines">
-              <p className="text-sm text-slate-500">
-                Last-free-day countdown and alerts arrive in build step 6.
-              </p>
-            </Panel>
+            )}
+
+            <div className="space-y-5">
+              {detail.charge_groups.map((g) => (
+                <div key={g.payee_org_id}>
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-1">
+                    <span className="text-sm font-semibold text-slate-700">{g.payee_name}</span>
+                    <span className="text-sm font-semibold text-slate-900">{formatMoneyList(g.subtotals)}</span>
+                  </div>
+                  <table className="mt-2 w-full text-left text-sm">
+                    <tbody>
+                      {g.charges.map((c) => (
+                        <tr key={c.id} className="text-slate-600">
+                          <td className="py-1.5">{c.type.replace(/_/g, ' ')}</td>
+                          <td className="py-1.5 text-xs text-slate-400">{c.source}</td>
+                          <td className="py-1.5">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[c.status] ?? 'bg-slate-100'}`}>{c.status}</span>
+                          </td>
+                          <td className="py-1.5 text-right font-medium text-slate-800">{formatMoney(c.amount, c.currency)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+
+            {detail.totals_by_currency.length > 0 && (
+              <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-3">
+                <span className="text-sm font-semibold text-slate-500">Total owed</span>
+                <span className="text-lg font-bold text-slate-900">{formatMoneyList(detail.totals_by_currency)}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5">
+            <h3 className="mb-1 text-sm font-semibold text-slate-500">Deadlines</h3>
+            <p className="text-sm text-slate-500">
+              Last-free-day countdown and alerts arrive in build step 6 (charges already carry last-free-day dates).
+            </p>
           </div>
         </>
       )}

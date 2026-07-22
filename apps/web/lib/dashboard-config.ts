@@ -1,7 +1,7 @@
 import type { Role } from '@rezo/shared-types';
 
 /** Highest build step delivered so far — modules at/below this are live. */
-export const CURRENT_STEP = 3;
+export const CURRENT_STEP = 4;
 
 export interface ModuleCard {
   title: string;

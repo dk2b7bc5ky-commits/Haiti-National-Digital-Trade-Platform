@@ -88,6 +88,56 @@ enum ContainerStatus {
   GATED_OUT
 }
 
+/// Charge categories (spec §7).
+enum ChargeType {
+  CUSTOMS_DUTY
+  CUSTOMS_FEE
+  PORT_DUES
+  TERMINAL_HANDLING
+  STORAGE
+  DEMURRAGE
+  DETENTION
+  INSPECTION
+  SCANNING
+  REZO_FEE
+}
+
+/// Charge lifecycle (spec §7). PENDING_REVIEW charges are excluded from the
+/// payable total until an Ops user verifies them (spec §1.3, build step 7).
+enum ChargeStatus {
+  PENDING
+  PENDING_REVIEW
+  REQUESTED
+  PAID
+  OVERDUE
+}
+
+/// Where a charge came from (spec §7). External sources are stubbed adapters.
+enum ChargeSource {
+  MANIFEST
+  ASYCUDA
+  OCTOPI
+  DOCUMENT
+  MANUAL
+}
+
+/// Verification state for extracted charges (spec §1.3; used in build step 7).
+enum ReviewState {
+  NONE
+  PENDING
+  RESOLVED
+}
+
+/// Payee category (who ultimately receives a charge).
+enum PayeeType {
+  CUSTOMS
+  PORT
+  TERMINAL
+  LINE
+  REZO
+  OTHER
+}
+
 // ---------------------------------------------------------------------------
 // Identity & tenancy
 // ---------------------------------------------------------------------------
@@ -112,6 +162,8 @@ model Organization {
   billsAsConsignee   BillOfLading[]   @relation("BlConsignee")
   containersImported Container[]      @relation("ContainerImporter")
   containersTerminal Container[]      @relation("ContainerTerminal")
+  payees             Payee[]          @relation("OrgPayees")
+  chargesAsPayee     Charge[]         @relation("ChargePayee")
 
   @@map("organizations")
 }
@@ -235,12 +287,79 @@ model Container {
   bl       BillOfLading  @relation(fields: [blId], references: [id])
   importer Organization  @relation("ContainerImporter", fields: [importerOrgId], references: [id])
   terminal Organization? @relation("ContainerTerminal", fields: [terminalOrgId], references: [id])
+  charges  Charge[]
 
   @@index([blId])
   @@index([importerOrgId])
   @@index([terminalOrgId])
   @@index([status])
   @@map("containers")
+}
+
+// ---------------------------------------------------------------------------
+// Charges, payees & market configuration (spec §7). MONEY RULE (spec §15):
+// amounts are integer minor units + an ISO-4217 currency — never a float.
+// ---------------------------------------------------------------------------
+
+/// Registry of who gets paid. `settlementRef` is an opaque routing token used
+/// by the payment rail (build step 8); Rezo never holds funds — money moves
+/// payer → payee directly.
+model Payee {
+  id           String    @id @default(uuid())
+  orgId        String    @map("org_id")
+  name         String
+  type         PayeeType
+  settlementRef String   @map("settlement_ref")
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  org Organization @relation("OrgPayees", fields: [orgId], references: [id])
+
+  @@unique([orgId, type])
+  @@index([orgId])
+  @@map("payees")
+}
+
+model Charge {
+  id          String       @id @default(uuid())
+  containerId String       @map("container_id")
+  payeeOrgId  String       @map("payee_org_id")
+  type        ChargeType
+  amount      Int // minor units of `currency` (e.g. USD cents)
+  currency    String // ISO-4217
+  dueDate     DateTime?    @map("due_date")
+  lastFreeDay DateTime?    @map("last_free_day")
+  status      ChargeStatus @default(PENDING)
+  reviewState ReviewState  @default(NONE) @map("review_state")
+  source      ChargeSource @default(MANUAL)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  container Container    @relation(fields: [containerId], references: [id])
+  payeeOrg  Organization @relation("ChargePayee", fields: [payeeOrgId], references: [id])
+
+  @@index([containerId])
+  @@index([payeeOrgId])
+  @@index([status])
+  @@map("charges")
+}
+
+/// Per-country configuration (spec §7 addendum). Fees, currencies, languages,
+/// and enabled modules are configuration — NOT hard-coded. Haiti is row one.
+model Market {
+  id             String   @id @default(uuid())
+  code           String   @unique // e.g. "HT"
+  name           String
+  baseCurrency   String   @map("base_currency")
+  currencies     String[]
+  languages      String[]
+  tariff         Json // fee schedule, amounts in minor units
+  enabledModules String[] @map("enabled_modules")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("markets")
 }
 
 /// Append-only audit trail (spec §11). Rows are only ever inserted.

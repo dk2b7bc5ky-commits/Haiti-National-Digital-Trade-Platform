@@ -172,8 +172,15 @@ export interface ContainerDetail {
     description: string | null;
     manifest_id: string;
   };
-  charges: unknown[];
-  total_owed: { amount: number; currency: string } | null;
+  charges: ChargeSummary[];
+  /** Charges grouped by payee (spec §1.4). Populated from build step 4. */
+  charge_groups: PayeeChargeGroup[];
+  /**
+   * Payable total. Single Money when all payable charges share one currency,
+   * else null — see totals_by_currency. (FX/settlement is build step 8.)
+   */
+  total_owed: Money | null;
+  totals_by_currency: Money[];
   deadlines: unknown[];
 }
 
@@ -190,6 +197,72 @@ export interface ManifestSummary {
 export interface ManifestSubmitResult {
   manifest_id: string;
   container_ids: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Charges, payees & market config (Step 4).
+// Money is always integer minor units + ISO-4217 currency (spec §15).
+// ---------------------------------------------------------------------------
+
+export type ChargeType =
+  | 'customs_duty'
+  | 'customs_fee'
+  | 'port_dues'
+  | 'terminal_handling'
+  | 'storage'
+  | 'demurrage'
+  | 'detention'
+  | 'inspection'
+  | 'scanning'
+  | 'rezo_fee';
+
+export type ChargeStatus = 'pending' | 'pending_review' | 'requested' | 'paid' | 'overdue';
+export type ChargeSource = 'manifest' | 'asycuda' | 'octopi' | 'document' | 'manual';
+export type PayeeType = 'customs' | 'port' | 'terminal' | 'line' | 'rezo' | 'other';
+
+export interface Money {
+  amount: number; // integer minor units
+  currency: string; // ISO-4217
+}
+
+export interface ChargeSummary {
+  id: string;
+  container_id: string;
+  payee_org_id: string;
+  payee_name: string;
+  type: ChargeType;
+  amount: number;
+  currency: string;
+  status: ChargeStatus;
+  source: ChargeSource;
+  due_date: string | null;
+  last_free_day: string | null;
+}
+
+/** Charges grouped by payee for the consolidated view (spec §1.4). */
+export interface PayeeChargeGroup {
+  payee_org_id: string;
+  payee_name: string;
+  charges: ChargeSummary[];
+  subtotals: Money[];
+}
+
+export interface PayeeSummary {
+  id: string;
+  org_id: string;
+  name: string;
+  type: PayeeType;
+  active: boolean;
+}
+
+export interface MarketConfig {
+  code: string;
+  name: string;
+  base_currency: string;
+  currencies: string[];
+  languages: string[];
+  enabled_modules: string[];
+  tariff: Record<string, unknown>;
 }
 
 /** Request body for POST /api/v1/manifests (spec §15). */

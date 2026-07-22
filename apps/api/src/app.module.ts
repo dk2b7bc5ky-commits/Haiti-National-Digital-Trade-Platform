@@ -9,6 +9,9 @@ import { OrganizationsModule } from './organizations/organizations.module';
 import { UsersModule } from './users/users.module';
 import { ApiKeysModule } from './api-keys/api-keys.module';
 import { DataHubModule } from './data-hub/data-hub.module';
+import { MarketConfigModule } from './config/config.module';
+import { IntegrationModule } from './integration/integration.module';
+import { BillingModule } from './billing/billing.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { PermissionsGuard } from './auth/permissions.guard';
 
@@ -23,7 +26,10 @@ import { PermissionsGuard } from './auth/permissions.guard';
     OrganizationsModule,
     UsersModule,
     ApiKeysModule,
+    MarketConfigModule,
+    IntegrationModule,
     DataHubModule,
+    BillingModule,
   ],
   providers: [
     // Global auth: every route requires a valid JWT unless marked @Public().

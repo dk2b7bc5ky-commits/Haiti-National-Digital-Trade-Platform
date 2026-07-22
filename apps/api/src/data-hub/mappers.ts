@@ -4,6 +4,7 @@ import {
   ManifestStatus,
   Prisma,
 } from '@prisma/client';
+import { toChargeSummary, groupByPayee, totalOwed, sumByCurrency } from '../charges/mappers';
 import type {
   ContainerSize as ApiContainerSize,
   ContainerStatus as ApiContainerStatus,
@@ -60,6 +61,7 @@ export const containerDetailInclude = {
   bl: { include: { manifest: { include: { voyage: { include: voyageInclude } } } } },
   importer: true,
   terminal: true,
+  charges: { include: { payeeOrg: { select: { id: true, legalName: true } } }, orderBy: { createdAt: 'asc' } },
 } as const;
 
 type ContainerWithRels = Prisma.ContainerGetPayload<{ include: typeof containerInclude }>;
@@ -101,6 +103,7 @@ function toDirectoryOrg(o: { id: string; legalName: string; type: DirectoryOrg['
 
 export function toContainerDetail(c: ContainerDetailRow): ContainerDetail {
   const summary = toContainerSummary(c);
+  const charges = c.charges;
   return {
     container: {
       ...summary,
@@ -110,9 +113,11 @@ export function toContainerDetail(c: ContainerDetailRow): ContainerDetail {
       description: c.bl.description,
       manifest_id: c.bl.manifestId,
     },
-    // Populated in build steps 4–6 (Charge, Deadline).
-    charges: [],
-    total_owed: null,
+    charges: charges.map(toChargeSummary),
+    charge_groups: groupByPayee(charges),
+    total_owed: totalOwed(charges),
+    totals_by_currency: sumByCurrency(charges),
+    // Deadlines populated in build step 6.
     deadlines: [],
   };
 }

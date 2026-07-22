@@ -17,13 +17,14 @@ one place**.
 This repository is being built in the exact 14-step order from the spec, one step
 at a time.
 
-**Current status: Step 3 — Data Hub core.** Vessel / Voyage / Manifest /
-BillOfLading / Container models, **single manifest submission** (API + a
-shipping-line portal form) that creates the voyage, bills of lading, and
-containers in one call, and **role-scoped container list/detail views** so an
-importer reads what the line submitted once — no retyping (spec Flow A). (Steps
-1–2 delivered the monorepo + infra + health round-trip, and identity/tenancy/RBAC
-with login and role-based dashboards.)
+**Current status: Step 4 — Payee & Charge model + Market/Config.** Charges (money
+as integer minor units + ISO currency), a payee registry, and per-country
+`Market` config whose tariff is the **only** source of fee amounts (never
+hard-coded). Charges are created manually or pulled via a **mock `TerminalAdapter`**
+(behind a documented interface, swappable for a real one). The container detail
+now shows **charges grouped by payee with subtotals and a total owed**. (Steps
+1–3 delivered infra + health, identity/tenancy/RBAC, and the Data Hub with single
+manifest submission and role-scoped container views.)
 
 ---
 
@@ -156,6 +157,31 @@ views arrive with the broker portal (step 10).
 and open **Containers** — the container is there, never retyped. The seed also
 includes a demo voyage (MV Kreyòl Star) so the views aren't empty.
 
+## Charges, payees & market config (Step 4)
+
+```http
+GET  /api/v1/markets                                   # list market configs
+GET  /api/v1/markets/:code                             # e.g. HT — currencies, tariff, modules
+PATCH /api/v1/markets/:code (config:manage)            # update tariff/currencies/modules
+GET  /api/v1/payees (charge:read)                      # payee registry
+POST /api/v1/payees (config:manage)
+GET  /api/v1/containers/:containerId/charges (charge:read)
+POST /api/v1/containers/:containerId/charges (charge:write)          # manual charge
+POST /api/v1/containers/:containerId/charges/sync-terminal (charge:write)  # mock TerminalAdapter
+```
+
+- **Money** is always an integer of minor units + an ISO-4217 `currency` (spec §15) — never a float.
+- **Fees come from config**, not code: `MarketConfigService` reads the `Market.tariff`
+  row; the mock `TerminalAdapter` and any fee logic look prices up there so a
+  government concession can index/approve rates (spec §14).
+- **Adapters are swappable**: `TerminalAdapter` is bound to a DI token in
+  `IntegrationModule`; replacing the mock with a real Octopi/CPS adapter is a
+  one-line provider change — business logic never touches it.
+- The container detail groups **charges by payee** with subtotals and a
+  **total owed** (only `pending`/`requested`/`overdue` count; `pending_review`
+  is excluded per spec §1.3). Try **Sync terminal charges** on a container as
+  `admin@rezo.test` or `terminal@rezo.test`.
+
 ## What you should see
 
 - **`curl http://localhost:4000/api/v1/health`** returns:
@@ -194,8 +220,8 @@ npm run build             # build all workspaces
 
 1. ~~Scaffold~~ ✅
 2. ~~Identity & tenancy (orgs, users, RBAC, login)~~ ✅
-3. **Data Hub core (vessel/voyage/manifest/BL/container + single submission)** ← *you are here*
-4. Payee & Charge model + Market/Config
+3. ~~Data Hub core (vessel/voyage/manifest/BL/container + single submission)~~ ✅
+4. **Payee & Charge model + Market/Config** ← *you are here*
 5. Consolidated container view
 6. Deadline & alert engine
 7. Document ingestion + verification queue → **Phase 1 complete**
