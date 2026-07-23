@@ -36,6 +36,53 @@ const HT_TARIFF = {
   },
 };
 
+/**
+ * Haiti shipping-line agents & line-direct offices — who actually collects the
+ * shipping/line charges. `lineDirect` = the line's own office collects (e.g.
+ * MSC Haiti); otherwise a maritime agency collects on the line's behalf (e.g.
+ * AGEMAR for Maersk). Each becomes an Organization + a LINE-type Payee.
+ * Contacts are from public sources and should be re-verified before production.
+ */
+const SHIPPING_AGENTS: { code: string; name: string; lineDirect: boolean }[] = [
+  { code: 'AGEMAR', name: 'AGEMAR S.A.', lineDirect: false },
+  { code: 'MSC_HAITI', name: 'MSC Haiti S.A.', lineDirect: true },
+  { code: 'JB_VITAL', name: 'Ets J.B. Vital S.A.', lineDirect: false },
+  { code: 'CMA_CGM_HAITI', name: 'CMA CGM Haiti S.A.', lineDirect: true },
+  { code: 'ENMARCOLDA', name: "ENMARCOLDA S.A. (d'Adesky)", lineDirect: false },
+  { code: 'NADAL', name: 'NADAL S.A. (NADALSA)', lineDirect: false },
+  { code: 'SAMAR', name: 'SAMAR S.A.', lineDirect: false },
+  { code: 'DEMSA', name: 'DEMSA (Développement Maritime S.A.)', lineDirect: false },
+  { code: 'ADEKO', name: 'ADEKO Enterprises S.A.', lineDirect: false },
+  { code: 'MADSEN', name: 'Madsen Export-Import S.A.', lineDirect: false },
+  { code: 'ANTOINE_HOGARTH', name: 'Antoine Hogarth S.A.', lineDirect: false },
+  { code: 'ANTILLEAN_HAITI', name: "Antillean d'Haiti S.A.", lineDirect: true },
+  { code: 'SEABOARD_HAITI', name: "Seaboard d'Haiti S.A.", lineDirect: true },
+  { code: 'SONTRAM', name: 'SONTRAM S.A.', lineDirect: false },
+  { code: 'RVAM', name: 'RVAM (Reginald Villard Agences Maritimes)', lineDirect: false },
+  { code: 'JOEL_LAFORTUNE', name: 'Joel Lafortune (agency)', lineDirect: false },
+];
+
+/** Which agent/office collects for each shipping line (charge routing key). */
+const LINE_TO_AGENT: Record<string, string> = {
+  'Maersk Line': 'AGEMAR', 'Sealand (Maersk)': 'AGEMAR', MOL: 'AGEMAR', 'Alaska Transport': 'AGEMAR',
+  MSC: 'MSC_HAITI',
+  'CMA CGM': 'JB_VITAL', 'Hamburg Sud': 'JB_VITAL',
+  'Hapag-Lloyd': 'ENMARCOLDA', Crowley: 'ENMARCOLDA', CSA: 'ENMARCOLDA', 'V-Chilean Line': 'ENMARCOLDA',
+  ZIM: 'NADAL', 'Caribbean Feeder Service': 'NADAL',
+  Evergreen: 'SAMAR',
+  'King Ocean': 'DEMSA', COSCO: 'DEMSA',
+  ONE: 'ADEKO', 'Hoegh Autoliners': 'ADEKO', Marfret: 'ADEKO',
+  'K-Line': 'MADSEN',
+  'NYK Line': 'ANTOINE_HOGARTH', 'Hyundai (autos)': 'ANTOINE_HOGARTH', NOS: 'ANTOINE_HOGARTH',
+  "d'Amico": 'ANTOINE_HOGARTH', 'Lauro Line': 'ANTOINE_HOGARTH', 'Sea Group': 'ANTOINE_HOGARTH', Inchcape: 'ANTOINE_HOGARTH',
+  'Antillean Marine': 'ANTILLEAN_HAITI',
+  'Seaboard Marine': 'SEABOARD_HAITI',
+  Maramerica: 'SONTRAM', 'Coral Trading': 'SONTRAM', 'SCM Lines': 'SONTRAM', Sunbulk: 'SONTRAM',
+  'Shell (tanker)': 'RVAM', 'ExxonMobil (tanker)': 'RVAM', 'Total (tanker)': 'RVAM',
+  'ChevronTexaco (tanker)': 'RVAM', 'Stena Bulk (tanker)': 'RVAM', 'Jo Tankers': 'RVAM', 'Stolt Nielsen (tanker)': 'RVAM',
+  Cargill: 'JOEL_LAFORTUNE', Murmansk: 'JOEL_LAFORTUNE', 'Southern Shipping': 'JOEL_LAFORTUNE',
+};
+
 interface SeedOrg {
   type: OrgType;
   legalName: string;
@@ -124,6 +171,7 @@ async function main(): Promise<void> {
   }
 
   await seedMarketAndPayees();
+  await seedShippingAgents();
   await seedFxRates();
   await seedDemoDataset();
   await seedSubscriptions();
@@ -132,6 +180,29 @@ async function main(): Promise<void> {
   const userCount = await prisma.user.count();
   console.log(`\nSeed complete: ${orgCount} organizations, ${userCount} users.`);
   console.log(`All seeded users share the dev password: "${DEV_PASSWORD}"`);
+}
+
+/**
+ * Seed every shipping-line agent / line-direct office as an Organization plus a
+ * LINE-type Payee, so the billing view can show what is owed to each. Idempotent
+ * (matches on legal name).
+ */
+async function seedShippingAgents(): Promise<void> {
+  let created = 0;
+  for (const a of SHIPPING_AGENTS) {
+    const org =
+      (await prisma.organization.findFirst({ where: { legalName: a.name } })) ??
+      (await prisma.organization.create({
+        data: { type: 'SHIPPING_LINE', legalName: a.name, country: 'HT', kycStatus: 'VERIFIED' },
+      }));
+    await prisma.payee.upsert({
+      where: { orgId_type: { orgId: org.id, type: 'LINE' } },
+      update: { name: a.name },
+      create: { orgId: org.id, name: a.name, type: 'LINE', settlementRef: `stlm_${a.code.toLowerCase()}` },
+    });
+    created++;
+  }
+  console.log(`• Shipping agents/line offices seeded: ${created} payees (type LINE).`);
 }
 
 /** Demo subscriptions (spec §2.2), priced from the tariff. Idempotent. */
@@ -328,10 +399,20 @@ async function seedDemoDataset(): Promise<void> {
     { number: 'MAEU5566773', bl: blFood, importerOrgId: importer2.id, size: 'TWENTY', arrival: daysAgo(4), stage: 'ARRIVED', customs: true },
   ];
 
+  // Demo shipping lines assigned (in order) to the ARRIVED containers, so their
+  // line charge routes to a spread of real Haiti agents (AGEMAR, MSC Haiti, …).
+  const DEMO_LINES = ['Maersk Line', 'MSC', 'CMA CGM', 'Hapag-Lloyd', 'ZIM', 'Evergreen'];
+  const agentOrgByCode = new Map<string, string>();
+  for (const a of SHIPPING_AGENTS) {
+    const org = await prisma.organization.findFirst({ where: { legalName: a.name } });
+    if (org) agentOrgByCode.set(a.code, org.id);
+  }
+
   const byNumber = new Map<string, { container: Container; charges: Charge[]; stage: Stage }>();
   let chargeCount = 0;
   let deadlineCount = 0;
   let alertCount = 0;
+  let lineChargeIdx = 0;
 
   for (const p of plans) {
     const milestones = stageMilestones(p.stage, p.arrival, daysAgo);
@@ -394,6 +475,31 @@ async function seedDemoDataset(): Promise<void> {
           beforeValue: { field: 'storage_amount', amount: 4500 },
         },
       });
+    }
+
+    // Shipping/line charge on containers still in port, routed to the agent that
+    // collects for the container's (demo) shipping line — so the billing view
+    // shows amounts owed to the real Haiti agents (AGEMAR, MSC Haiti, …).
+    if (p.stage === 'ARRIVED') {
+      const demoLine = DEMO_LINES[lineChargeIdx % DEMO_LINES.length];
+      const agentOrgId = agentOrgByCode.get(LINE_TO_AGENT[demoLine]);
+      if (agentOrgId) {
+        const lineCharge = await prisma.charge.create({
+          data: {
+            containerId: container.id,
+            payeeOrgId: agentOrgId,
+            type: 'DEMURRAGE',
+            amount: 45000 + (lineChargeIdx % 4) * 15000,
+            currency: HT_TARIFF.currency,
+            status: 'PENDING',
+            source: 'MANUAL',
+            dueDate: new Date(p.arrival.getTime() + 5 * DAY_MS),
+          },
+        });
+        charges.push(lineCharge);
+        chargeCount++;
+      }
+      lineChargeIdx++;
     }
 
     // Deadlines + alerts only matter while the box is still in port.

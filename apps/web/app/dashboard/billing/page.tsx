@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import type { ContainerSummary, ContainerDetail, PayeeType } from '@rezo/shared-types';
+import type { ContainerSummary, ContainerDetail, PayeeType, PayeeSummary } from '@rezo/shared-types';
 import { useAuth } from '../../../lib/auth';
 import { apiFetch, apiFetchEnvelope } from '../../../lib/api';
 import { formatMoney, formatMoneyList } from '../../../lib/format';
@@ -39,10 +39,13 @@ export default function BillingPage() {
   const { token } = useAuth();
   const [containers, setContainers] = useState<ContainerSummary[]>([]);
   const [details, setDetails] = useState<ContainerDetail[]>([]);
+  const [registry, setRegistry] = useState<PayeeSummary[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(async () => {
     if (!token) return;
+    // Full payee/agent registry (customs, port, terminal, banks, shipping agents…).
+    apiFetch<PayeeSummary[]>('/payees', { token }).then(setRegistry).catch(() => setRegistry([]));
     const { json } = await apiFetchEnvelope<ContainerSummary[]>('/containers?limit=200', { token });
     const list = json.data ?? [];
     setContainers(list);
@@ -75,9 +78,19 @@ export default function BillingPage() {
       }
     }
   }
-  const payees = [...byPayee.values()].sort((a, b) => a.name.localeCompare(b.name));
   const totalOutstanding = [...totalByCurrency.entries()].map(([currency, amount]) => ({ amount, currency }));
   const overdueCount = bills.filter((c) => c.payment_status === 'overdue').length;
+
+  // One row per payee/agent. Use the full registry when available (so every
+  // agent shows, even at zero owed); otherwise fall back to only those owed.
+  const payeeRows = (registry.length > 0
+    ? registry.map((r) => ({ key: r.org_id, name: r.name, type: r.type, totals: byPayee.get(r.org_id)?.totals ?? new Map<string, number>() }))
+    : [...byPayee.values()].map((p) => ({ key: p.payeeOrgId, name: p.name, type: p.type, totals: p.totals }))
+  ).sort((a, b) => {
+    const av = [...a.totals.values()].reduce((s, n) => s + n, 0);
+    const bv = [...b.totals.values()].reduce((s, n) => s + n, 0);
+    return bv !== av ? bv - av : a.name.localeCompare(b.name);
+  });
 
   return (
     <Chrome auth={auth}>
@@ -98,30 +111,34 @@ export default function BillingPage() {
         </p>
       )}
 
-      {payees.length > 0 && (
+      {payeeRows.length > 0 && (
         <section className="mt-8">
-          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">Amount owed by payee</h2>
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">Amount owed by payee / agent</h2>
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-100 text-xs uppercase text-slate-400">
-                  <th className="px-4 py-3 font-medium">Payee</th>
+                  <th className="px-4 py-3 font-medium">Payee / agent</th>
                   <th className="px-4 py-3 font-medium">Type</th>
                   <th className="px-4 py-3 text-right font-medium">Amount owed</th>
                 </tr>
               </thead>
               <tbody>
-                {payees.map((p) => (
-                  <tr key={p.payeeOrgId} className="border-b border-slate-50">
-                    <td className="px-4 py-3 text-slate-700">{p.name}</td>
-                    <td className="px-4 py-3">
-                      {p.type && <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PAYEE_STYLE[p.type] ?? PAYEE_STYLE.other}`}>{p.type}</span>}
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-800">
-                      {formatMoneyList([...p.totals.entries()].map(([currency, amount]) => ({ amount, currency })))}
-                    </td>
-                  </tr>
-                ))}
+                {payeeRows.map((p) => {
+                  const entries = [...p.totals.entries()].map(([currency, amount]) => ({ amount, currency }));
+                  const owes = entries.length > 0;
+                  return (
+                    <tr key={p.key} className="border-b border-slate-50">
+                      <td className={`px-4 py-3 ${owes ? 'text-slate-700' : 'text-slate-400'}`}>{p.name}</td>
+                      <td className="px-4 py-3">
+                        {p.type && <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PAYEE_STYLE[p.type] ?? PAYEE_STYLE.other}`}>{p.type}</span>}
+                      </td>
+                      <td className={`px-4 py-3 text-right ${owes ? 'font-medium text-slate-800' : 'text-slate-400'}`}>
+                        {owes ? formatMoneyList(entries) : '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

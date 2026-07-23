@@ -18,7 +18,8 @@
     "lint": "npm run lint --workspaces --if-present",
     "setup": "node scripts/setup.mjs",
     "start:all": "concurrently -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
-    "demo": "npm run setup && npm run start:all"
+    "demo": "npm run setup && npm run start:all",
+    "db:reset": "npm run prisma:reset --workspace @rezo/api"
   },
   "engines": {
     "node": ">=20"
