@@ -109,85 +109,99 @@ export default function NewManifestPage() {
 
       <form onSubmit={onSubmit} className="mt-6 space-y-6">
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-sm font-semibold text-slate-500">Voyage</h2>
+          <h2 className="mb-4 text-sm font-semibold text-slate-500">1. Voyage</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <Input label="Vessel name" value={voyage.vessel_name} onChange={(v) => setVoyage({ ...voyage, vessel_name: v })} required />
-            <Input label="Vessel IMO" value={voyage.vessel_imo} onChange={(v) => setVoyage({ ...voyage, vessel_imo: v })} required />
+            <Input label="Vessel IMO" value={voyage.vessel_imo} onChange={(v) => setVoyage({ ...voyage, vessel_imo: v })} required hint="7-digit IMO number" />
             <Input label="Voyage number" value={voyage.voyage_number} onChange={(v) => setVoyage({ ...voyage, voyage_number: v })} required />
             <Input label="Port" value={voyage.port} onChange={(v) => setVoyage({ ...voyage, port: v })} required />
-            <Input label="ETA" type="datetime-local" value={voyage.eta} onChange={(v) => setVoyage({ ...voyage, eta: v })} required />
+            <Input label="ETA" type="datetime-local" value={voyage.eta} onChange={(v) => setVoyage({ ...voyage, eta: v })} required hint="Estimated arrival at the port" />
           </div>
         </section>
 
-        {bls.map((bl, bi) => (
-          <section key={bi} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-500">Bill of lading {bi + 1}</h2>
-              {bls.length > 1 && (
-                <button type="button" onClick={() => setBls(bls.filter((_, i) => i !== bi))} className="text-xs text-red-600 hover:underline">
-                  Remove
-                </button>
-              )}
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Input label="BL number" value={bl.bl_number} onChange={(v) => setBl(bi, { bl_number: v })} required />
-              <Input label="Shipper" value={bl.shipper} onChange={(v) => setBl(bi, { shipper: v })} required />
-              <div>
-                <label className="block text-sm font-medium text-slate-700">Consignee (importer)</label>
-                <select
-                  value={bl.consignee_org_id}
-                  onChange={(e) => setBl(bi, { consignee_org_id: e.target.value })}
-                  required
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
-                >
-                  <option value="">Select importer…</option>
-                  {importers.map((o) => <option key={o.id} value={o.id}>{o.legal_name}</option>)}
-                </select>
-              </div>
-              <Input label="Description" value={bl.description} onChange={(v) => setBl(bi, { description: v })} />
-            </div>
-
-            <div className="mt-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Containers</p>
-              <div className="space-y-2">
-                {bl.containers.map((c, ci) => (
-                  <div key={ci} className="flex items-center gap-2">
-                    <input
-                      placeholder="Container number"
-                      value={c.container_number}
-                      onChange={(e) => setContainer(bi, ci, { container_number: e.target.value })}
-                      required
-                      className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 font-mono text-sm focus:border-sky-500 focus:outline-none"
-                    />
+        <div>
+          <h2 className="mb-3 text-sm font-semibold text-slate-500">2. Bills of lading</h2>
+          <div className="space-y-4">
+            {bls.map((bl, bi) => (
+              <section key={bi} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-600">Bill of lading {bi + 1}</h3>
+                  {bls.length > 1 && (
+                    <button type="button" onClick={() => setBls(bls.filter((_, i) => i !== bi))} className="text-xs text-red-600 hover:underline">
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input label="BL number" value={bl.bl_number} onChange={(v) => setBl(bi, { bl_number: v })} required />
+                  <Input label="Shipper" value={bl.shipper} onChange={(v) => setBl(bi, { shipper: v })} required />
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">Consignee (importer)</label>
                     <select
-                      value={c.size_type}
-                      onChange={(e) => setContainer(bi, ci, { size_type: e.target.value as ContainerSize })}
-                      className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:border-sky-500 focus:outline-none"
+                      value={bl.consignee_org_id}
+                      onChange={(e) => setBl(bi, { consignee_org_id: e.target.value })}
+                      required
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
                     >
-                      <option value="20">20&apos;</option>
-                      <option value="40">40&apos;</option>
-                      <option value="reefer">Reefer</option>
+                      <option value="">Select importer…</option>
+                      {importers.map((o) => <option key={o.id} value={o.id}>{o.legal_name}</option>)}
                     </select>
-                    {bl.containers.length > 1 && (
-                      <button type="button" onClick={() => setBl(bi, { containers: bl.containers.filter((_, j) => j !== ci) })} className="text-slate-400 hover:text-red-600">✕</button>
-                    )}
+                    <p className="mt-1 text-xs text-slate-400">The importer this B/L is consigned to</p>
                   </div>
-                ))}
-              </div>
-              <button type="button" onClick={() => setBl(bi, { containers: [...bl.containers, emptyContainer()] })} className="mt-2 text-xs font-medium text-sky-700 hover:underline">
-                + Add container
-              </button>
-            </div>
-          </section>
-        ))}
+                  <Input label="Description" value={bl.description} onChange={(v) => setBl(bi, { description: v })} />
+                </div>
 
-        <button type="button" onClick={() => setBls([...bls, emptyBl()])} className="text-sm font-medium text-sky-700 hover:underline">
-          + Add bill of lading
-        </button>
+                <div className="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Containers on this B/L</p>
+                  <div className="space-y-2">
+                    {bl.containers.map((c, ci) => (
+                      <div key={ci} className="flex items-center gap-2">
+                        <input
+                          placeholder="Container number"
+                          value={c.container_number}
+                          onChange={(e) => setContainer(bi, ci, { container_number: e.target.value })}
+                          required
+                          className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 font-mono text-sm focus:border-sky-500 focus:outline-none"
+                        />
+                        <select
+                          value={c.size_type}
+                          onChange={(e) => setContainer(bi, ci, { size_type: e.target.value as ContainerSize })}
+                          className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:border-sky-500 focus:outline-none"
+                        >
+                          <option value="20">20&apos;</option>
+                          <option value="40">40&apos;</option>
+                          <option value="reefer">Reefer</option>
+                        </select>
+                        {bl.containers.length > 1 && (
+                          <button type="button" onClick={() => setBl(bi, { containers: bl.containers.filter((_, j) => j !== ci) })} className="text-slate-400 hover:text-red-600">✕</button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setBl(bi, { containers: [...bl.containers, emptyContainer()] })}
+                    className="mt-3 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                  >
+                    + Add container
+                  </button>
+                </div>
+              </section>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setBls([...bls, emptyBl()])}
+            className="mt-4 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            + Add bill of lading
+          </button>
+        </div>
 
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-        <div>
+        <div className="border-t border-slate-200 pt-5">
           <button type="submit" disabled={submitting} className="rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50">
             {submitting ? 'Submitting…' : 'Submit manifest'}
           </button>
@@ -197,7 +211,7 @@ export default function NewManifestPage() {
   );
 }
 
-function Input({ label, value, onChange, type = 'text', required }: { label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean }) {
+function Input({ label, value, onChange, type = 'text', required, hint }: { label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean; hint?: string }) {
   return (
     <div>
       <label className="block text-sm font-medium text-slate-700">{label}</label>
@@ -208,6 +222,7 @@ function Input({ label, value, onChange, type = 'text', required }: { label: str
         required={required}
         className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
       />
+      {hint && <p className="mt-1 text-xs text-slate-400">{hint}</p>}
     </div>
   );
 }

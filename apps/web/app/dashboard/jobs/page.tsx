@@ -5,16 +5,8 @@ import Link from 'next/link';
 import type { TransportJobSummary } from '@rezo/shared-types';
 import { useAuth } from '../../../lib/auth';
 import { apiFetch, apiFetchEnvelope, apiUpload } from '../../../lib/api';
-import { formatMoney } from '../../../lib/format';
 import { Chrome, Loading, useRequireAuth } from '../../../components/chrome';
-
-const STATUS_STYLE: Record<string, string> = {
-  offered: 'bg-sky-100 text-sky-700',
-  accepted: 'bg-indigo-100 text-indigo-700',
-  in_transit: 'bg-amber-100 text-amber-700',
-  delivered: 'bg-green-100 text-green-700',
-  cancelled: 'bg-slate-200 text-slate-600',
-};
+import { Money, StatusPill, EmptyState } from '../../../components/ui';
 
 export default function JobsPage() {
   const { auth, ready } = useRequireAuth();
@@ -34,7 +26,11 @@ export default function JobsPage() {
       <h1 className="text-2xl font-bold">Trucking jobs</h1>
       <p className="mt-1 text-sm text-slate-500">Accept jobs, upload insurance & POD, share GPS, and book a gate appointment.</p>
       <div className="mt-6 space-y-4">
-        {jobs.length === 0 && <p className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">No jobs yet.</p>}
+        {jobs.length === 0 && (
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <EmptyState title="No trucking jobs yet." hint="Jobs appear here once an importer arranges trucking for a released container." />
+          </div>
+        )}
         {jobs.map((j) => <JobCard key={j.id} job={j} token={token} onDone={load} />)}
       </div>
     </Chrome>
@@ -65,8 +61,8 @@ function JobCard({ job, token, onDone }: { job: TransportJobSummary; token: stri
           <span className="ml-2 text-sm text-slate-600">{job.pickup} → {job.dropoff}</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-slate-800">{formatMoney(job.price, job.currency)}</span>
-          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[job.status]}`}>{job.status.replace(/_/g, ' ')}</span>
+          <Money amount={job.price} currency={job.currency} className="text-sm font-semibold text-slate-800" />
+          <StatusPill status={job.status} />
         </div>
       </div>
 

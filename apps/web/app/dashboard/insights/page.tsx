@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import type { OperationalDashboard, GovernmentDashboard } from '@rezo/shared-types';
 import { useAuth } from '../../../lib/auth';
 import { apiFetch } from '../../../lib/api';
-import { formatMoney, formatMoneyList } from '../../../lib/format';
+import { formatMoneyList } from '../../../lib/format';
 import { Chrome, Loading, useRequireAuth } from '../../../components/chrome';
+import { Money, CountPill } from '../../../components/ui';
 
 export default function InsightsPage() {
   const { auth, ready } = useRequireAuth();
@@ -54,18 +55,17 @@ export default function InsightsPage() {
             {op.revenue_by_fee_type.length === 0 ? (
               <p className="text-sm text-slate-500">No paid charges yet.</p>
             ) : (
-              <table className="w-full text-left text-sm">
-                <thead><tr className="border-b border-slate-100 text-xs uppercase text-slate-400"><th className="py-2 font-medium">Fee type</th><th className="py-2 font-medium">Count</th><th className="py-2 text-right font-medium">Amount</th></tr></thead>
-                <tbody>
-                  {op.revenue_by_fee_type.map((r) => (
-                    <tr key={r.type + r.currency} className="border-b border-slate-50">
-                      <td className="py-2 text-slate-700">{r.type.replace(/_/g, ' ')}</td>
-                      <td className="py-2 text-slate-500">{r.count}</td>
-                      <td className="py-2 text-right font-medium text-slate-800">{formatMoney(r.amount, r.currency)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ul className="divide-y divide-slate-50">
+                {op.revenue_by_fee_type.map((r) => (
+                  <li key={r.type + r.currency} className="flex items-center justify-between py-2">
+                    <span className="flex min-w-0 items-center text-slate-700">
+                      <span className="truncate capitalize">{r.type.replace(/_/g, ' ')}</span>
+                      <CountPill n={r.count} />
+                    </span>
+                    <Money amount={r.amount} currency={r.currency} className="ml-4 font-medium text-slate-800" />
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
         </>
@@ -81,16 +81,28 @@ export default function InsightsPage() {
           </div>
           <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-xs uppercase tracking-wide text-slate-400">Arrivals (last 7 days)</p>
-            <div className="mt-3 flex items-end gap-2" style={{ height: 80 }}>
+            <div className="mt-4 flex items-end gap-3 border-b border-slate-200" style={{ height: 96 }}>
               {gov.arrivals_by_day.map((d) => {
                 const max = Math.max(1, ...gov.arrivals_by_day.map((x) => x.count));
+                // Real bar for non-zero days; a thin baseline stub for empty days
+                // so all 7 columns read as a chart rather than one floating block.
+                const barHeight = d.count > 0 ? Math.max(6, (d.count / max) * 64) : 2;
                 return (
-                  <div key={d.date} className="flex flex-1 flex-col items-center justify-end">
-                    <div className="w-full rounded-t bg-sky-500" style={{ height: `${(d.count / max) * 64}px` }} title={`${d.count}`} />
-                    <span className="mt-1 text-[10px] text-slate-400">{d.date.slice(5)}</span>
+                  <div key={d.date} className="flex flex-1 flex-col items-center justify-end gap-1">
+                    <span className={`text-[11px] font-medium tabular-nums ${d.count > 0 ? 'text-slate-600' : 'text-slate-300'}`}>{d.count}</span>
+                    <div
+                      className={`w-full rounded-t ${d.count > 0 ? 'bg-sky-500' : 'bg-slate-200'}`}
+                      style={{ height: `${barHeight}px` }}
+                      title={`${d.count} on ${d.date}`}
+                    />
                   </div>
                 );
               })}
+            </div>
+            <div className="mt-1 flex gap-3">
+              {gov.arrivals_by_day.map((d) => (
+                <span key={d.date} className="flex-1 text-center text-[10px] text-slate-400">{d.date.slice(5)}</span>
+              ))}
             </div>
           </div>
         </section>

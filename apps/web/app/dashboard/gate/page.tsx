@@ -6,13 +6,7 @@ import type { GateAppointmentSummary } from '@rezo/shared-types';
 import { useAuth } from '../../../lib/auth';
 import { apiFetch, apiFetchEnvelope } from '../../../lib/api';
 import { Chrome, Loading, useRequireAuth } from '../../../components/chrome';
-
-const STATUS_STYLE: Record<string, string> = {
-  requested: 'bg-amber-100 text-amber-700',
-  confirmed: 'bg-indigo-100 text-indigo-700',
-  completed: 'bg-green-100 text-green-700',
-  cancelled: 'bg-slate-200 text-slate-600',
-};
+import { StatusPill, EmptyState } from '../../../components/ui';
 
 export default function GatePage() {
   const { auth, ready } = useRequireAuth();
@@ -48,14 +42,14 @@ export default function GatePage() {
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && <tr><td colSpan={4} className="px-5 py-6 text-center text-slate-500">No appointments.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={4}><EmptyState title="No gate appointments yet." hint="A trucker books a slot; the terminal confirms and completes it." /></td></tr>}
             {rows.map((a) => (
               <tr key={a.id} className="border-b border-slate-50">
                 <td className="px-5 py-3">
                   <Link href={`/dashboard/containers/${a.container_id}`} className="font-mono text-sky-700 hover:underline">{a.container_number}</Link>
                 </td>
                 <td className="px-5 py-3 text-slate-600">{new Date(a.slot_time).toLocaleString()}</td>
-                <td className="px-5 py-3"><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[a.status]}`}>{a.status}</span></td>
+                <td className="px-5 py-3"><StatusPill status={a.status} /></td>
                 {canManage && (
                   <td className="px-5 py-3 text-xs">
                     {a.status === 'requested' && <button onClick={() => act(a.id, 'confirm')} className="mr-3 text-sky-700 hover:underline">confirm</button>}

@@ -5,15 +5,9 @@ import Link from 'next/link';
 import type { ContainerSummary, ContainerDetail, PayeeType, PayeeSummary } from '@rezo/shared-types';
 import { useAuth } from '../../../lib/auth';
 import { apiFetch, apiFetchEnvelope } from '../../../lib/api';
-import { formatMoney, formatMoneyList } from '../../../lib/format';
+import { formatMoneyList } from '../../../lib/format';
 import { Chrome, Loading, useRequireAuth } from '../../../components/chrome';
-
-const STATUS_STYLE: Record<string, string> = {
-  none: 'bg-slate-100 text-slate-500',
-  pending: 'bg-amber-100 text-amber-700',
-  paid: 'bg-green-100 text-green-700',
-  overdue: 'bg-red-100 text-red-700',
-};
+import { Money, MoneyList, StatusPill } from '../../../components/ui';
 
 const PAYEE_STYLE: Record<string, string> = {
   customs: 'bg-indigo-100 text-indigo-700',
@@ -133,8 +127,8 @@ export default function BillingPage() {
                       <td className="px-4 py-3">
                         {p.type && <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PAYEE_STYLE[p.type] ?? PAYEE_STYLE.other}`}>{p.type}</span>}
                       </td>
-                      <td className={`px-4 py-3 text-right ${owes ? 'font-medium text-slate-800' : 'text-slate-400'}`}>
-                        {owes ? formatMoneyList(entries) : '—'}
+                      <td className={`px-4 py-3 text-right ${owes ? 'font-medium text-slate-800' : ''}`}>
+                        <MoneyList items={entries} empty="$0.00" />
                       </td>
                     </tr>
                   );
@@ -154,7 +148,7 @@ export default function BillingPage() {
                 <tr className="border-b border-slate-100 text-xs uppercase text-slate-400">
                   <th className="px-4 py-3 font-medium">Container</th>
                   <th className="px-4 py-3 font-medium">B/L</th>
-                  <th className="px-4 py-3 font-medium">Owed</th>
+                  <th className="px-4 py-3 text-right font-medium">Owed</th>
                   <th className="px-4 py-3 font-medium">Last free day</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium"></th>
@@ -167,9 +161,11 @@ export default function BillingPage() {
                       <Link href={`/dashboard/containers/${c.id}`} className="font-mono font-medium text-sky-700 hover:underline">{c.container_number}</Link>
                     </td>
                     <td className="px-4 py-3 text-slate-500">{c.bl_number}</td>
-                    <td className="px-4 py-3 font-medium text-slate-800">{c.total_owed ? formatMoney(c.total_owed.amount, c.total_owed.currency) : '—'}</td>
+                    <td className="px-4 py-3 text-right font-medium text-slate-800">
+                      {c.total_owed ? <Money amount={c.total_owed.amount} currency={c.total_owed.currency} /> : <MoneyList items={[]} empty="$0.00" />}
+                    </td>
                     <td className="px-4 py-3 text-slate-500">{c.last_free_day ? new Date(c.last_free_day).toLocaleDateString() : '—'}</td>
-                    <td className="px-4 py-3"><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[c.payment_status]}`}>{c.payment_status}</span></td>
+                    <td className="px-4 py-3"><StatusPill status={c.payment_status} /></td>
                     <td className="px-4 py-3 text-right">
                       <Link href={`/dashboard/containers/${c.id}`} className="text-xs font-semibold text-sky-700 hover:underline">Review &amp; pay →</Link>
                     </td>

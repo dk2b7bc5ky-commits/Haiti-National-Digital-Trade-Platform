@@ -7,17 +7,12 @@ import type { ContainerDetail } from '@rezo/shared-types';
 import { useAuth } from '../../../../lib/auth';
 import { apiFetchEnvelope, apiFetch, ApiClientError } from '../../../../lib/api';
 import { apiUpload } from '../../../../lib/api';
-import { formatMoney, formatMoneyList, countdown, PAYMENT_STATUS_STYLE, COUNTDOWN_STYLE } from '../../../../lib/format';
+import { countdown } from '../../../../lib/format';
 import { Chrome, Loading, useRequireAuth } from '../../../../components/chrome';
 import { PaymentPanel } from '../../../../components/payment-panel';
+import { Money, MoneyList, StatusPill, type PillTone } from '../../../../components/ui';
 
-const STATUS_STYLE: Record<string, string> = {
-  pending: 'bg-amber-100 text-amber-700',
-  pending_review: 'bg-orange-100 text-orange-700',
-  requested: 'bg-sky-100 text-sky-700',
-  paid: 'bg-green-100 text-green-700',
-  overdue: 'bg-red-100 text-red-700',
-};
+const COUNTDOWN_TONE: Record<string, PillTone> = { ok: 'gray', soon: 'amber', overdue: 'red' };
 
 export default function ContainerDetailPage() {
   const { auth, ready } = useRequireAuth();
@@ -93,24 +88,14 @@ export default function ContainerDetailPage() {
               <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="font-mono text-2xl font-bold">{detail.container.container_number}</h1>
-                  <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
-                    {detail.container.status}
-                  </span>
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${PAYMENT_STATUS_STYLE[detail.container.payment_status]}`}>
-                    {detail.container.payment_status}
-                  </span>
-                  {cd && (
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${COUNTDOWN_STYLE[cd.tone]}`}>
-                      last free day · {cd.label}
-                    </span>
-                  )}
+                  <StatusPill status={detail.container.status} />
+                  <StatusPill status={detail.container.payment_status} />
+                  {cd && <StatusPill tone={COUNTDOWN_TONE[cd.tone]} label={`last free day · ${cd.label}`} />}
                 </div>
                 {detail.total_owed && (
                   <div className="text-right">
                     <p className="text-xs uppercase tracking-wide text-slate-400">Total owed</p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {formatMoney(detail.total_owed.amount, detail.total_owed.currency)}
-                    </p>
+                    <Money amount={detail.total_owed.amount} currency={detail.total_owed.currency} className="text-2xl font-bold text-slate-900" />
                   </div>
                 )}
               </div>
@@ -212,7 +197,7 @@ export default function ContainerDetailPage() {
                         </span>
                       )}
                     </div>
-                    <span className="text-sm font-semibold text-slate-900">{formatMoneyList(g.subtotals)}</span>
+                    <MoneyList items={g.subtotals} className="text-sm font-semibold text-slate-900" />
                   </div>
                   <table className="mt-2 w-full text-left text-sm">
                     <tbody>
@@ -221,9 +206,9 @@ export default function ContainerDetailPage() {
                           <td className="py-1.5">{c.type.replace(/_/g, ' ')}</td>
                           <td className="py-1.5 text-xs text-slate-400">{c.source}</td>
                           <td className="py-1.5">
-                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[c.status] ?? 'bg-slate-100'}`}>{c.status}</span>
+                            <StatusPill status={c.status} />
                           </td>
-                          <td className="py-1.5 text-right font-medium text-slate-800">{formatMoney(c.amount, c.currency)}</td>
+                          <td className="py-1.5 text-right font-medium text-slate-800"><Money amount={c.amount} currency={c.currency} /></td>
                         </tr>
                       ))}
                     </tbody>
@@ -235,7 +220,7 @@ export default function ContainerDetailPage() {
             {detail.totals_by_currency.length > 0 && (
               <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-3">
                 <span className="text-sm font-semibold text-slate-500">Total owed</span>
-                <span className="text-lg font-bold text-slate-900">{formatMoneyList(detail.totals_by_currency)}</span>
+                <MoneyList items={detail.totals_by_currency} className="text-lg font-bold text-slate-900" />
               </div>
             )}
           </div>
@@ -268,7 +253,7 @@ export default function ContainerDetailPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-slate-600">{new Date(dl.datetime).toLocaleDateString()}</span>
-                        {cd && <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${COUNTDOWN_STYLE[cd.tone]}`}>{cd.label}</span>}
+                        {cd && <StatusPill tone={COUNTDOWN_TONE[cd.tone]} label={cd.label} />}
                       </div>
                     </div>
                   );

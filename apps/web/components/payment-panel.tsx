@@ -3,14 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { ContainerDetail, PaymentRequestSummary, MarketConfig } from '@rezo/shared-types';
 import { apiFetch, ApiClientError } from '../lib/api';
-import { formatMoney } from '../lib/format';
-
-const ROUTING_STYLE: Record<string, string> = {
-  pending: 'bg-slate-100 text-slate-500',
-  settled: 'bg-green-100 text-green-700',
-  failed: 'bg-red-100 text-red-700',
-  reversed: 'bg-slate-200 text-slate-600',
-};
+import { Money, StatusPill } from './ui';
 
 function uuid(): string {
   // Browser-native; fine for an idempotency key.
@@ -124,15 +117,15 @@ export function PaymentPanel({ detail, token, onDone }: { detail: ContainerDetai
                 <tr key={r.id} className="border-b border-slate-50">
                   <td className="py-2 text-slate-700">{r.payee_name}{r.is_rezo_fee && <span className="ml-1 rounded bg-violet-100 px-1.5 py-0.5 text-xs text-violet-700">Rezo fee</span>}</td>
                   <td className="py-2 text-xs text-slate-400">{r.charge_currency}→{request.settlement_currency} @ {r.fx_rate}</td>
-                  <td className="py-2 text-right font-medium text-slate-800">{formatMoney(r.settlement_amount, request.settlement_currency)}</td>
-                  <td className="py-2 text-right"><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROUTING_STYLE[r.status]}`}>{r.status}</span></td>
+                  <td className="py-2 text-right font-medium text-slate-800"><Money amount={r.settlement_amount} currency={request.settlement_currency} /></td>
+                  <td className="py-2 text-right"><StatusPill status={r.status} /></td>
                 </tr>
               ))}
             </tbody>
           </table>
           <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3">
-            <span className="text-sm font-semibold text-slate-500">Total (incl. Rezo fee {formatMoney(request.rezo_fee, request.settlement_currency)})</span>
-            <span className="text-lg font-bold text-slate-900">{formatMoney(request.gross_amount_settlement, request.settlement_currency)}</span>
+            <span className="text-sm font-semibold text-slate-500">Total (incl. Rezo fee <Money amount={request.rezo_fee} currency={request.settlement_currency} />)</span>
+            <Money amount={request.gross_amount_settlement} currency={request.settlement_currency} className="text-lg font-bold text-slate-900" />
           </div>
 
           <div className="mt-4 flex items-center gap-3">
@@ -144,11 +137,7 @@ export function PaymentPanel({ detail, token, onDone }: { detail: ContainerDetai
                 <button onClick={() => setRequest(null)} className="text-sm text-slate-500 hover:underline">Cancel</button>
               </>
             )}
-            {request.status !== 'created' && (
-              <span className={`rounded-full px-3 py-1 text-sm font-semibold ${request.status === 'settled' ? 'bg-green-100 text-green-700' : request.status === 'partially_settled' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
-                {request.status.replace(/_/g, ' ')}
-              </span>
-            )}
+            {request.status !== 'created' && <StatusPill status={request.status} />}
             {request.failed_charge_ids.length > 0 && (request.status === 'partially_settled' || request.status === 'failed') && (
               <button onClick={retryFailed} disabled={busy} className="rounded-lg border border-amber-300 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50">
                 Retry {request.failed_charge_ids.length} failed

@@ -5,8 +5,11 @@ import Link from 'next/link';
 import type { ContainerSummary } from '@rezo/shared-types';
 import { useAuth } from '../../../lib/auth';
 import { apiFetchEnvelope } from '../../../lib/api';
-import { formatMoney, countdown, PAYMENT_STATUS_STYLE, COUNTDOWN_STYLE } from '../../../lib/format';
+import { countdown } from '../../../lib/format';
 import { Chrome, Loading, useRequireAuth } from '../../../components/chrome';
+import { Money, MoneyList, Paid, StatusPill, type PillTone } from '../../../components/ui';
+
+const COUNTDOWN_TONE: Record<string, PillTone> = { ok: 'gray', soon: 'amber', overdue: 'red' };
 
 const SIZE_LABEL: Record<string, string> = { '20': "20'", '40': "40'", reefer: 'Reefer' };
 
@@ -50,7 +53,7 @@ export default function ContainersPage() {
               <tr className="border-b border-slate-100 text-xs uppercase text-slate-400">
                 <th className="px-5 py-3 font-medium">Container</th>
                 <th className="px-5 py-3 font-medium">Vessel / Voyage</th>
-                <th className="px-5 py-3 font-medium">Total owed</th>
+                <th className="px-5 py-3 text-right font-medium">Total owed</th>
                 <th className="px-5 py-3 font-medium">Payment</th>
                 <th className="px-5 py-3 font-medium">Last free day</th>
               </tr>
@@ -69,19 +72,23 @@ export default function ContainersPage() {
                     <td className="px-5 py-3 text-slate-600">
                       {c.voyage.vessel.name} <span className="text-slate-400">· {c.voyage.voyage_number}</span>
                     </td>
-                    <td className="px-5 py-3 font-medium text-slate-800">
-                      {c.total_owed ? formatMoney(c.total_owed.amount, c.total_owed.currency) : '—'}
+                    <td className="px-5 py-3 text-right font-medium text-slate-800">
+                      {c.total_owed ? (
+                        <Money amount={c.total_owed.amount} currency={c.total_owed.currency} />
+                      ) : c.payment_status === 'paid' ? (
+                        <Paid />
+                      ) : (
+                        <MoneyList items={[]} empty="$0.00" />
+                      )}
                     </td>
                     <td className="px-5 py-3">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PAYMENT_STATUS_STYLE[c.payment_status]}`}>
-                        {c.payment_status}
-                      </span>
+                      <StatusPill status={c.payment_status} />
                     </td>
                     <td className="px-5 py-3">
                       {c.last_free_day ? (
                         <div className="flex items-center gap-2">
                           <span className="text-slate-600">{new Date(c.last_free_day).toLocaleDateString()}</span>
-                          {cd && <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${COUNTDOWN_STYLE[cd.tone]}`}>{cd.label}</span>}
+                          {cd && <StatusPill tone={COUNTDOWN_TONE[cd.tone]} label={cd.label} />}
                         </div>
                       ) : (
                         <span className="text-slate-400">—</span>

@@ -5,8 +5,8 @@ import Link from 'next/link';
 import type { VerificationTaskSummary } from '@rezo/shared-types';
 import { useAuth } from '../../../../lib/auth';
 import { apiFetchEnvelope, apiFetch } from '../../../../lib/api';
-import { formatMoney } from '../../../../lib/format';
 import { Chrome, Loading, useRequireAuth } from '../../../../components/chrome';
+import { Money, EmptyState } from '../../../../components/ui';
 
 export default function VerificationQueuePage() {
   const { auth, ready } = useRequireAuth();
@@ -36,8 +36,8 @@ export default function VerificationQueuePage() {
 
       <div className="mt-6 space-y-3">
         {rows && rows.length === 0 && (
-          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
-            Queue is empty — nothing to review. 🎉
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <EmptyState title="Queue is empty — nothing to review. 🎉" hint="Low-confidence extracted charges land here for a quick human check." />
           </div>
         )}
         {rows?.map((t) => (
@@ -80,7 +80,7 @@ function TaskCard({ task, token, canResolve, onDone }: { task: VerificationTaskS
           <p className="mt-1 text-xs text-slate-500">
             Extracted value:{' '}
             <span className="font-medium">
-              {before?.amount != null ? formatMoney(before.amount, before.currency ?? 'USD') : '—'}
+              {before?.amount != null ? <Money amount={before.amount} currency={before.currency ?? 'USD'} /> : '—'}
             </span>{' '}
             · confidence <span className="rounded bg-orange-100 px-1.5 py-0.5 font-medium text-orange-700">{task.confidence.toFixed(2)}</span>
           </p>
