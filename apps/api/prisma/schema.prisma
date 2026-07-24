@@ -160,6 +160,30 @@ enum AlertStatus {
   FAILED
 }
 
+/// Notification event types (spec §6a). Covers the whole platform, not just
+/// the scheduled deadline reminder.
+enum NotificationType {
+  DEADLINE_REMINDER
+  PAYMENT_CONFIRMED
+  PAYMENT_FAILED
+  CONTAINER_RELEASED
+  GATE_APPOINTMENT_CONFIRMED
+  GATE_REMINDER
+  VERIFICATION_NEEDED
+  CHARGE_ADDED
+  DOCUMENT_REQUIRED
+  TRUCKING_JOB_OFFERED
+  TRUCKING_JOB_ACCEPTED
+  TRUCKING_JOB_DELIVERED
+}
+
+/// Notification urgency, drives the Alerts grouping + colors (spec §6c).
+enum NotificationSeverity {
+  CRITICAL
+  SOON
+  INFO
+}
+
 /// How a document reached Rezo (spec §7/§1.3).
 enum DocumentSource {
   UPLOAD
@@ -284,10 +308,16 @@ model User {
   role         Role
   passwordHash String     @map("password_hash")
   status       UserStatus @default(ACTIVE)
+  // Quiet hours (spec §6e): suppress EMAIL between these hours (0–23, local).
+  // Still recorded in-app. Null = no quiet hours.
+  notifyQuietStart Int?   @map("notify_quiet_start")
+  notifyQuietEnd   Int?   @map("notify_quiet_end")
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
 
-  org Organization @relation(fields: [orgId], references: [id])
+  org           Organization             @relation(fields: [orgId], references: [id])
+  notifications Notification[]           @relation("UserNotifications")
+  notifyPrefs   NotificationPreference[] @relation("UserNotifyPrefs")
 
   @@index([orgId])
   @@map("users")
@@ -731,6 +761,51 @@ model PaymentRouting {
   @@index([paymentRequestId])
   @@index([status])
   @@map("payment_routings")
+}
+
+/// A delivered notification (spec §6). One row per (recipient user, channel).
+/// The in-app feed + bell read these; email rows are "sent" via the mock
+/// NotificationAdapter. `amountAtRisk` (minor units + currency) is shown when
+/// money is on the line (e.g. demurrage). `deepLink` routes to the right page.
+model Notification {
+  id              String               @id @default(uuid())
+  type            NotificationType
+  severity        NotificationSeverity @default(INFO)
+  recipientOrgId  String               @map("recipient_org_id")
+  recipientUserId String?              @map("recipient_user_id")
+  containerId     String?              @map("container_id")
+  title           String
+  body            String
+  amountAtRisk    Int?                 @map("amount_at_risk")
+  amountCurrency  String?              @map("amount_currency")
+  channel         AlertChannel         @default(IN_APP)
+  deepLink        String?              @map("deep_link")
+  readAt          DateTime?            @map("read_at")
+  createdAt       DateTime             @default(now()) @map("created_at")
+
+  recipientUser User? @relation("UserNotifications", fields: [recipientUserId], references: [id])
+
+  @@index([recipientUserId, channel, readAt])
+  @@index([recipientOrgId])
+  @@index([containerId])
+  @@map("notifications")
+}
+
+/// Per-user, per-type notification channel preferences (spec §6e). Absent row =
+/// defaults (in-app on, email off).
+model NotificationPreference {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  inApp     Boolean          @default(true) @map("in_app")
+  email     Boolean          @default(false)
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  user User @relation("UserNotifyPrefs", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@index([userId])
+  @@map("notification_preferences")
 }
 
 /// Append-only audit trail (spec §11). Rows are only ever inserted.

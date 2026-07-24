@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { HealthStatus, AuthContext } from '@rezo/shared-types';
 import { useAuth } from '../lib/auth';
 import { apiFetch } from '../lib/api';
+import { NotificationBell } from './notification-bell';
 
 /** Redirects to /login when not authenticated; returns the resolved auth state. */
 export function useRequireAuth() {
@@ -55,6 +56,7 @@ export function Chrome({ auth, children }: { auth: AuthContext; children: React.
               <span className="text-lg font-bold tracking-tight text-slate-900">Rezo</span>
             </Link>
             <div className="flex items-center gap-3">
+              <NotificationBell />
               <SystemStatus />
               <button
                 onClick={() => { logout(); router.replace('/login'); }}

@@ -36,6 +36,8 @@ export const Permission = {
   RELEASE_AUTHORIZE: 'release:authorize',
   DASHBOARD_VIEW: 'dashboard:view',
   DASHBOARD_GOV: 'dashboard:gov',
+  /** Everyone authenticated can read/manage their own notifications. */
+  NOTIFICATION_READ: 'notification:read',
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -93,7 +95,8 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
 };
 
 export function permissionsForRole(role: Role): Permission[] {
-  return ROLE_PERMISSIONS[role] ?? [];
+  // Every authenticated principal can manage their own notifications.
+  return [...(ROLE_PERMISSIONS[role] ?? []), Permission.NOTIFICATION_READ];
 }
 
 /** Default role assigned to the principal when an org authenticates via API key. */

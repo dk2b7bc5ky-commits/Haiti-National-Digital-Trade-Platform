@@ -13,6 +13,7 @@ import { DeadlineService } from '../deadlines/deadline.service';
 import { AuthPrincipal } from '../auth/auth-principal';
 import { resolveContainerScope } from '../data-hub/scoping';
 import { TERMINAL_ADAPTER, TerminalAdapter } from '../integration/terminal-adapter';
+import { NotificationsService } from '../notifications/notifications.service';
 import { toChargeSummary, apiToChargeType } from './mappers';
 import { CreateChargeDto } from './dto';
 import type { ChargeSummary } from '@rezo/shared-types';
@@ -27,6 +28,7 @@ export class ChargesService {
     private readonly config: MarketConfigService,
     private readonly payees: PayeesService,
     private readonly deadlines: DeadlineService,
+    private readonly notifications: NotificationsService,
     @Inject(TERMINAL_ADAPTER) private readonly terminal: TerminalAdapter,
   ) {}
 
@@ -51,7 +53,7 @@ export class ChargesService {
 
   /** Manually record a charge (spec §1.2: admin/terminal can create records). */
   async createManual(principal: AuthPrincipal, containerId: string, dto: CreateChargeDto): Promise<ChargeSummary> {
-    await this.requireVisibleContainer(principal, containerId);
+    const container = await this.requireVisibleContainer(principal, containerId);
 
     const type = apiToChargeType(dto.type);
     if (!type) throw new BadRequestException('Unknown charge type.');
@@ -75,6 +77,13 @@ export class ChargesService {
     });
     await this.auditCharge(principal, charge.id, 'charge.create_manual', charge.type, charge.amount, charge.currency);
     await this.deadlines.recomputeForContainer(containerId); // spec §1.5: recompute on new data
+    await this.notifications.notify({
+      type: 'CHARGE_ADDED', severity: 'INFO', orgId: container.importerOrgId, containerId,
+      title: 'New charge added',
+      body: `A ${dto.type.replace(/_/g, ' ')} charge was added to ${container.containerNumber}.`,
+      amountAtRisk: { amount: charge.amount, currency: charge.currency },
+      deepLink: `/dashboard/containers/${containerId}`,
+    });
     return toChargeSummary(charge);
   }
 

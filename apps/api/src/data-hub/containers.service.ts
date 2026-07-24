@@ -14,6 +14,7 @@ import {
 import { PayeeMap } from '../charges/mappers';
 import { DeadlineService } from '../deadlines/deadline.service';
 import { ASYCUDA_ADAPTER, AsycudaAdapter } from '../integration/asycuda-adapter';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { ContainerSummary, ContainerDetail, ContainerStatus as ApiStatus, TimelineStep } from '@rezo/shared-types';
 
 const API_TO_STATUS: Record<ApiStatus, ContainerStatus> = {
@@ -35,6 +36,7 @@ export class ContainersService {
     private readonly prisma: PrismaService,
     private readonly deadlines: DeadlineService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
     @Inject(ASYCUDA_ADAPTER) private readonly asycuda: AsycudaAdapter,
   ) {}
 
@@ -121,6 +123,12 @@ export class ContainersService {
       actorUserId: principal.userId, actorOrgId: principal.orgId,
       action: 'container.customs_clear', entity: 'Container', entityId: id,
       after: { declaration_ref: clearance.declarationRef, status: clearance.status },
+    });
+    await this.notifications.notify({
+      type: 'CONTAINER_RELEASED', severity: 'INFO', orgId: container.importerOrgId, containerId: id,
+      title: 'Customs cleared',
+      body: `Container ${container.containerNumber} has cleared customs and is ready to gate out once charges are settled.`,
+      deepLink: `/dashboard/containers/${id}`,
     });
     return this.getById(principal, id);
   }

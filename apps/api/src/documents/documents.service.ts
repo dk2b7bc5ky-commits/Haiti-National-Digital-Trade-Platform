@@ -7,6 +7,7 @@ import { StorageService } from '../storage/storage.service';
 import { MarketConfigService } from '../config/market-config.service';
 import { PayeesService, payeeTypeForCharge } from '../payees/payees.service';
 import { DeadlineService } from '../deadlines/deadline.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { AuthPrincipal } from '../auth/auth-principal';
 import { resolveContainerScope } from '../data-hub/scoping';
 import { apiToChargeType } from '../charges/mappers';
@@ -38,6 +39,7 @@ export class DocumentsService {
     private readonly config: MarketConfigService,
     private readonly payees: PayeesService,
     private readonly deadlines: DeadlineService,
+    private readonly notifications: NotificationsService,
     @Inject(EXTRACTION_PROVIDER) private readonly extractor: ExtractionProvider,
   ) {}
 
@@ -133,6 +135,18 @@ export class DocumentsService {
         }
       }
       await this.deadlines.recomputeForContainer(container.id);
+      if (tasks > 0) {
+        // Verification is an Ops task — notify the Rezo (orchestrator) org.
+        const rezo = await this.prisma.organization.findFirst({ where: { type: 'REZO' } });
+        if (rezo) {
+          await this.notifications.notify({
+            type: 'VERIFICATION_NEEDED', severity: 'SOON', orgId: rezo.id, containerId: container.id,
+            title: 'Verification needed',
+            body: `${tasks} low-confidence charge(s) on ${container.containerNumber} need review before they can be paid.`,
+            deepLink: '/dashboard/ops/verification',
+          });
+        }
+      }
     }
 
     const updated = await this.prisma.document.update({

@@ -175,6 +175,7 @@ async function main(): Promise<void> {
   await seedFxRates();
   await seedDemoDataset();
   await seedSubscriptions();
+  await seedNotifications();
 
   const orgCount = await prisma.organization.count();
   const userCount = await prisma.user.count();
@@ -203,6 +204,69 @@ async function seedShippingAgents(): Promise<void> {
     created++;
   }
   console.log(`• Shipping agents/line offices seeded: ${created} payees (type LINE).`);
+}
+
+/**
+ * Demo notifications (spec §6) so the redesigned Alerts page + bell are
+ * populated on first login. Spans event types and severities across a few
+ * users. Idempotent: skipped once any notification exists.
+ */
+async function seedNotifications(): Promise<void> {
+  if ((await prisma.notification.count()) > 0) {
+    console.log('• Notifications already present — skipping.');
+    return;
+  }
+  const now = Date.now();
+  const ago = (mins: number) => new Date(now - mins * 60_000);
+  const userByEmail = async (email: string) => prisma.user.findUnique({ where: { email } });
+  const cId = async (num: string) => (await prisma.container.findUnique({ where: { containerNumber: num }, select: { id: true } }))?.id ?? null;
+
+  const importer1 = await userByEmail('importer@rezo.test');
+  const importer2 = await userByEmail('importer2@rezo.test');
+  const ops = await userByEmail('ops@rezo.test');
+  if (!importer1) return;
+
+  type N = {
+    user: { id: string; orgId: string } | null;
+    type: string; severity: string; container: string | null; title: string; body: string;
+    amount?: number; channel?: string; read?: boolean; when: Date; link?: string;
+  };
+  const rows: N[] = [
+    { user: importer1, type: 'DEADLINE_REMINDER', severity: 'CRITICAL', container: 'CMAU2223334', title: 'Last free day tomorrow', body: 'Container CMAU2223334 — 1 day left. Settle charges to avoid demurrage.', amount: 6000, when: ago(30) },
+    { user: importer1, type: 'PAYMENT_FAILED', severity: 'CRITICAL', container: 'CMAU2223334', title: 'Payment failed', body: 'A payee routing did not settle. Review and retry the failed portion.', when: ago(90) },
+    { user: importer1, type: 'DEADLINE_REMINDER', severity: 'SOON', container: 'MSCU4455662', title: 'Last free day in 3 days', body: 'Container MSCU4455662 — 3 days left before storage begins.', amount: 3000, when: ago(240) },
+    { user: importer1, type: 'CHARGE_ADDED', severity: 'INFO', container: 'CMAU9998887', title: 'New charge added', body: 'A demurrage charge was added to CMAU9998887.', amount: 45000, when: ago(300) },
+    { user: importer1, type: 'PAYMENT_CONFIRMED', severity: 'INFO', container: 'CMAU7654321', title: 'Payment confirmed', body: 'Your payment was authorized and routed directly to every payee.', read: true, when: ago(1440) },
+    { user: importer1, type: 'GATE_APPOINTMENT_CONFIRMED', severity: 'INFO', container: 'CMAU7654321', title: 'Gate appointment confirmed', body: 'The terminal confirmed the gate slot for CMAU7654321.', read: true, when: ago(1500) },
+    { user: importer2, type: 'CONTAINER_RELEASED', severity: 'INFO', container: 'MAEU5566771', title: 'Customs cleared', body: 'MAEU5566771 cleared customs and is ready to gate out.', when: ago(120) },
+    { user: importer2, type: 'TRUCKING_JOB_OFFERED', severity: 'INFO', container: 'MAEU5566771', title: 'Trucking job posted', body: 'CPS Terminal → Distribution Nord depot, Cap-Haïtien.', when: ago(150) },
+    { user: ops, type: 'VERIFICATION_NEEDED', severity: 'SOON', container: 'MSCU4455663', title: 'Verification needed', body: '1 low-confidence charge on MSCU4455663 needs review before it can be paid.', when: ago(60) },
+  ];
+
+  let created = 0;
+  for (const r of rows) {
+    if (!r.user) continue;
+    const containerId = r.container ? await cId(r.container) : null;
+    await prisma.notification.create({
+      data: {
+        type: r.type as never,
+        severity: r.severity as never,
+        recipientOrgId: r.user.orgId,
+        recipientUserId: r.user.id,
+        containerId,
+        title: r.title,
+        body: r.body,
+        amountAtRisk: r.amount ?? null,
+        amountCurrency: r.amount ? 'USD' : null,
+        channel: (r.channel as never) ?? 'IN_APP',
+        deepLink: containerId ? `/dashboard/containers/${containerId}` : (r.link ?? '/dashboard/alerts'),
+        readAt: r.read ? r.when : null,
+        createdAt: r.when,
+      },
+    });
+    created++;
+  }
+  console.log(`• Notifications seeded: ${created} across event types + severities.`);
 }
 
 /** Demo subscriptions (spec §2.2), priced from the tariff. Idempotent. */

@@ -8,6 +8,7 @@ import { AuthPrincipal } from '../auth/auth-principal';
 import { resolveContainerScope } from '../data-hub/scoping';
 import { PAYMENT_RAIL, PaymentRail, RailOutcome } from '../integration/payment-rail';
 import { FxService } from './fx.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { toRoutingSummary, reqStatusToApi } from './mappers';
 import { CreatePaymentRequestDto } from './dto';
 import type { PaymentRequestSummary } from '@rezo/shared-types';
@@ -23,6 +24,7 @@ export class PaymentsService {
     private readonly config: MarketConfigService,
     private readonly payees: PayeesService,
     private readonly fx: FxService,
+    private readonly notifications: NotificationsService,
     @Inject(PAYMENT_RAIL) private readonly rail: PaymentRail,
   ) {}
 
@@ -196,7 +198,26 @@ export class PaymentsService {
       after: { routings: request.routings.map((r) => ({ payee: r.payeeOrgId, status: r.status })) },
     });
 
-    return this.summary(id);
+    const result = await this.summary(id);
+    // Notify the payer's org of the outcome (spec §6b).
+    const link = `/dashboard/containers/${request.containerId}`;
+    if (result.status === 'settled') {
+      await this.notifications.notify({
+        type: 'PAYMENT_CONFIRMED', severity: 'INFO', orgId: request.importerOrgId, containerId: request.containerId,
+        title: 'Payment confirmed',
+        body: 'Your payment was authorized and routed directly to every payee.',
+        deepLink: link,
+      });
+    } else if (result.status === 'failed' || result.status === 'partially_settled') {
+      await this.notifications.notify({
+        type: 'PAYMENT_FAILED', severity: 'CRITICAL', orgId: request.importerOrgId, containerId: request.containerId,
+        title: result.status === 'failed' ? 'Payment failed' : 'Payment partially settled',
+        body: 'One or more payee routings did not settle. Review and retry the failed portion.',
+        deepLink: link,
+      });
+    }
+
+    return result;
   }
 
   async get(principal: AuthPrincipal, id: string): Promise<PaymentRequestSummary> {

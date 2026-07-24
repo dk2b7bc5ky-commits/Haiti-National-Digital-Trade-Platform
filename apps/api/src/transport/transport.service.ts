@@ -8,6 +8,7 @@ import { MarketConfigService } from '../config/market-config.service';
 import { AuthPrincipal } from '../auth/auth-principal';
 import { Permission } from '../rbac/permissions';
 import { resolveContainerScope } from '../data-hub/scoping';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateTransportJobDto, CreateGateAppointmentDto, GpsDto } from './dto';
 import type { TransportJobSummary, GateAppointmentSummary } from '@rezo/shared-types';
 
@@ -22,6 +23,7 @@ export class TransportService {
     private readonly audit: AuditService,
     private readonly storage: StorageService,
     private readonly config: MarketConfigService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   private toJob(j: TransportJob & { container: { containerNumber: string } }): TransportJobSummary {
@@ -80,6 +82,11 @@ export class TransportService {
       include: jobWithContainer,
     });
     await this.audit.record({ actorUserId: principal.userId, actorOrgId: principal.orgId, action: 'transport.job_create', entity: 'TransportJob', entityId: job.id });
+    await this.notifications.notify({
+      type: 'TRUCKING_JOB_OFFERED', severity: 'INFO', orgId: job.createdByOrgId, containerId: container.id,
+      title: 'Trucking job posted', body: `${container.containerNumber}: ${dto.pickup} → ${dto.dropoff}.`,
+      deepLink: '/dashboard/jobs',
+    });
     return this.toJob(job);
   }
 
@@ -105,6 +112,11 @@ export class TransportService {
       include: jobWithContainer,
     });
     await this.audit.record({ actorUserId: principal.userId, actorOrgId: principal.orgId, action: 'transport.job_accept', entity: 'TransportJob', entityId: id });
+    await this.notifications.notify({
+      type: 'TRUCKING_JOB_ACCEPTED', severity: 'INFO', orgId: job.createdByOrgId, containerId: job.containerId,
+      title: 'Trucking job accepted', body: `A trucker accepted the haul for ${updated.container.containerNumber}.`,
+      deepLink: '/dashboard/jobs',
+    });
     return this.toJob(updated);
   }
 
@@ -117,6 +129,13 @@ export class TransportService {
       kind === 'insurance' ? { insuranceRef: key } : { podRef: key, status: 'DELIVERED' };
     const updated = await this.prisma.transportJob.update({ where: { id: job.id }, data, include: jobWithContainer });
     await this.audit.record({ actorUserId: principal.userId, actorOrgId: principal.orgId, action: `transport.${kind}_upload`, entity: 'TransportJob', entityId: id });
+    if (kind === 'pod') {
+      await this.notifications.notify({
+        type: 'TRUCKING_JOB_DELIVERED', severity: 'INFO', orgId: job.createdByOrgId, containerId: job.containerId,
+        title: 'Container delivered', body: `Proof of delivery received for ${updated.container.containerNumber}.`,
+        deepLink: '/dashboard/jobs',
+      });
+    }
     return this.toJob(updated);
   }
 
@@ -202,6 +221,17 @@ export class TransportService {
     }
 
     await this.audit.record({ actorUserId: principal.userId, actorOrgId: principal.orgId, action: `gate.${status.toLowerCase()}`, entity: 'GateAppointment', entityId: id });
+    if (status === 'CONFIRMED') {
+      const c = await this.prisma.container.findUnique({ where: { id: appt.containerId }, select: { importerOrgId: true, containerNumber: true } });
+      if (c) {
+        await this.notifications.notify({
+          type: 'GATE_APPOINTMENT_CONFIRMED', severity: 'INFO', orgId: c.importerOrgId, containerId: appt.containerId,
+          title: 'Gate appointment confirmed',
+          body: `The terminal confirmed the gate slot for ${c.containerNumber} on ${updated.slotTime.toLocaleString()}.`,
+          deepLink: '/dashboard/gate',
+        });
+      }
+    }
     return this.toAppt(updated);
   }
 

@@ -88,7 +88,8 @@ export type Permission =
   | 'customs:clear'
   | 'release:authorize'
   | 'dashboard:view'
-  | 'dashboard:gov';
+  | 'dashboard:gov'
+  | 'notification:read';
 
 export interface OrgSummary {
   id: string;
@@ -326,6 +327,57 @@ export interface AlertSummary {
   sent_at: string | null;
   read_at: string | null;
   message: string;
+}
+
+// ---------------------------------------------------------------------------
+// Notifications (Section 6). Platform-wide event feed, not just deadlines.
+// ---------------------------------------------------------------------------
+
+export type NotificationType =
+  | 'deadline_reminder'
+  | 'payment_confirmed'
+  | 'payment_failed'
+  | 'container_released'
+  | 'gate_appointment_confirmed'
+  | 'gate_reminder'
+  | 'verification_needed'
+  | 'charge_added'
+  | 'document_required'
+  | 'trucking_job_offered'
+  | 'trucking_job_accepted'
+  | 'trucking_job_delivered';
+
+export type NotificationSeverity = 'critical' | 'soon' | 'info';
+
+export interface NotificationSummary {
+  id: string;
+  type: NotificationType;
+  severity: NotificationSeverity;
+  container_id: string | null;
+  container_number: string | null;
+  title: string;
+  body: string;
+  amount_at_risk: Money | null;
+  channel: AlertChannel;
+  deep_link: string | null;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface UnreadCount {
+  unread: number;
+}
+
+/** One row per event type in the preferences screen (spec §6e). */
+export interface NotificationPreference {
+  type: NotificationType;
+  in_app: boolean;
+  email: boolean;
+}
+
+export interface NotificationPreferences {
+  preferences: NotificationPreference[];
+  quiet_hours: { start: number | null; end: number | null };
 }
 
 // ---------------------------------------------------------------------------
