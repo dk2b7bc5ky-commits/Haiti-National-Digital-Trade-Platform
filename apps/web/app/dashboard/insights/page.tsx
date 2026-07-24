@@ -38,7 +38,6 @@ export default function InsightsPage() {
           </section>
 
           <section className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat label="Rezo fee revenue" value={formatMoneyList(op.rezo_fee_revenue)} />
             <Stat label="Deadlines at risk (7d)" value={String(op.deadlines_at_risk)} tone={op.deadlines_at_risk > 0 ? 'warn' : undefined} />
             <div className="sm:col-span-2 lg:col-span-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs uppercase tracking-wide text-slate-400">Containers by status</p>

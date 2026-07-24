@@ -113,9 +113,9 @@ export function PaymentPanel({ detail, token, onDone }: { detail: ContainerDetai
               </tr>
             </thead>
             <tbody>
-              {request.routings.map((r) => (
+              {request.routings.filter((r) => !r.is_rezo_fee).map((r) => (
                 <tr key={r.id} className="border-b border-slate-50">
-                  <td className="py-2 text-slate-700">{r.payee_name}{r.is_rezo_fee && <span className="ml-1 rounded bg-violet-100 px-1.5 py-0.5 text-xs text-violet-700">Rezo fee</span>}</td>
+                  <td className="py-2 text-slate-700">{r.payee_name}</td>
                   <td className="py-2 text-xs text-slate-400">{r.charge_currency}→{request.settlement_currency} @ {r.fx_rate}</td>
                   <td className="py-2 text-right font-medium text-slate-800"><Money amount={r.settlement_amount} currency={request.settlement_currency} /></td>
                   <td className="py-2 text-right"><StatusPill status={r.status} /></td>
@@ -124,8 +124,8 @@ export function PaymentPanel({ detail, token, onDone }: { detail: ContainerDetai
             </tbody>
           </table>
           <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3">
-            <span className="text-sm font-semibold text-slate-500">Total (incl. Rezo fee <Money amount={request.rezo_fee} currency={request.settlement_currency} />)</span>
-            <Money amount={request.gross_amount_settlement} currency={request.settlement_currency} className="text-lg font-bold text-slate-900" />
+            <span className="text-sm font-semibold text-slate-500">Total</span>
+            <Money amount={request.gross_amount_settlement - request.rezo_fee} currency={request.settlement_currency} className="text-lg font-bold text-slate-900" />
           </div>
 
           <div className="mt-4 flex items-center gap-3">

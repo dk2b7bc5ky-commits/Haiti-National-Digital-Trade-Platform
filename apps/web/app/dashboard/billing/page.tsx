@@ -77,9 +77,10 @@ export default function BillingPage() {
 
   // One row per payee/agent. Use the full registry when available (so every
   // agent shows, even at zero owed); otherwise fall back to only those owed.
+  // The Rezo platform fee is never shown to users.
   const payeeRows = (registry.length > 0
-    ? registry.map((r) => ({ key: r.org_id, name: r.name, type: r.type, totals: byPayee.get(r.org_id)?.totals ?? new Map<string, number>() }))
-    : [...byPayee.values()].map((p) => ({ key: p.payeeOrgId, name: p.name, type: p.type, totals: p.totals }))
+    ? registry.filter((r) => r.type !== 'rezo').map((r) => ({ key: r.org_id, name: r.name, type: r.type, totals: byPayee.get(r.org_id)?.totals ?? new Map<string, number>() }))
+    : [...byPayee.values()].filter((p) => p.type !== 'rezo').map((p) => ({ key: p.payeeOrgId, name: p.name, type: p.type, totals: p.totals }))
   ).sort((a, b) => {
     const av = [...a.totals.values()].reduce((s, n) => s + n, 0);
     const bv = [...b.totals.values()].reduce((s, n) => s + n, 0);
