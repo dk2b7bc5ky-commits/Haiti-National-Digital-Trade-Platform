@@ -7,7 +7,7 @@ import { useAuth } from '../../../lib/auth';
 import { apiFetch, apiFetchEnvelope } from '../../../lib/api';
 import { formatMoneyList } from '../../../lib/format';
 import { Chrome, Loading, useRequireAuth } from '../../../components/chrome';
-import { Money, MoneyList, StatusPill } from '../../../components/ui';
+import { MoneyList } from '../../../components/ui';
 
 const PAYEE_STYLE: Record<string, string> = {
   customs: 'bg-indigo-100 text-indigo-700',
@@ -109,6 +109,7 @@ export default function BillingPage() {
       {payeeRows.length > 0 && (
         <section className="mt-8">
           <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">Amount owed by payee / agent</h2>
+          <p className="mb-2 text-xs text-slate-400">Click a payee to see each container and exactly what&apos;s owed to them.</p>
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
             <table className="w-full text-left text-sm">
               <thead>
@@ -116,6 +117,7 @@ export default function BillingPage() {
                   <th className="px-4 py-3 font-medium">Payee / agent</th>
                   <th className="px-4 py-3 font-medium">Type</th>
                   <th className="px-4 py-3 text-right font-medium">Amount owed</th>
+                  <th className="px-4 py-3 font-medium"></th>
                 </tr>
               </thead>
               <tbody>
@@ -123,55 +125,26 @@ export default function BillingPage() {
                   const entries = [...p.totals.entries()].map(([currency, amount]) => ({ amount, currency }));
                   const owes = entries.length > 0;
                   return (
-                    <tr key={p.key} className="border-b border-slate-50">
-                      <td className={`px-4 py-3 ${owes ? 'text-slate-700' : 'text-slate-400'}`}>{p.name}</td>
+                    <tr key={p.key} className={`border-b border-slate-50 ${owes ? 'hover:bg-sky-50/40' : ''}`}>
+                      <td className="px-4 py-3">
+                        {owes ? (
+                          <Link href={`/dashboard/billing/${p.key}`} className="font-medium text-sky-700 hover:underline">{p.name}</Link>
+                        ) : (
+                          <span className="text-slate-400">{p.name}</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         {p.type && <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PAYEE_STYLE[p.type] ?? PAYEE_STYLE.other}`}>{p.type}</span>}
                       </td>
                       <td className={`px-4 py-3 text-right ${owes ? 'font-medium text-slate-800' : ''}`}>
                         <MoneyList items={entries} empty="$0.00" />
                       </td>
+                      <td className="px-4 py-3 text-right">
+                        {owes && <Link href={`/dashboard/billing/${p.key}`} className="text-xs font-semibold text-sky-700 hover:underline">View →</Link>}
+                      </td>
                     </tr>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
-
-      {bills.length > 0 && (
-        <section className="mt-8">
-          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">Bills by container</h2>
-          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 text-xs uppercase text-slate-400">
-                  <th className="px-4 py-3 font-medium">Container</th>
-                  <th className="px-4 py-3 font-medium">B/L</th>
-                  <th className="px-4 py-3 text-right font-medium">Owed</th>
-                  <th className="px-4 py-3 font-medium">Last free day</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {bills.map((c) => (
-                  <tr key={c.id} className="border-b border-slate-50">
-                    <td className="px-4 py-3">
-                      <Link href={`/dashboard/containers/${c.id}`} className="font-mono font-medium text-sky-700 hover:underline">{c.container_number}</Link>
-                    </td>
-                    <td className="px-4 py-3 text-slate-500">{c.bl_number}</td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-800">
-                      {c.total_owed ? <Money amount={c.total_owed.amount} currency={c.total_owed.currency} /> : <MoneyList items={[]} empty="$0.00" />}
-                    </td>
-                    <td className="px-4 py-3 text-slate-500">{c.last_free_day ? new Date(c.last_free_day).toLocaleDateString() : '—'}</td>
-                    <td className="px-4 py-3"><StatusPill status={c.payment_status} /></td>
-                    <td className="px-4 py-3 text-right">
-                      <Link href={`/dashboard/containers/${c.id}`} className="text-xs font-semibold text-sky-700 hover:underline">Review &amp; pay →</Link>
-                    </td>
-                  </tr>
-                ))}
               </tbody>
             </table>
           </div>
