@@ -14,6 +14,17 @@ import { Money, MoneyList, StatusPill, type PillTone } from '../../../../compone
 
 const COUNTDOWN_TONE: Record<string, PillTone> = { ok: 'gray', soon: 'amber', overdue: 'red' };
 
+// Plain-language, Haiti-specific labels for each release step (per the
+// logistics overview: agency+APN fees → documents → AGD customs tax → release).
+const STEP_INFO: Record<string, { label: string; desc: string }> = {
+  arrived: { label: 'Arrived at port', desc: 'Container landed at the terminal.' },
+  charges_settled: { label: 'Agency & port fees paid', desc: 'Arrival fees incl. APN port dues settled.' },
+  customs_cleared: { label: 'Customs cleared (AGD)', desc: 'Customs tax bill settled and cleared by AGD.' },
+  released: { label: 'Release authorized', desc: 'Cleared for pickup once fees and customs are done.' },
+  gate_booked: { label: 'Gate appointment', desc: 'Pickup slot booked with the terminal.' },
+  gated_out: { label: 'Delivered', desc: 'Container has left the port.' },
+};
+
 export default function ContainerDetailPage() {
   const { auth, ready } = useRequireAuth();
   const { token } = useAuth();
@@ -117,10 +128,10 @@ export default function ContainerDetailPage() {
             </Panel>
           </div>
 
-          {/* Lifecycle timeline (spec §2.5) */}
+          {/* Release progress — plain-language clearance checklist + blocker */}
           <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold text-slate-500">Status timeline</h3>
+              <h3 className="text-sm font-semibold text-slate-500">Release progress</h3>
               <div className="flex gap-2">
                 {auth.permissions.includes('customs:clear') && !detail.container.cleared_at && (
                   <button onClick={() => containerAction('customs-clear')} disabled={busy}
@@ -136,19 +147,43 @@ export default function ContainerDetailPage() {
                 )}
               </div>
             </div>
-            <ol className="flex flex-wrap gap-x-2 gap-y-3">
-              {detail.timeline.map((s, i) => (
-                <li key={s.key} className="flex items-center">
-                  <div className="flex flex-col items-center text-center">
-                    <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${s.reached ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-400'}`}>
-                      {s.reached ? '✓' : i + 1}
+
+            {/* What is blocking delivery right now? */}
+            {(() => {
+              const next = detail.timeline.find((s) => !s.reached);
+              return next ? (
+                <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                  <span className="text-lg">⏳</span>
+                  <p className="text-sm text-amber-800">
+                    <span className="font-semibold">Waiting on: {STEP_INFO[next.key]?.label ?? next.label}</span>
+                    <span className="block text-xs text-amber-700">{STEP_INFO[next.key]?.desc}</span>
+                  </p>
+                </div>
+              ) : (
+                <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
+                  <span className="text-lg">✓</span> Delivered — nothing is blocking this container.
+                </div>
+              );
+            })()}
+
+            <ol className="space-y-3">
+              {detail.timeline.map((s) => {
+                const info = STEP_INFO[s.key] ?? { label: s.label, desc: '' };
+                return (
+                  <li key={s.key} className="flex items-start gap-3">
+                    <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${s.reached ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-400'}`}>
+                      {s.reached ? '✓' : '•'}
                     </span>
-                    <span className={`mt-1 max-w-[7rem] text-xs ${s.reached ? 'font-medium text-slate-700' : 'text-slate-400'}`}>{s.label}</span>
-                    {s.at && <span className="text-[10px] text-slate-400">{new Date(s.at).toLocaleDateString()}</span>}
-                  </div>
-                  {i < detail.timeline.length - 1 && <span className={`mx-1 h-0.5 w-6 ${s.reached ? 'bg-green-400' : 'bg-slate-200'}`} />}
-                </li>
-              ))}
+                    <div className="min-w-0">
+                      <p className={`text-sm ${s.reached ? 'font-medium text-slate-800' : 'text-slate-400'}`}>
+                        {info.label}
+                        {s.at && <span className="ml-2 text-xs font-normal text-slate-400">{new Date(s.at).toLocaleDateString()}</span>}
+                      </p>
+                      <p className="text-xs text-slate-400">{info.desc}</p>
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
           </div>
 
