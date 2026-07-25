@@ -26,6 +26,8 @@ const HT_TARIFF = {
   inspection: { flat: 7500 }, // $75.00 (customs inspection)
   terminal_handling: { TWENTY: 15000, FORTY: 25000, REEFER: 40000 },
   storage_per_day: { TWENTY: 2000, FORTY: 3000, REEFER: 6000 },
+  // Free-time allowances (days) shown on the container list. Config, not code.
+  free_days: { demurrage: 5, electric: 3 },
   subscription_plans: {
     small_broker: { monthly: 5000, annual: 50000 },
     large_broker: { monthly: 25000, annual: 250000 },
