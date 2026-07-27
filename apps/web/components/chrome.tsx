@@ -26,6 +26,7 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
+  { href: '/dashboard', label: 'Home', icon: 'home' },
   { href: '/dashboard/insights', label: 'Dashboards', icon: 'chart', permission: 'dashboard:view' },
   { href: '/dashboard/containers', label: 'Containers', icon: 'box', permission: 'container:read' },
   { href: '/dashboard/alerts', label: 'Alerts', icon: 'bell', permission: 'container:read' },
@@ -40,6 +41,7 @@ const NAV: NavItem[] = [
 
 function NavIcon({ name }: { name: string }) {
   const p: Record<string, React.ReactNode> = {
+    home: <><path d="M4 11l8-7 8 7" /><path d="M6 10v10h12V10" /></>,
     chart: <><path d="M4 19V5M4 19h16" /><path d="M8 15l3-3 3 2 4-5" /></>,
     box: <><rect x="4" y="7" width="16" height="12" rx="1.5" /><path d="M4 11h16" /></>,
     bell: <><path d="M6 9a6 6 0 1 1 12 0c0 4 2 5 2 5H4s2-1 2-5Z" /><path d="M10 20a2 2 0 0 0 4 0" /></>,

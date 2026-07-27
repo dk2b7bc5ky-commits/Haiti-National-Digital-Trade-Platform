@@ -1,139 +1,145 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import type { OrgSummary } from '@rezo/shared-types';
-import { useEffect, useState } from 'react';
+import type { ContainerSummary, OperationalDashboard, NotificationSummary, Money as MoneyT } from '@rezo/shared-types';
 import { useAuth } from '../../lib/auth';
-import { apiFetchEnvelope } from '../../lib/api';
-import { roleConfig, CURRENT_STEP } from '../../lib/dashboard-config';
+import { apiFetch, apiFetchEnvelope } from '../../lib/api';
+import { countdown } from '../../lib/format';
 import { Chrome, Loading, useRequireAuth } from '../../components/chrome';
+import { Money, MoneyList, StatusPill, type PillTone } from '../../components/ui';
 
-const ACCENT: Record<string, string> = {
-  violet: 'bg-violet-100 text-violet-700',
-  amber: 'bg-amber-100 text-amber-700',
-  sky: 'bg-sky-100 text-sky-700',
-  emerald: 'bg-emerald-100 text-emerald-700',
-  indigo: 'bg-indigo-100 text-indigo-700',
-  orange: 'bg-orange-100 text-orange-700',
-  cyan: 'bg-cyan-100 text-cyan-700',
-  rose: 'bg-rose-100 text-rose-700',
-  teal: 'bg-teal-100 text-teal-700',
-  slate: 'bg-slate-200 text-slate-700',
+const COUNTDOWN_TONE: Record<string, PillTone> = { ok: 'gray', soon: 'amber', overdue: 'red' };
+const ACT_ICON: Record<string, string> = {
+  payment_confirmed: '✅', payment_failed: '❌', container_released: '📦', gate_appointment_confirmed: '🚪',
+  gate_reminder: '🚪', verification_needed: '🔍', charge_added: '🧾', document_required: '📄',
+  deadline_reminder: '⏰', trucking_job_offered: '🚚', trucking_job_accepted: '🚚', trucking_job_delivered: '🚚',
 };
+
+function sumByCurrency(items: (MoneyT | null | undefined)[]): MoneyT[] {
+  const m = new Map<string, number>();
+  for (const it of items) if (it) m.set(it.currency, (m.get(it.currency) ?? 0) + it.amount);
+  return [...m.entries()].map(([currency, amount]) => ({ amount, currency }));
+}
 
 export default function DashboardPage() {
   const { auth, ready } = useRequireAuth();
+  const { token } = useAuth();
+  const [containers, setContainers] = useState<ContainerSummary[]>([]);
+  const [op, setOp] = useState<OperationalDashboard | null>(null);
+  const [activity, setActivity] = useState<NotificationSummary[]>([]);
+
+  useEffect(() => {
+    if (!token) return;
+    apiFetchEnvelope<ContainerSummary[]>('/containers?limit=200', { token }).then(({ json }) => setContainers(json.data ?? [])).catch(() => {});
+    apiFetch<OperationalDashboard>('/dashboard/operational', { token }).then(setOp).catch(() => {});
+    apiFetch<NotificationSummary[]>('/notifications?limit=6', { token }).then(setActivity).catch(() => {});
+  }, [token]);
+
+  const owing = useMemo(() => containers.filter((c) => c.payment_status === 'pending' || c.payment_status === 'overdue'), [containers]);
+  const totalOwed = useMemo(() => sumByCurrency(owing.map((c) => c.total_owed)), [owing]);
+  const atRisk = useMemo(
+    () => owing.filter((c) => { const cd = countdown(c.last_free_day); return cd && cd.days <= 2; }),
+    [owing],
+  );
+  const attention = useMemo(() => {
+    return [...owing]
+      .map((c) => ({ c, cd: countdown(c.last_free_day) }))
+      .sort((a, b) => (a.cd?.days ?? 9999) - (b.cd?.days ?? 9999))
+      .slice(0, 6);
+  }, [owing]);
+
   if (!ready || !auth) return <Loading />;
 
-  const cfg = roleConfig(auth.user.role);
-  const accent = ACCENT[cfg.accent] ?? ACCENT.slate;
+  const firstName = auth.user.name.split(' ')[0];
 
   return (
     <Chrome auth={auth}>
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold">{cfg.label} dashboard</h1>
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${accent}`}>{auth.user.role}</span>
-      </div>
-      <p className="mt-1 text-slate-600">{cfg.tagline}</p>
+      <p className="text-sm text-slate-500">
+        Bonjou, <span className="font-medium text-slate-700">{firstName}</span> · {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+      </p>
+      <h1 className="mt-1 text-2xl font-bold">Overview</h1>
 
-      <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {cfg.modules.map((m) => {
-          const available = m.step <= CURRENT_STEP;
-          const card = (
-            <div
-              className={`h-full rounded-xl border p-5 transition ${
-                available
-                  ? 'border-slate-200 bg-white shadow-sm ' + (m.href ? 'hover:border-sky-300 hover:shadow' : '')
-                  : 'border-dashed border-slate-300 bg-slate-50'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-slate-800">{m.title}</h3>
-                {available ? (
-                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                    {m.href ? 'Open →' : 'Available'}
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-500">Step {m.step}</span>
-                )}
-              </div>
-              <p className="mt-2 text-sm text-slate-500">{m.description}</p>
-            </div>
-          );
-          return available && m.href ? (
-            <Link key={m.title} href={m.href}>{card}</Link>
-          ) : (
-            <div key={m.title}>{card}</div>
-          );
-        })}
+      {/* Owed strip — sums of real charges, never a held balance */}
+      <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Total owed" value={<MoneyList items={totalOwed} empty="$0.00" className="text-2xl font-bold text-slate-900" />} sub="across your active containers" />
+        <Stat
+          label="At risk (≤48h)"
+          value={<span className={`text-2xl font-bold ${atRisk.length ? 'text-red-600' : 'text-slate-900'}`}>{atRisk.length}</span>}
+          sub="last free day within 48h"
+          tone={atRisk.length ? 'warn' : undefined}
+        />
+        {op && (
+          <Stat label="Payments processed" value={<span className="text-2xl font-bold text-slate-900">{op.payments_processed}</span>} sub={<MoneyList items={op.amount_processed} empty="$0.00" />} />
+        )}
+        {op && (
+          <Stat label="Released" value={<span className="text-2xl font-bold text-slate-900">{op.released}</span>} sub={`${op.gated_out} gated out`} />
+        )}
       </section>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-3">
-        <TenantPanel />
-        <PermissionsPanel permissions={auth.permissions} />
-      </div>
+      {/* Needs your attention — the hero */}
+      <section className="mt-8">
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">Needs your attention</h2>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-soft">
+          {attention.length === 0 ? (
+            <p className="p-8 text-center text-sm text-slate-500">🎉 Nothing needs your attention — every container is settled.</p>
+          ) : (
+            <ul className="divide-y divide-slate-50">
+              {attention.map(({ c, cd }) => (
+                <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 hover:bg-sky-50/40">
+                  <div className="min-w-0">
+                    <Link href={`/dashboard/containers/${c.id}`} className="font-mono font-medium text-sky-700 hover:underline">{c.container_number}</Link>
+                    <span className="ml-2 text-xs text-slate-400">{c.voyage.port}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {c.total_owed && <Money amount={c.total_owed.amount} currency={c.total_owed.currency} className="text-sm font-semibold text-slate-800" />}
+                    {cd && <StatusPill tone={COUNTDOWN_TONE[cd.tone]} label={cd.label} />}
+                    <Link href={`/dashboard/containers/${c.id}`} className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-700">Pay</Link>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      {/* Recent activity */}
+      <section className="mt-8">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Recent activity</h2>
+          <Link href="/dashboard/alerts" className="text-xs font-medium text-sky-700 hover:underline">See all →</Link>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white shadow-soft">
+          {activity.length === 0 ? (
+            <p className="p-6 text-center text-sm text-slate-400">No recent activity yet.</p>
+          ) : (
+            <ul className="divide-y divide-slate-50">
+              {activity.map((n) => (
+                <li key={n.id} className="flex items-start gap-3 px-5 py-3">
+                  <span className="mt-0.5">{ACT_ICON[n.type] ?? '•'}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-slate-800">
+                      {n.title}
+                      {n.container_number && <Link href={n.deep_link || `/dashboard/containers/${n.container_id}`} className="ml-2 font-mono text-xs text-sky-700 hover:underline">{n.container_number}</Link>}
+                    </p>
+                    <p className="text-xs text-slate-400">{new Date(n.created_at).toLocaleString()}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
     </Chrome>
   );
 }
 
-function PermissionsPanel({ permissions }: { permissions: string[] }) {
+function Stat({ label, value, sub, tone }: { label: string; value: React.ReactNode; sub?: React.ReactNode; tone?: 'warn' }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="text-sm font-semibold text-slate-500">Your permissions</h3>
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {permissions.map((p) => (
-          <span key={p} className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600">{p}</span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TenantPanel() {
-  const { token, auth } = useAuth();
-  const crossTenant = auth?.permissions.includes('tenant:read_all');
-  const [orgs, setOrgs] = useState<OrgSummary[] | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-
-  useEffect(() => {
-    apiFetchEnvelope<OrgSummary[]>('/organizations?limit=50', { token })
-      .then(({ json }) => (json.error ? setErr(json.error.message) : setOrgs(json.data ?? [])))
-      .catch(() => setErr('Could not load organizations.'));
-  }, [token]);
-
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-500">
-          {crossTenant ? 'Organizations (all tenants)' : 'Your organization'}
-        </h3>
-        {orgs && <span className="text-xs text-slate-400">{orgs.length} shown</span>}
-      </div>
-      {err && <p className="mt-3 text-sm text-red-600">{err}</p>}
-      {orgs && (
-        <table className="mt-3 w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-100 text-xs uppercase text-slate-400">
-              <th className="py-2 font-medium">Legal name</th>
-              <th className="py-2 font-medium">Type</th>
-              <th className="py-2 font-medium">KYC</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orgs.map((o) => (
-              <tr key={o.id} className="border-b border-slate-50">
-                <td className="py-2 text-slate-700">{o.legal_name}</td>
-                <td className="py-2 text-slate-500">{o.type}</td>
-                <td className="py-2">
-                  <span className={`rounded px-1.5 py-0.5 text-xs ${o.kyc_status === 'VERIFIED' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                    {o.kyc_status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+    <div className={`rounded-xl border p-5 shadow-soft ${tone === 'warn' ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-white'}`}>
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</p>
+      <div className="mt-1">{value}</div>
+      {sub && <p className="mt-0.5 text-xs text-slate-500">{sub}</p>}
     </div>
   );
 }
