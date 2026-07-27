@@ -45,7 +45,7 @@ export function Chrome({ auth, children }: { auth: AuthContext; children: React.
   const items = NAV.filter((n) => !n.permission || auth.permissions.includes(n.permission as never));
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#fafaf8]">
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-6">
           {/* Top row: brand + system status + sign out */}

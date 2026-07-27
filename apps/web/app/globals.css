@@ -1,3 +1,16 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #fafaf8; /* warm off-white app background */
+    --text: #0a2a2d; /* near-black teal */
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    /* Tabular, lining figures so amounts/dates/counts align in columns. */
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
+  }
+}
