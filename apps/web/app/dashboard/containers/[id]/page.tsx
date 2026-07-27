@@ -13,6 +13,7 @@ import { PaymentPanel } from '../../../../components/payment-panel';
 import { Money, MoneyList, StatusPill, type PillTone } from '../../../../components/ui';
 
 const COUNTDOWN_TONE: Record<string, PillTone> = { ok: 'gray', soon: 'amber', overdue: 'red' };
+const DEADLINE_TEXT: Record<string, string> = { ok: 'text-slate-700', soon: 'text-amber-600', overdue: 'text-red-600' };
 
 // Plain-language, Haiti-specific labels for each release step (per the
 // logistics overview: agency+APN fees → documents → AGD customs tax → release).
@@ -45,37 +46,11 @@ export default function ContainerDetailPage() {
 
   const canWrite = auth?.permissions.includes('charge:write');
 
-  async function syncTerminal() {
+  async function action(path: string, method = 'POST') {
     setBusy(true);
     setErr(null);
     try {
-      await apiFetch(`/containers/${id}/charges/sync-terminal`, { method: 'POST', token });
-      load();
-    } catch (e) {
-      setErr(e instanceof ApiClientError ? e.message : 'Sync failed.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function requestInspection() {
-    setBusy(true);
-    setErr(null);
-    try {
-      await apiFetch(`/containers/${id}/request-inspection`, { method: 'POST', token });
-      load();
-    } catch (e) {
-      setErr(e instanceof ApiClientError ? e.message : 'Inspection request failed.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function containerAction(path: string) {
-    setBusy(true);
-    setErr(null);
-    try {
-      await apiFetch(`/containers/${id}/${path}`, { method: 'POST', token });
+      await apiFetch(`/containers/${id}/${path}`, { method, token });
       load();
     } catch (e) {
       setErr(e instanceof ApiClientError ? e.message : 'Action failed.');
@@ -86,6 +61,8 @@ export default function ContainerDetailPage() {
 
   if (!ready || !auth) return <Loading />;
 
+  const cd = detail ? countdown(detail.container.last_free_day) : null;
+
   return (
     <Chrome auth={auth}>
       <Link href="/dashboard/containers" className="text-sm text-sky-700 hover:underline">← All containers</Link>
@@ -93,211 +70,204 @@ export default function ContainerDetailPage() {
 
       {detail && (
         <>
-          {(() => {
-            const cd = countdown(detail.container.last_free_day);
-            return (
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+          {/* Header card: identity + prominent deadline block */}
+          <div className="mt-3 rounded-xl border border-slate-200 bg-white p-5 shadow-soft">
+            <div className="flex flex-wrap items-start justify-between gap-6">
+              <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="font-mono text-2xl font-bold">{detail.container.container_number}</h1>
                   <StatusPill status={detail.container.status} />
                   <StatusPill status={detail.container.payment_status} />
-                  {cd && <StatusPill tone={COUNTDOWN_TONE[cd.tone]} label={`last free day · ${cd.label}`} />}
                 </div>
+                <div className="mt-3 grid gap-x-8 gap-y-1 sm:grid-cols-2">
+                  <Field label="B/L" value={detail.container.bl_number} mono />
+                  <Field label="Vessel / voyage" value={`${detail.container.voyage.vessel.name} · ${detail.container.voyage.voyage_number}`} />
+                  <Field label="Arrival" value={detail.container.arrival_date ? new Date(detail.container.arrival_date).toLocaleDateString() : '—'} />
+                  <Field label="Port" value={detail.container.voyage.port} />
+                  <Field label="Importer" value={detail.container.importer.legal_name} />
+                  <Field label="Terminal" value={detail.container.terminal?.legal_name ?? 'Not yet assigned'} />
+                </div>
+              </div>
+
+              <div className="w-full max-w-[15rem] rounded-lg border border-slate-200 bg-slate-50 p-4 sm:w-auto">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Last free day</p>
+                {detail.container.last_free_day ? (
+                  <>
+                    <p className={`text-lg font-bold ${DEADLINE_TEXT[cd?.tone ?? 'ok']}`}>{new Date(detail.container.last_free_day).toLocaleDateString()}</p>
+                    {cd && <p className={`text-sm font-semibold ${DEADLINE_TEXT[cd.tone]}`}>{cd.label}</p>}
+                    <p className="mt-1 text-[11px] leading-snug text-slate-400">Storage / demurrage begins accruing after this date.</p>
+                  </>
+                ) : (
+                  <p className="text-slate-400">—</p>
+                )}
                 {detail.total_owed && (
-                  <div className="text-right">
-                    <p className="text-xs uppercase tracking-wide text-slate-400">Total owed</p>
-                    <Money amount={detail.total_owed.amount} currency={detail.total_owed.currency} className="text-2xl font-bold text-slate-900" />
+                  <div className="mt-3 border-t border-slate-200 pt-2">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Total owed</p>
+                    <Money amount={detail.total_owed.amount} currency={detail.total_owed.currency} className="text-xl font-bold text-slate-900" />
                   </div>
                 )}
               </div>
-            );
-          })()}
-
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <Panel title="Container">
-              <Field label="Size / type" value={detail.container.size_type} />
-              <Field label="Arrival date" value={detail.container.arrival_date ? new Date(detail.container.arrival_date).toLocaleString() : '—'} />
-              <Field label="Importer" value={detail.container.importer.legal_name} />
-              <Field label="Terminal" value={detail.container.terminal?.legal_name ?? 'Not yet assigned'} />
-            </Panel>
-            <Panel title="Bill of lading & voyage">
-              <Field label="BL number" value={detail.container.bl_number} mono />
-              <Field label="Shipper" value={detail.container.shipper} />
-              <Field label="Vessel" value={`${detail.container.voyage.vessel.name} (IMO ${detail.container.voyage.vessel.imo})`} />
-              <Field label="Voyage / port" value={`${detail.container.voyage.voyage_number} · ${detail.container.voyage.port}`} />
-            </Panel>
+            </div>
           </div>
 
-          {/* Release progress — plain-language clearance checklist + blocker */}
-          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold text-slate-500">Release progress</h3>
-              <div className="flex gap-2">
-                {auth.permissions.includes('customs:clear') && !detail.container.cleared_at && (
-                  <button onClick={() => containerAction('customs-clear')} disabled={busy}
-                    className="rounded-lg border border-rose-300 px-3 py-1.5 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50">
-                    Customs clear
-                  </button>
-                )}
-                {auth.permissions.includes('release:authorize') && !detail.container.released_at && (
-                  <button onClick={() => containerAction('authorize-release')} disabled={busy}
-                    className="rounded-lg border border-emerald-300 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">
-                    Authorize release
-                  </button>
-                )}
-              </div>
-            </div>
+          <div className="mt-6 grid gap-6 lg:grid-cols-3">
+            {/* LEFT / main — everything you owe */}
+            <div className="space-y-6 lg:col-span-2">
+              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-500">Everything you owe</h3>
+                  <div className="flex gap-2">
+                    {auth.permissions.includes('inspection:request') && (
+                      <button onClick={() => action('request-inspection')} disabled={busy} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+                        Request inspection
+                      </button>
+                    )}
+                    {canWrite && (
+                      <button onClick={() => action('charges/sync-terminal')} disabled={busy} className="rounded-lg border border-sky-300 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-50 disabled:opacity-50">
+                        {busy ? 'Syncing…' : 'Sync terminal charges'}
+                      </button>
+                    )}
+                  </div>
+                </div>
 
-            {/* What is blocking delivery right now? */}
-            {(() => {
-              const next = detail.timeline.find((s) => !s.reached);
-              return next ? (
-                <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-                  <span className="text-lg">⏳</span>
-                  <p className="text-sm text-amber-800">
-                    <span className="font-semibold">Waiting on: {STEP_INFO[next.key]?.label ?? next.label}</span>
-                    <span className="block text-xs text-amber-700">{STEP_INFO[next.key]?.desc}</span>
+                {detail.charge_groups.length === 0 && (
+                  <p className="py-6 text-center text-sm text-slate-500">
+                    No charges yet.{canWrite ? ' Use “Sync terminal charges” to pull them from the terminal (mock).' : ''}
                   </p>
-                </div>
-              ) : (
-                <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
-                  <span className="text-lg">✓</span> Delivered — nothing is blocking this container.
-                </div>
-              );
-            })()}
-
-            <ol className="space-y-3">
-              {detail.timeline.map((s) => {
-                const info = STEP_INFO[s.key] ?? { label: s.label, desc: '' };
-                return (
-                  <li key={s.key} className="flex items-start gap-3">
-                    <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${s.reached ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-400'}`}>
-                      {s.reached ? '✓' : '•'}
-                    </span>
-                    <div className="min-w-0">
-                      <p className={`text-sm ${s.reached ? 'font-medium text-slate-800' : 'text-slate-400'}`}>
-                        {info.label}
-                        {s.at && <span className="ml-2 text-xs font-normal text-slate-400">{new Date(s.at).toLocaleDateString()}</span>}
-                      </p>
-                      <p className="text-xs text-slate-400">{info.desc}</p>
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
-
-          {/* Charges grouped by payee (spec §1.4) */}
-          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-500">Charges by payee</h3>
-              <div className="flex gap-2">
-                {auth.permissions.includes('inspection:request') && (
-                  <button
-                    onClick={requestInspection}
-                    disabled={busy}
-                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                  >
-                    Request inspection
-                  </button>
                 )}
-                {canWrite && (
-                  <button
-                    onClick={syncTerminal}
-                    disabled={busy}
-                    className="rounded-lg border border-sky-300 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-50 disabled:opacity-50"
-                  >
-                    {busy ? 'Syncing…' : 'Sync terminal charges'}
-                  </button>
-                )}
-              </div>
-            </div>
 
-            {detail.charge_groups.length === 0 && (
-              <p className="py-6 text-center text-sm text-slate-500">
-                No charges yet.{canWrite ? ' Use “Sync terminal charges” to pull them from the terminal (mock).' : ''}
-              </p>
-            )}
-
-            <div className="space-y-5">
-              {detail.charge_groups.map((g) => (
-                <div key={g.payee_org_id}>
-                  <div className="flex items-end justify-between border-b border-slate-100 pb-1">
-                    <div>
-                      <span className="text-sm font-semibold text-slate-700">{g.payee_name}</span>
-                      {(g.payee_type || g.settlement_hint) && (
-                        <span className="ml-2 text-xs text-slate-400">
-                          pay to{g.payee_type ? ` ${g.payee_type}` : ''}
-                          {g.settlement_hint ? ` · ${g.settlement_hint}` : ''}
-                        </span>
-                      )}
+                <div className="space-y-5">
+                  {detail.charge_groups.map((g) => (
+                    <div key={g.payee_org_id}>
+                      <div className="flex items-end justify-between border-b border-slate-100 pb-1">
+                        <div>
+                          <span className="text-sm font-semibold text-slate-700">{g.payee_name}</span>
+                          {g.payee_type && <span className="ml-2 text-xs text-slate-400">pay to {g.payee_type}</span>}
+                        </div>
+                        <MoneyList items={g.subtotals} className="text-sm font-semibold text-slate-900" />
+                      </div>
+                      <table className="mt-2 w-full text-left text-sm">
+                        <tbody>
+                          {g.charges.map((c) => (
+                            <tr key={c.id} className="text-slate-600">
+                              <td className="py-1.5 capitalize">{c.type.replace(/_/g, ' ')}</td>
+                              <td className="py-1.5 text-xs text-slate-400">{c.source}</td>
+                              <td className="py-1.5"><StatusPill status={c.status} /></td>
+                              <td className="py-1.5 text-right font-medium text-slate-800"><Money amount={c.amount} currency={c.currency} /></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                    <MoneyList items={g.subtotals} className="text-sm font-semibold text-slate-900" />
+                  ))}
+                </div>
+
+                {detail.totals_by_currency.length > 0 && (
+                  <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-3">
+                    <span className="text-sm font-semibold text-slate-500">Total owed</span>
+                    <MoneyList items={detail.totals_by_currency} className="text-lg font-bold text-slate-900" />
                   </div>
-                  <table className="mt-2 w-full text-left text-sm">
-                    <tbody>
-                      {g.charges.map((c) => (
-                        <tr key={c.id} className="text-slate-600">
-                          <td className="py-1.5">{c.type.replace(/_/g, ' ')}</td>
-                          <td className="py-1.5 text-xs text-slate-400">{c.source}</td>
-                          <td className="py-1.5">
-                            <StatusPill status={c.status} />
-                          </td>
-                          <td className="py-1.5 text-right font-medium text-slate-800"><Money amount={c.amount} currency={c.currency} /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ))}
+                )}
+              </div>
+
+              {auth.permissions.includes('payment:create') && <PaymentPanel detail={detail} token={token} onDone={load} />}
+              {auth.permissions.includes('document:write') && <DocumentUpload containerId={id} token={token} onDone={load} />}
+              {auth.permissions.includes('transport:manage') && <ArrangeTrucking containerId={id} token={token} />}
             </div>
 
-            {detail.totals_by_currency.length > 0 && (
-              <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-3">
-                <span className="text-sm font-semibold text-slate-500">Total owed</span>
-                <MoneyList items={detail.totals_by_currency} className="text-lg font-bold text-slate-900" />
-              </div>
-            )}
-          </div>
-
-          {auth.permissions.includes('payment:create') && (
-            <PaymentPanel detail={detail} token={token} onDone={load} />
-          )}
-
-          {auth.permissions.includes('document:write') && (
-            <DocumentUpload containerId={id} token={token} onDone={load} />
-          )}
-
-          {auth.permissions.includes('transport:manage') && (
-            <ArrangeTrucking containerId={id} token={token} />
-          )}
-
-          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="mb-3 text-sm font-semibold text-slate-500">Deadlines</h3>
-            {detail.deadlines.length === 0 ? (
-              <p className="text-sm text-slate-500">No deadlines tracked yet (added when charges carry a last-free-day).</p>
-            ) : (
-              <div className="space-y-2">
-                {detail.deadlines.map((dl) => {
-                  const cd = countdown(dl.datetime);
-                  return (
-                    <div key={dl.id} className="flex items-center justify-between border-b border-slate-50 pb-2 text-sm">
-                      <div>
-                        <span className="font-medium text-slate-700">{dl.type.replace(/_/g, ' ')}</span>
-                        <span className="ml-2 text-slate-400">{dl.payee_name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-600">{new Date(dl.datetime).toLocaleDateString()}</span>
-                        {cd && <StatusPill tone={COUNTDOWN_TONE[cd.tone]} label={cd.label} />}
-                      </div>
-                    </div>
-                  );
-                })}
-                <p className="pt-1 text-xs text-slate-400">
-                  Reminders fire automatically (in-app + email) at {detail.deadlines[0].alert_schedule.join(', ')} days before. See <Link href="/dashboard/alerts" className="text-sky-700 hover:underline">Alerts</Link>.
+            {/* RIGHT rail — who you pay, release progress, deadlines */}
+            <div className="space-y-6">
+              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft">
+                <h3 className="mb-3 text-sm font-semibold text-slate-500">Who you pay</h3>
+                {detail.charge_groups.length === 0 ? (
+                  <p className="text-sm text-slate-400">No payees yet.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {detail.charge_groups.map((g) => (
+                      <li key={g.payee_org_id} className="flex items-center justify-between gap-3 text-sm">
+                        <span className="min-w-0 truncate text-slate-700">{g.payee_name}</span>
+                        <MoneyList items={g.subtotals} className="font-medium text-slate-800" />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="mt-3 border-t border-slate-100 pt-2 text-xs text-slate-400">
+                  Rezo routes your payment straight to each party — it never holds the money.
                 </p>
               </div>
-            )}
+
+              {/* Release progress — plain-language clearance checklist + blocker */}
+              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-slate-500">Release progress</h3>
+                  <div className="flex gap-2">
+                    {auth.permissions.includes('customs:clear') && !detail.container.cleared_at && (
+                      <button onClick={() => action('customs-clear')} disabled={busy} className="rounded-lg border border-rose-300 px-2.5 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50">Customs clear</button>
+                    )}
+                    {auth.permissions.includes('release:authorize') && !detail.container.released_at && (
+                      <button onClick={() => action('authorize-release')} disabled={busy} className="rounded-lg border border-emerald-300 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">Authorize release</button>
+                    )}
+                  </div>
+                </div>
+
+                {(() => {
+                  const next = detail.timeline.find((s) => !s.reached);
+                  return next ? (
+                    <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                      <p className="text-sm font-semibold text-amber-800">Waiting on: {STEP_INFO[next.key]?.label ?? next.label}</p>
+                      <p className="text-xs text-amber-700">{STEP_INFO[next.key]?.desc}</p>
+                    </div>
+                  ) : (
+                    <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm font-semibold text-green-800">
+                      ✓ Delivered — nothing is blocking this container.
+                    </div>
+                  );
+                })()}
+
+                <ol className="space-y-3">
+                  {detail.timeline.map((s) => {
+                    const info = STEP_INFO[s.key] ?? { label: s.label, desc: '' };
+                    return (
+                      <li key={s.key} className="flex items-start gap-3">
+                        <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${s.reached ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-400'}`}>{s.reached ? '✓' : '•'}</span>
+                        <div className="min-w-0">
+                          <p className={`text-sm ${s.reached ? 'font-medium text-slate-800' : 'text-slate-400'}`}>
+                            {info.label}
+                            {s.at && <span className="ml-2 text-xs font-normal text-slate-400">{new Date(s.at).toLocaleDateString()}</span>}
+                          </p>
+                          <p className="text-xs text-slate-400">{info.desc}</p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft">
+                <h3 className="mb-3 text-sm font-semibold text-slate-500">Deadlines</h3>
+                {detail.deadlines.length === 0 ? (
+                  <p className="text-sm text-slate-500">No deadlines tracked yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {detail.deadlines.map((dl) => {
+                      const dcd = countdown(dl.datetime);
+                      return (
+                        <div key={dl.id} className="flex items-center justify-between gap-2 border-b border-slate-50 pb-2 text-sm">
+                          <div className="min-w-0">
+                            <span className="font-medium text-slate-700">{dl.type.replace(/_/g, ' ')}</span>
+                            <span className="ml-2 text-xs text-slate-400">{dl.payee_name}</span>
+                          </div>
+                          {dcd && <StatusPill tone={COUNTDOWN_TONE[dcd.tone]} label={dcd.label} />}
+                        </div>
+                      );
+                    })}
+                    <p className="pt-1 text-xs text-slate-400">
+                      Reminders fire automatically at {detail.deadlines[0].alert_schedule.join(', ')} days before. See <Link href="/dashboard/alerts" className="text-sky-700 hover:underline">Alerts</Link>.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </>
       )}
@@ -320,11 +290,7 @@ function DocumentUpload({ containerId, token, onDone }: { containerId: string; t
       form.append('file', file);
       form.append('container_id', containerId);
       form.append('doc_type', docType);
-      const res = await apiUpload<{ charges_created: number; charges_pending_review: number; verification_tasks: number }>(
-        '/documents',
-        form,
-        token,
-      );
+      const res = await apiUpload<{ charges_created: number; charges_pending_review: number; verification_tasks: number }>('/documents', form, token);
       setMsg(`Extracted ${res.charges_created} charge(s); ${res.charges_pending_review} need review (→ Ops queue).`);
       setFile(null);
       onDone();
@@ -336,7 +302,7 @@ function DocumentUpload({ containerId, token, onDone }: { containerId: string; t
   }
 
   return (
-    <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft">
       <h3 className="mb-3 text-sm font-semibold text-slate-500">Upload document</h3>
       <p className="mb-3 text-xs text-slate-400">
         A terminal invoice or declaration is stored and run through extraction (mock OCR/LLM). Low-confidence fields go to the Ops verification queue and are excluded from the total until confirmed.
@@ -368,17 +334,13 @@ function ArrangeTrucking({ containerId, token }: { containerId: string; token: s
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    apiFetch<{ id: string; legal_name: string }[]>('/organizations/directory?type=TRUCKER', { token })
-      .then(setTruckers).catch(() => {});
+    apiFetch<{ id: string; legal_name: string }[]>('/organizations/directory?type=TRUCKER', { token }).then(setTruckers).catch(() => {});
   }, [token]);
 
   async function create() {
     setBusy(true); setMsg(null);
     try {
-      await apiFetch('/transport-jobs', {
-        method: 'POST', token,
-        body: { container_id: containerId, trucker_org_id: truckerId || undefined, pickup, dropoff, price: Number(price) },
-      });
+      await apiFetch('/transport-jobs', { method: 'POST', token, body: { container_id: containerId, trucker_org_id: truckerId || undefined, pickup, dropoff, price: Number(price) } });
       setMsg('Transport job created — visible to the trucker under Trucking.');
       setDropoff('');
     } catch (e) {
@@ -387,7 +349,7 @@ function ArrangeTrucking({ containerId, token }: { containerId: string; token: s
   }
 
   return (
-    <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft">
       <h3 className="mb-3 text-sm font-semibold text-slate-500">Arrange trucking</h3>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
@@ -418,20 +380,11 @@ function ArrangeTrucking({ containerId, token }: { containerId: string; token: s
   );
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="mb-3 text-sm font-semibold text-slate-500">{title}</h3>
-      <div className="space-y-2">{children}</div>
-    </div>
-  );
-}
-
 function Field({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex justify-between gap-4 text-sm">
       <span className="text-slate-400">{label}</span>
-      <span className={`text-right text-slate-800 ${mono ? 'font-mono' : ''}`}>{value}</span>
+      <span className={`truncate text-right text-slate-800 ${mono ? 'font-mono' : ''}`}>{value}</span>
     </div>
   );
 }

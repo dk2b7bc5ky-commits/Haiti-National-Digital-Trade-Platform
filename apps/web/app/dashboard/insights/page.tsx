@@ -25,7 +25,7 @@ export default function InsightsPage() {
 
   return (
     <Chrome auth={auth}>
-      <h1 className="text-2xl font-bold">Reports</h1>
+      <h1 className="text-2xl font-bold">Dashboard</h1>
       <p className="mt-1 text-sm text-slate-500">Operational read-model from real platform activity{isGov ? ' + government view' : ''}.</p>
 
       {op && (
