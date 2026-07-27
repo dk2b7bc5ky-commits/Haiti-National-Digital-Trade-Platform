@@ -26,8 +26,7 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { href: '/dashboard', label: 'Home', icon: 'home' },
-  { href: '/dashboard/insights', label: 'Dashboards', icon: 'chart', permission: 'dashboard:view' },
+  { href: '/dashboard/insights', label: 'Reports', icon: 'chart', permission: 'dashboard:view' },
   { href: '/dashboard/containers', label: 'Containers', icon: 'box', permission: 'container:read' },
   { href: '/dashboard/alerts', label: 'Alerts', icon: 'bell', permission: 'container:read' },
   { href: '/dashboard/ops/verification', label: 'Verification', icon: 'check', permission: 'verification:read' },
