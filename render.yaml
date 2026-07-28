@@ -68,10 +68,8 @@ services:
         value: "20"
       - key: NODE_ENV
         value: production
-      # The web app composes https://<this host>/api/v1 at build time, so the
-      # two services are wired together automatically — no manual URL entry.
-      - key: NEXT_PUBLIC_API_HOST
-        fromService:
-          type: web
-          name: rezo-api
-          property: host
+      # Explicit API base URL (the browser calls this directly). Set to the
+      # deployed rezo-api service's public URL so the web app and API are
+      # reliably wired together regardless of blueprint build ordering.
+      - key: NEXT_PUBLIC_API_BASE_URL
+        value: https://rezo-api-f0iy.onrender.com/api/v1
