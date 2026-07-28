@@ -1,7 +1,15 @@
 import type { ApiResponse } from '@rezo/shared-types';
 
+// Resolution order:
+//   1. NEXT_PUBLIC_API_BASE_URL — an explicit full base URL (…/api/v1), if set.
+//   2. NEXT_PUBLIC_API_HOST — just the API hostname (Render injects this from
+//      the API service); we compose https://<host>/api/v1.
+//   3. Local dev default.
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api/v1';
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  (process.env.NEXT_PUBLIC_API_HOST
+    ? `https://${process.env.NEXT_PUBLIC_API_HOST}/api/v1`
+    : 'http://localhost:4000/api/v1');
 
 export class ApiClientError extends Error {
   constructor(

@@ -423,6 +423,16 @@ async function seedDemoDataset(): Promise<void> {
     rezo: (await prisma.payee.findFirstOrThrow({ where: { type: 'REZO' } })).orgId,
   };
 
+  // The accounts / payees / market / broker setup above is idempotent (upsert /
+  // find-first), so it is safe to re-run on every deploy. The demo dataset below
+  // uses plain create() with unique keys, so guard it: if the demo voyage's
+  // vessel already exists, this DB has been seeded — stop here and preserve
+  // whatever data (demo or real) is already there.
+  if (await prisma.vessel.findUnique({ where: { imo: 'IMO9310001' } })) {
+    console.log('Rezo seed: accounts ensured; demo dataset already present — skipping.');
+    return;
+  }
+
   // One voyage; a manifest with three bills of lading.
   const eta = daysAgo(10);
   const vessel = await prisma.vessel.create({ data: { name: 'MV Kreyòl Star', imo: 'IMO9310001', lineOrgId: line.id } });

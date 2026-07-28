@@ -184,3 +184,41 @@ Each phase is shippable on its own and verified before the next.
   it until a manifest exists.
 - **Cost.** Reading documents with Claude has a small per-document cost;
   negligible at your volume, worth naming.
+
+---
+
+## 9. What the real sample notices confirmed (structure only)
+
+Three real notices (Maersk, MSC, King Ocean) were reviewed. Actual B/L numbers,
+shipment data, and bank account numbers are **not** recorded here or in the
+repo — only the structure that shapes the reader. All three arrive at
+`traffic@alizeimports.com` and name **Alize Imports SA** as consignee, in a mix
+of **French and English**.
+
+**Every notice maps cleanly onto Rezo's existing model** — this validates the
+build. Key patterns the reader must handle:
+
+- **Formats vary by carrier:** a PDF form (Maersk / AGEMAR), an inline HTML
+  table in the email body (MSC), and a spreadsheet attachment (King Ocean /
+  DEMSA). The reader needs to handle body text, PDF, and spreadsheet.
+- **Multiple payees per shipment, each with its own total + bank** — exactly
+  Rezo's payee-grouped charges. Real parties seen: the line's **agent**
+  (AGEMAR, MSC Haiti, DEMSA), the **terminal / port operator** (Caribbean Port
+  Services), a separate **demurrage entity** (DECSA), plus **AGD** (customs) and
+  **APN** (port authority).
+- **Charge types seen:** freight collect, RCV, DOC, agency fee, APN (port),
+  AGD (customs), terminal local charge / LTC, gate move, electricity (reefer),
+  demurrage, security fee, guarantee deposit. These fold into Rezo's charge
+  types + payee mapping.
+- **Free time & the Containers-tab columns are real:** MSC's table literally
+  has **Demurrage (free days)**, **Electricity (free days)**, and a daily
+  **Tariff** rate — the exact columns we built. Free time differs by carrier
+  and by dry vs. reefer (e.g. 10 vs. 3 days; 21 vs. 10 days), so it's read
+  per-notice, not assumed.
+- **Container number isn't always present** (the Maersk form shows QTY + SIZE
+  but no container number) → the reader must be able to **match by B/L** when
+  the container number is missing.
+- **The inbox is noisy:** one sample carried an unrelated slide-deck
+  attachment. Reinforces the strict "is this an arrival notice?" filter.
+
+These become the test set for the reader in build phase **A1**.

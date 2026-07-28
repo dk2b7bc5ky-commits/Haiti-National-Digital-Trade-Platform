@@ -15,9 +15,11 @@ async function bootstrap(): Promise<void> {
   const origins = process.env.CORS_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean);
   app.enableCors({ origin: origins && origins.length > 0 ? origins : true, credentials: true });
 
-  const port = Number(process.env.API_PORT ?? 4000);
-  await app.listen(port);
-  new Logger('Bootstrap').log(`Rezo API listening on http://localhost:${port}/api/v1`);
+  // Managed hosts (Render, Railway, Heroku, …) inject the port to bind as PORT.
+  // Fall back to API_PORT (our local convention), then 4000.
+  const port = Number(process.env.PORT ?? process.env.API_PORT ?? 4000);
+  await app.listen(port, '0.0.0.0');
+  new Logger('Bootstrap').log(`Rezo API listening on port ${port} at /api/v1`);
 }
 
 void bootstrap();
