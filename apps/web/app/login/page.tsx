@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/auth';
 import { ApiClientError } from '../../lib/api';
@@ -103,6 +104,10 @@ export default function LoginPage() {
             ))}
           </div>
         </div>
+
+        <p className="mt-5 text-center text-xs text-slate-400">
+          <Link href="/vision" className="hover:text-sky-700 hover:underline">See Haiti’s national trade vision →</Link>
+        </p>
       </div>
     </main>
   );

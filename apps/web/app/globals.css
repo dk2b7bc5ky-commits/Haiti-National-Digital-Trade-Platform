@@ -14,3 +14,15 @@
     font-feature-settings: 'tnum' 1, 'lnum' 1;
   }
 }
+
+/* Restrained entrance motion (Linear-grade); disabled for reduced-motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-rise {
+    animation: rise 0.5s ease-out both;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
