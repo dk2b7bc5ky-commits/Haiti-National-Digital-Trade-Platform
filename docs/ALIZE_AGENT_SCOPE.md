@@ -112,18 +112,29 @@ email), so there's always a trail back to the original notice.
 
 ---
 
-## 6. Decisions for you (with my recommendation)
+## 6. Decisions
 
-These don't block me starting — I'll assume the **recommended** option unless
-you say otherwise.
-
-1. **Which inbox?**
-   - ✅ *Recommended:* a **dedicated Alize import inbox** (e.g.
-     `imports@…`) that agents send/forward notices to. Keeps your personal
-     mail private and gives the agent a clean signal.
-   - Alt: your personal inbox (`titeo@me.com`), filtered strictly to known
-     senders. Simplest, but the agent can see personal mail.
-   - Alt: a forward-in address you forward notices to. Most private.
+1. **Which inbox?** — ✅ **RESOLVED.**
+   - Email host: **Google Workspace** → the agent connects via **Google
+     OAuth** (you click "allow" once; no password shared) or a scoped
+     **app password**. Never the main account password, and never pasted into
+     chat or the repo — entered directly into the deployed server's secret
+     store at connection time.
+   - **`traffic@alizeimports.com`** — the **primary target.** This is the
+     operations inbox where **arrival notices and port / APN bills** arrive.
+     Today those get forwarded to an accountant to pay — *this agent replaces
+     that step*, putting the bills on Rezo to be paid directly to each payee.
+     ⚠️ It's also a live human inbox (supplier replies, tax bills to the
+     accountant). So the agent is **strictly read-only** and acts **only** on
+     messages that match arrival-notice / bill rules — everything else is
+     ignored and untouched.
+   - **`mateo@alizeimports.com`** — personal work inbox for **product
+     purchase & shipment confirmations** from suppliers. This is *different*
+     data (what was bought, from whom) — not arrival notices/charges. It's a
+     genuinely useful **future** feature (match a purchase to its incoming
+     container, pre-fill goods/description), but it is **out of scope for v1**.
+     v1 watches `traffic@` only.
+   - `titeo@me.com` is **not** used.
 
 2. **How much autonomy before you look?**
    - ✅ *Recommended:* **Draft for review** — agent fills everything in and
