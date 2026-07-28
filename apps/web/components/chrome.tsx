@@ -7,6 +7,7 @@ import type { HealthStatus, AuthContext } from '@rezo/shared-types';
 import { useAuth } from '../lib/auth';
 import { apiFetch } from '../lib/api';
 import { NotificationBell } from './notification-bell';
+import { CommandPalette } from './command-palette';
 
 /** Redirects to /login when not authenticated; returns the resolved auth state. */
 export function useRequireAuth() {
@@ -102,12 +103,22 @@ function SidebarNav({ items, pathname, onNavigate }: { items: NavItem[]; pathnam
 
 /** Shared page shell: left sidebar (desktop) + slide-over (mobile), sticky top bar. */
 export function Chrome({ auth, children }: { auth: AuthContext; children: React.ReactNode }) {
-  const { logout } = useAuth();
+  const { logout, token } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const items = NAV.filter((n) => !n.permission || auth.permissions.includes(n.permission as never));
   const signOut = () => { logout(); router.replace('/login'); };
+
+  // ⌘K / Ctrl+K opens the command palette.
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPaletteOpen((o) => !o); }
+    };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#fafaf8]">
@@ -147,6 +158,15 @@ export function Chrome({ auth, children }: { auth: AuthContext; children: React.
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
             </button>
             <SectorChip />
+            <button
+              onClick={() => setPaletteOpen(true)}
+              className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-400 hover:bg-slate-50 sm:flex"
+              aria-label="Search"
+            >
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
+              Search
+              <kbd className="rounded border border-slate-200 bg-slate-50 px-1.5 text-[11px] font-medium text-slate-400">⌘K</kbd>
+            </button>
           </div>
           <div className="flex items-center gap-3">
             <NotificationBell />
@@ -155,6 +175,8 @@ export function Chrome({ auth, children }: { auth: AuthContext; children: React.
         </header>
         <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
       </div>
+
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} navItems={items} token={token} />
     </div>
   );
 }

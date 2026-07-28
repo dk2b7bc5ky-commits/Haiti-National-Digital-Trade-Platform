@@ -13,6 +13,13 @@
     /* Tabular, lining figures so amounts/dates/counts align in columns. */
     font-feature-settings: 'tnum' 1, 'lnum' 1;
   }
+  /* Accessible, consistent keyboard focus (GOV.UK standard): visible ring on
+     keyboard navigation, no ring on mouse click. */
+  :focus-visible {
+    outline: 2px solid #20808e;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }
 
 /* Restrained entrance motion (Linear-grade); disabled for reduced-motion. */
