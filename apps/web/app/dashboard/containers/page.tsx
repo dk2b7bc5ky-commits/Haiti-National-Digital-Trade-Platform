@@ -6,6 +6,7 @@ import type { ContainerSummary, MarketConfig } from '@rezo/shared-types';
 import { useAuth } from '../../../lib/auth';
 import { apiFetch, apiFetchEnvelope } from '../../../lib/api';
 import { countdown } from '../../../lib/format';
+import { useT, countdownLabel } from '../../../lib/i18n';
 import { Chrome, Loading, useRequireAuth } from '../../../components/chrome';
 import { Money, MoneyList, Paid, StatusPill, EmptyState, type PillTone } from '../../../components/ui';
 
@@ -28,6 +29,7 @@ const PAY_OPTS = ['pending', 'overdue', 'paid', 'none'];
 export default function ContainersPage() {
   const { auth, ready } = useRequireAuth();
   const { token } = useAuth();
+  const t = useT();
   const [rows, setRows] = useState<ContainerSummary[] | null>(null);
   const [freeDays, setFreeDays] = useState(FREE_DAYS_DEFAULT);
   const [err, setErr] = useState<string | null>(null);
@@ -42,13 +44,14 @@ export default function ContainersPage() {
     if (!token) return;
     apiFetchEnvelope<ContainerSummary[]>('/containers?limit=200', { token })
       .then(({ json }) => (json.error ? setErr(json.error.message) : setRows(json.data ?? [])))
-      .catch(() => setErr('Could not load containers.'));
+      .catch(() => setErr(t('containers.loadError')));
     apiFetch<MarketConfig>('/markets/HT', { token })
       .then((m) => {
         const fd = (m.tariff?.free_days ?? {}) as { demurrage?: number; electric?: number };
         setFreeDays({ demurrage: fd.demurrage ?? FREE_DAYS_DEFAULT.demurrage, electric: fd.electric ?? FREE_DAYS_DEFAULT.electric });
       })
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const filtered = useMemo(() => {
@@ -74,36 +77,36 @@ export default function ContainersPage() {
   return (
     <Chrome auth={auth}>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Containers</h1>
+        <h1 className="text-2xl font-bold">{t('containers.title')}</h1>
         {auth.permissions.includes('manifest:submit') && (
           <Link href="/dashboard/manifests/new" className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700">
-            + Submit manifest
+            {t('containers.submitManifest')}
           </Link>
         )}
       </div>
-      <p className="mt-1 text-sm text-slate-500">One screen per container — arrival, free time, total owed, and the last-free-day countdown.</p>
+      <p className="mt-1 text-sm text-slate-500">{t('containers.subtitle')}</p>
 
       {/* Filter bar */}
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search container, B/L, or vessel…"
+          placeholder={t('containers.searchPlaceholder')}
           className="min-w-[16rem] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
         />
         <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-lg border border-slate-300 px-2 py-2 text-sm">
-          <option value="">All statuses</option>
-          {STATUS_OPTS.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+          <option value="">{t('containers.allStatuses')}</option>
+          {STATUS_OPTS.map((s) => <option key={s} value={s}>{t(`st.${s}`)}</option>)}
         </select>
         <select value={pay} onChange={(e) => setPay(e.target.value)} className="rounded-lg border border-slate-300 px-2 py-2 text-sm">
-          <option value="">Any payment</option>
-          {PAY_OPTS.map((s) => <option key={s} value={s}>{s}</option>)}
+          <option value="">{t('containers.anyPayment')}</option>
+          {PAY_OPTS.map((s) => <option key={s} value={s}>{t(`pay.${s}`)}</option>)}
         </select>
         <label className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm ${atRiskOnly ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-slate-300 text-slate-600'}`}>
-          <input type="checkbox" checked={atRiskOnly} onChange={(e) => setAtRiskOnly(e.target.checked)} /> At risk only
+          <input type="checkbox" checked={atRiskOnly} onChange={(e) => setAtRiskOnly(e.target.checked)} /> {t('containers.atRiskOnly')}
         </label>
-        {anyFilter && <button onClick={clear} className="text-sm text-sky-700 hover:underline">Clear</button>}
-        {rows && <span className="ml-auto text-xs text-slate-400">{filtered.length} of {rows.length}</span>}
+        {anyFilter && <button onClick={clear} className="text-sm text-sky-700 hover:underline">{t('common.clear')}</button>}
+        {rows && <span className="ml-auto text-xs text-slate-400">{t('common.ofCount', { a: filtered.length, b: rows.length })}</span>}
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-soft">
@@ -124,23 +127,23 @@ export default function ContainersPage() {
 
         {/* Empty states */}
         {rows && rows.length === 0 && (
-          <EmptyState title="No containers yet." hint="Submit a manifest (or connect your inbox) to get started." />
+          <EmptyState title={t('containers.noneTitle')} hint={t('containers.noneHint')} />
         )}
         {rows && rows.length > 0 && filtered.length === 0 && (
-          <EmptyState title="No containers match your filters." hint="Try clearing the search or filters." />
+          <EmptyState title={t('containers.noMatchTitle')} hint={t('containers.noMatchHint')} />
         )}
 
         {rows && filtered.length > 0 && (
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <th className="px-5 py-3 font-medium">Container</th>
-                <th className="px-5 py-3 font-medium">Arrival date</th>
-                <th className="px-5 py-3 text-center font-medium">Free electric</th>
-                <th className="px-5 py-3 text-center font-medium">Free demurrage</th>
-                <th className="px-5 py-3 text-right font-medium">Total owed</th>
-                <th className="px-5 py-3 font-medium">Payment</th>
-                <th className="px-5 py-3 font-medium">Last free day</th>
+                <th className="px-5 py-3 font-medium">{t('containers.colContainer')}</th>
+                <th className="px-5 py-3 font-medium">{t('containers.colArrival')}</th>
+                <th className="px-5 py-3 text-center font-medium">{t('containers.colFreeElectric')}</th>
+                <th className="px-5 py-3 text-center font-medium">{t('containers.colFreeDemurrage')}</th>
+                <th className="px-5 py-3 text-right font-medium">{t('common.totalOwed')}</th>
+                <th className="px-5 py-3 font-medium">{t('containers.colPayment')}</th>
+                <th className="px-5 py-3 font-medium">{t('containers.colLastFreeDay')}</th>
               </tr>
             </thead>
             <tbody>
@@ -158,13 +161,13 @@ export default function ContainersPage() {
                     </td>
                     <td className="px-5 py-3 text-center">
                       {isReefer ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">⚡ {freeDays.electric} days</span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">⚡ {t('containers.days', { n: freeDays.electric })}</span>
                       ) : (
                         <span className="text-slate-300">—</span>
                       )}
                     </td>
                     <td className="px-5 py-3 text-center">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">⏳ {freeDays.demurrage} days</span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">⏳ {t('containers.days', { n: freeDays.demurrage })}</span>
                     </td>
                     <td className="px-5 py-3 text-right font-medium text-slate-800">
                       {c.total_owed ? (
@@ -175,12 +178,12 @@ export default function ContainersPage() {
                         <MoneyList items={[]} empty="$0.00" />
                       )}
                     </td>
-                    <td className="px-5 py-3"><StatusPill status={c.payment_status} /></td>
+                    <td className="px-5 py-3"><StatusPill status={c.payment_status} label={t(`pay.${c.payment_status}`)} /></td>
                     <td className="px-5 py-3">
                       {c.last_free_day ? (
                         <div className="flex items-center gap-2">
                           <span className="text-slate-600">{new Date(c.last_free_day).toLocaleDateString()}</span>
-                          {cd && <StatusPill tone={COUNTDOWN_TONE[cd.tone]} label={cd.label} />}
+                          {cd && <StatusPill tone={COUNTDOWN_TONE[cd.tone]} label={countdownLabel(cd, t)} />}
                         </div>
                       ) : (
                         <span className="text-slate-400">—</span>

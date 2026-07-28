@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ContainerDetail, PaymentRequestSummary, MarketConfig, Money as MoneyT } from '@rezo/shared-types';
 import { apiFetch, ApiClientError } from '../lib/api';
 import { formatMoney } from '../lib/format';
+import { useT, type TFunc } from '../lib/i18n';
 import { Money, MoneyList, StatusPill } from './ui';
 
 function uuid(): string {
@@ -13,10 +14,15 @@ function uuid(): string {
 type Step = 'review' | 'method' | 'confirm' | 'done';
 
 const METHODS = [
-  { id: 'bank_transfer', label: 'Bank transfer', desc: 'Direct bank-to-bank (mock rail)' },
-  { id: 'card', label: 'Card', desc: 'Debit or credit (mock)' },
-  { id: 'local_rail', label: 'Local rail / mobile money', desc: 'Domestic settlement (mock)' },
+  { id: 'bank_transfer', labelKey: 'ppanel.bankTransfer', descKey: 'ppanel.bankTransferDesc' },
+  { id: 'card', labelKey: 'ppanel.card', descKey: 'ppanel.cardDesc' },
+  { id: 'local_rail', labelKey: 'ppanel.localRail', descKey: 'ppanel.localRailDesc' },
 ];
+
+const methodLabel = (t: TFunc, id: string) => {
+  const m = METHODS.find((x) => x.id === id);
+  return m ? t(m.labelKey) : id;
+};
 
 /**
  * Pay flow (spec Flow C / design brief §4.5): three calm steps —
@@ -25,6 +31,7 @@ const METHODS = [
  * service fee is not surfaced in the UI.
  */
 export function PaymentPanel({ detail, token, onDone }: { detail: ContainerDetail; token: string | null; onDone: () => void }) {
+  const t = useT();
   const containerId = detail.container.id;
   const payable = useMemo(() => detail.charges.filter((c) => c.status === 'pending' || c.status === 'overdue'), [detail.charges]);
   const reviewGroups = useMemo(
@@ -57,7 +64,7 @@ export function PaymentPanel({ detail, token, onDone }: { detail: ContainerDetai
   if (payable.length === 0) {
     return (
       <div className="rounded-xl border border-green-200 bg-green-50 p-5 text-sm text-green-800 shadow-soft">
-        ✓ All charges settled — nothing to pay.
+        {t('ppanel.allSettled')}
       </div>
     );
   }
@@ -76,7 +83,7 @@ export function PaymentPanel({ detail, token, onDone }: { detail: ContainerDetai
       setRequest(r);
       setStep('method');
     } catch (e) {
-      setErr(e instanceof ApiClientError ? e.message : 'Could not prepare payment.');
+      setErr(e instanceof ApiClientError ? e.message : t('ppanel.couldNotPrepare'));
     } finally { setBusy(false); }
   }
 
@@ -89,7 +96,7 @@ export function PaymentPanel({ detail, token, onDone }: { detail: ContainerDetai
       setStep('done');
       onDone();
     } catch (e) {
-      setErr(e instanceof ApiClientError ? e.message : 'Payment failed.');
+      setErr(e instanceof ApiClientError ? e.message : t('ppanel.paymentFailed'));
     } finally { setBusy(false); }
   }
 
@@ -99,7 +106,7 @@ export function PaymentPanel({ detail, token, onDone }: { detail: ContainerDetai
       `Reference: ${r.id}`,
       `Container: ${detail.container.container_number}`,
       `Status:    ${r.status}`,
-      `Method:    ${METHODS.find((m) => m.id === method)?.label ?? method}`,
+      `Method:    ${methodLabel(t, method)}`,
       '',
       'Routed directly to each payee:',
       ...payRoutings(r).map((x) => `  ${x.payee_name.padEnd(28)} ${formatMoney(x.settlement_amount, r.settlement_currency)}  [${x.status}]`),
@@ -117,34 +124,34 @@ export function PaymentPanel({ detail, token, onDone }: { detail: ContainerDetai
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-soft">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-500">Pay charges</h3>
+        <h3 className="text-sm font-semibold text-slate-500">{t('ppanel.payCharges')}</h3>
         {step !== 'done' && <Stepper step={step} />}
       </div>
 
       {/* STEP 1 — Review */}
       {step === 'review' && (
         <div>
-          <p className="mb-3 text-xs text-slate-400">One authorization routes each portion directly to its payee. Rezo never holds the funds; the FX rate is frozen when you pay.</p>
+          <p className="mb-3 text-xs text-slate-400">{t('ppanel.oneAuth')}</p>
           <div className="space-y-3">
             {reviewGroups.map((g) => (
               <div key={g.name} className="flex items-center justify-between border-b border-slate-50 pb-2">
-                <span className="text-sm text-slate-700">{g.name}<span className="ml-2 text-xs text-slate-400">{g.charges.length} charge(s)</span></span>
+                <span className="text-sm text-slate-700">{g.name}<span className="ml-2 text-xs text-slate-400">{t('ppanel.chargeCount', { n: g.charges.length })}</span></span>
                 <MoneyList items={sumMoney(g.charges)} className="text-sm font-medium text-slate-800" />
               </div>
             ))}
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-3">
             <div className="flex items-center gap-2">
-              <label className="text-sm text-slate-500">Settle in</label>
+              <label className="text-sm text-slate-500">{t('ppanel.settleIn')}</label>
               <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm">
                 {currencies.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-slate-500">Total</span>
+              <span className="text-sm text-slate-500">{t('common.total')}</span>
               <MoneyList items={payableTotal} className="text-lg font-bold text-slate-900" />
               <button onClick={toMethod} disabled={busy} className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50">
-                {busy ? 'Preparing…' : 'Continue'}
+                {busy ? t('ppanel.preparing') : t('common.continue')}
               </button>
             </div>
           </div>
@@ -154,20 +161,20 @@ export function PaymentPanel({ detail, token, onDone }: { detail: ContainerDetai
       {/* STEP 2 — Method */}
       {step === 'method' && request && (
         <div>
-          <p className="mb-3 text-sm text-slate-500">Choose how to pay.</p>
+          <p className="mb-3 text-sm text-slate-500">{t('ppanel.chooseHow')}</p>
           <div className="grid gap-3 sm:grid-cols-3">
             {METHODS.map((m) => (
               <button key={m.id} onClick={() => setMethod(m.id)} className={`rounded-xl border p-4 text-left transition-colors ${method === m.id ? 'border-sky-500 bg-sky-50 ring-1 ring-sky-500' : 'border-slate-200 hover:bg-slate-50'}`}>
-                <p className="text-sm font-semibold text-slate-800">{m.label}</p>
-                <p className="mt-0.5 text-xs text-slate-500">{m.desc}</p>
+                <p className="text-sm font-semibold text-slate-800">{t(m.labelKey)}</p>
+                <p className="mt-0.5 text-xs text-slate-500">{t(m.descKey)}</p>
               </button>
             ))}
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-3">
-            <button onClick={() => setStep('review')} className="text-sm text-slate-500 hover:underline">← Back</button>
+            <button onClick={() => setStep('review')} className="text-sm text-slate-500 hover:underline">{t('common.back')}</button>
             <div className="flex items-center gap-3">
               <MoneyList items={[displayTotal(request)]} className="text-lg font-bold text-slate-900" />
-              <button onClick={() => setStep('confirm')} className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Continue</button>
+              <button onClick={() => setStep('confirm')} className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">{t('common.continue')}</button>
             </div>
           </div>
         </div>
@@ -178,18 +185,18 @@ export function PaymentPanel({ detail, token, onDone }: { detail: ContainerDetai
         <div>
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-500">Paying</span>
+              <span className="text-sm text-slate-500">{t('ppanel.paying')}</span>
               <MoneyList items={[displayTotal(request)]} className="text-2xl font-bold text-slate-900" />
             </div>
             <p className="mt-1 text-xs text-slate-400">
-              {payRoutings(request).length} payee(s) · {METHODS.find((m) => m.id === method)?.label} · routed directly to each party
+              {t('ppanel.payeeLine', { n: payRoutings(request).length, method: methodLabel(t, method) })}
             </p>
           </div>
           {err && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{err}</p>}
           <div className="mt-4 flex items-center justify-between">
-            <button onClick={() => setStep('method')} disabled={busy} className="text-sm text-slate-500 hover:underline">← Back</button>
+            <button onClick={() => setStep('method')} disabled={busy} className="text-sm text-slate-500 hover:underline">{t('common.back')}</button>
             <button onClick={pay} disabled={busy} className="rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50">
-              {busy ? 'Paying…' : `Pay ${formatMoney(displayTotal(request).amount, request.settlement_currency)}`}
+              {busy ? t('ppanel.paying') : t('ppanel.payAmount', { amount: formatMoney(displayTotal(request).amount, request.settlement_currency) })}
             </button>
           </div>
         </div>
@@ -209,14 +216,15 @@ function Receipt({
   request: PaymentRequestSummary; method: string;
   routings: PaymentRequestSummary['routings']; total: MoneyT; onDownload: () => void;
 }) {
+  const t = useT();
   const ok = request.status === 'settled';
   return (
     <div>
       <div className={`flex items-center gap-3 rounded-xl border p-4 ${ok ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}`}>
         <span className={`flex h-9 w-9 items-center justify-center rounded-full text-lg text-white ${ok ? 'bg-green-600' : 'bg-amber-500'}`}>{ok ? '✓' : '!'}</span>
         <div>
-          <p className={`font-semibold ${ok ? 'text-green-800' : 'text-amber-800'}`}>{ok ? 'Payment sent' : 'Partially settled'}</p>
-          <p className="text-xs text-slate-500">Reference {request.id.slice(0, 8)}</p>
+          <p className={`font-semibold ${ok ? 'text-green-800' : 'text-amber-800'}`}>{ok ? t('ppanel.paymentSent') : t('ppanel.partiallySettled')}</p>
+          <p className="text-xs text-slate-500">{t('ppanel.reference', { id: request.id.slice(0, 8) })}</p>
         </div>
         <div className="ml-auto text-right">
           <Money amount={total.amount} currency={total.currency} className="text-xl font-bold text-slate-900" />
@@ -224,7 +232,7 @@ function Receipt({
       </div>
 
       <table className="mt-4 w-full text-left text-sm">
-        <thead><tr className="border-b border-slate-100 text-xs uppercase text-slate-400"><th className="py-2 font-medium">Paid to</th><th className="py-2 text-right font-medium">Amount</th><th className="py-2 text-right font-medium">Status</th></tr></thead>
+        <thead><tr className="border-b border-slate-100 text-xs uppercase text-slate-400"><th className="py-2 font-medium">{t('ppanel.paidTo')}</th><th className="py-2 text-right font-medium">{t('ppanel.amount')}</th><th className="py-2 text-right font-medium">{t('ppanel.status')}</th></tr></thead>
         <tbody>
           {routings.map((r) => (
             <tr key={r.id} className="border-b border-slate-50">
@@ -236,27 +244,28 @@ function Receipt({
         </tbody>
       </table>
 
-      <p className="mt-3 text-xs text-slate-400">Sent directly to each payee — Rezo never held the money.</p>
+      <p className="mt-3 text-xs text-slate-400">{t('ppanel.sentDirectly')}</p>
       <div className="mt-4 flex items-center gap-3">
-        <button onClick={onDownload} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Download receipt</button>
-        <span className="text-xs text-slate-400">Method: {METHODS.find((m) => m.id === method)?.label ?? method}</span>
+        <button onClick={onDownload} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">{t('ppanel.downloadReceipt')}</button>
+        <span className="text-xs text-slate-400">{t('ppanel.methodLabel', { m: methodLabel(t, method) })}</span>
       </div>
     </div>
   );
 }
 
 function Stepper({ step }: { step: Step }) {
-  const steps: { key: Step; label: string }[] = [
-    { key: 'review', label: 'Review' },
-    { key: 'method', label: 'Method' },
-    { key: 'confirm', label: 'Confirm' },
+  const t = useT();
+  const steps: { key: Step; labelKey: string }[] = [
+    { key: 'review', labelKey: 'ppanel.review' },
+    { key: 'method', labelKey: 'ppanel.method' },
+    { key: 'confirm', labelKey: 'ppanel.confirm' },
   ];
   const idx = steps.findIndex((s) => s.key === step);
   return (
     <div className="flex items-center gap-1.5 text-xs">
       {steps.map((s, i) => (
         <span key={s.key} className="flex items-center gap-1.5">
-          <span className={`rounded-full px-2 py-0.5 font-medium ${i === idx ? 'bg-sky-600 text-white' : i < idx ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-400'}`}>{s.label}</span>
+          <span className={`rounded-full px-2 py-0.5 font-medium ${i === idx ? 'bg-sky-600 text-white' : i < idx ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-400'}`}>{t(s.labelKey)}</span>
           {i < steps.length - 1 && <span className="text-slate-300">›</span>}
         </span>
       ))}

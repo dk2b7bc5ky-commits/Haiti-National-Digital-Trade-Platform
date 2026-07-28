@@ -6,8 +6,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { HealthStatus, AuthContext } from '@rezo/shared-types';
 import { useAuth } from '../lib/auth';
 import { apiFetch } from '../lib/api';
+import { useT } from '../lib/i18n';
 import { NotificationBell } from './notification-bell';
 import { CommandPalette } from './command-palette';
+import { ThemeToggle, LanguageSwitcher } from './prefs';
 
 /** Redirects to /login when not authenticated; returns the resolved auth state. */
 export function useRequireAuth() {
@@ -19,6 +21,13 @@ export function useRequireAuth() {
   return { loading, token, auth, logout, ready: !loading && !!token && !!auth };
 }
 
+interface NavDef {
+  href: string;
+  labelKey: string;
+  icon: string;
+  permission?: string;
+}
+
 interface NavItem {
   href: string;
   label: string;
@@ -26,17 +35,17 @@ interface NavItem {
   permission?: string;
 }
 
-const NAV: NavItem[] = [
-  { href: '/dashboard/insights', label: 'Dashboard', icon: 'chart', permission: 'dashboard:view' },
-  { href: '/dashboard/containers', label: 'Containers', icon: 'box', permission: 'container:read' },
-  { href: '/dashboard/alerts', label: 'Alerts', icon: 'bell', permission: 'container:read' },
-  { href: '/dashboard/ops/verification', label: 'Verification', icon: 'check', permission: 'verification:read' },
-  { href: '/dashboard/broker/clients', label: 'My importers', icon: 'users', permission: 'broker:manage' },
-  { href: '/dashboard/jobs', label: 'Trucking', icon: 'truck', permission: 'transport:drive' },
-  { href: '/dashboard/gate', label: 'Gate', icon: 'gate', permission: 'gate:manage' },
-  { href: '/dashboard/api-keys', label: 'API keys', icon: 'key', permission: 'apikey:manage' },
-  { href: '/dashboard/billing', label: 'Billing', icon: 'receipt', permission: 'org:read' },
-  { href: '/dashboard/manifests/new', label: 'Submit manifest', icon: 'doc', permission: 'manifest:submit' },
+const NAV: NavDef[] = [
+  { href: '/dashboard/insights', labelKey: 'nav.dashboard', icon: 'chart', permission: 'dashboard:view' },
+  { href: '/dashboard/containers', labelKey: 'nav.containers', icon: 'box', permission: 'container:read' },
+  { href: '/dashboard/alerts', labelKey: 'nav.alerts', icon: 'bell', permission: 'container:read' },
+  { href: '/dashboard/ops/verification', labelKey: 'nav.verification', icon: 'check', permission: 'verification:read' },
+  { href: '/dashboard/broker/clients', labelKey: 'nav.myImporters', icon: 'users', permission: 'broker:manage' },
+  { href: '/dashboard/jobs', labelKey: 'nav.trucking', icon: 'truck', permission: 'transport:drive' },
+  { href: '/dashboard/gate', labelKey: 'nav.gate', icon: 'gate', permission: 'gate:manage' },
+  { href: '/dashboard/api-keys', labelKey: 'nav.apiKeys', icon: 'key', permission: 'apikey:manage' },
+  { href: '/dashboard/billing', labelKey: 'nav.billing', icon: 'receipt', permission: 'org:read' },
+  { href: '/dashboard/manifests/new', labelKey: 'nav.submitManifest', icon: 'doc', permission: 'manifest:submit' },
 ];
 
 function NavIcon({ name }: { name: string }) {
@@ -104,11 +113,14 @@ function SidebarNav({ items, pathname, onNavigate }: { items: NavItem[]; pathnam
 /** Shared page shell: left sidebar (desktop) + slide-over (mobile), sticky top bar. */
 export function Chrome({ auth, children }: { auth: AuthContext; children: React.ReactNode }) {
   const { logout, token } = useAuth();
+  const t = useT();
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const items = NAV.filter((n) => !n.permission || auth.permissions.includes(n.permission as never));
+  const items: NavItem[] = NAV
+    .filter((n) => !n.permission || auth.permissions.includes(n.permission as never))
+    .map((n) => ({ href: n.href, icon: n.icon, permission: n.permission, label: t(n.labelKey) }));
   const signOut = () => { logout(); router.replace('/login'); };
 
   // ⌘K / Ctrl+K opens the command palette.
@@ -128,7 +140,7 @@ export function Chrome({ auth, children }: { auth: AuthContext; children: React.
         <SidebarNav items={items} pathname={pathname} />
         <div className="border-t border-slate-200 p-3">
           <button onClick={signOut} className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900">
-            Sign out
+            {t('common.signOut')}
           </button>
         </div>
       </aside>
@@ -144,7 +156,7 @@ export function Chrome({ auth, children }: { auth: AuthContext; children: React.
             </div>
             <SidebarNav items={items} pathname={pathname} onNavigate={() => setOpen(false)} />
             <div className="border-t border-slate-200 p-3">
-              <button onClick={signOut} className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-500 hover:bg-slate-100">Sign out</button>
+              <button onClick={signOut} className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-500 hover:bg-slate-100">{t('common.signOut')}</button>
             </div>
           </aside>
         </div>
@@ -161,14 +173,16 @@ export function Chrome({ auth, children }: { auth: AuthContext; children: React.
             <button
               onClick={() => setPaletteOpen(true)}
               className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-400 hover:bg-slate-50 sm:flex"
-              aria-label="Search"
+              aria-label={t('common.search')}
             >
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></svg>
-              Search
+              {t('common.search')}
               <kbd className="rounded border border-slate-200 bg-slate-50 px-1.5 text-[11px] font-medium text-slate-400">⌘K</kbd>
             </button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <LanguageSwitcher />
+            <ThemeToggle />
             <NotificationBell />
             <SystemStatus />
           </div>
@@ -183,23 +197,25 @@ export function Chrome({ auth, children }: { auth: AuthContext; children: React.
 
 /** Static sector indicator (the national vision: Trade live, others on the roadmap). */
 function SectorChip() {
+  const t = useT();
   return (
     <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-medium text-slate-700">
       <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-      Trade &amp; Customs
+      {t('chrome.tradeCustoms')}
     </span>
   );
 }
 
 export function SystemStatus() {
   const { token } = useAuth();
+  const t = useT();
   const [ok, setOk] = useState<boolean | null>(null);
   useEffect(() => {
     apiFetch<HealthStatus>('/health', { token })
       .then((h) => setOk(h.status === 'ok'))
       .catch(() => setOk(false));
   }, [token]);
-  const label = ok === null ? 'checking' : ok ? 'API ok' : 'API down';
+  const label = ok === null ? t('chrome.apiChecking') : ok ? t('chrome.apiOk') : t('chrome.apiDown');
   const cls = ok === null ? 'bg-slate-100 text-slate-500' : ok ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
   return <span className={`hidden rounded-full px-2.5 py-1 text-xs font-medium sm:inline ${cls}`}>{label}</span>;
 }

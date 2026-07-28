@@ -5,12 +5,14 @@ import type { OperationalDashboard, GovernmentDashboard } from '@rezo/shared-typ
 import { useAuth } from '../../../lib/auth';
 import { apiFetch } from '../../../lib/api';
 import { formatMoneyList } from '../../../lib/format';
+import { useT } from '../../../lib/i18n';
 import { Chrome, Loading, useRequireAuth } from '../../../components/chrome';
 import { Money, CountPill } from '../../../components/ui';
 
 export default function InsightsPage() {
   const { auth, ready } = useRequireAuth();
   const { token } = useAuth();
+  const t = useT();
   const [op, setOp] = useState<OperationalDashboard | null>(null);
   const [gov, setGov] = useState<GovernmentDashboard | null>(null);
   const isGov = auth?.permissions.includes('dashboard:gov');
@@ -25,22 +27,22 @@ export default function InsightsPage() {
 
   return (
     <Chrome auth={auth}>
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-      <p className="mt-1 text-sm text-slate-500">Operational read-model from real platform activity{isGov ? ' + government view' : ''}.</p>
+      <h1 className="text-2xl font-bold">{t('nav.dashboard')}</h1>
+      <p className="mt-1 text-sm text-slate-500">{t('insights.subtitle')}{isGov ? t('insights.govSuffix') : ''}.</p>
 
       {op && (
         <>
           <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat label="Containers" value={String(op.containers_total)} />
-            <Stat label="Released" value={String(op.released)} sub={`${op.gated_out} gated out`} />
-            <Stat label="Avg clearance" value={op.avg_clearance_days != null ? `${op.avg_clearance_days} d` : '—'} />
-            <Stat label="Payments processed" value={String(op.payments_processed)} sub={formatMoneyList(op.amount_processed)} />
+            <Stat label={t('insights.containers')} value={String(op.containers_total)} />
+            <Stat label={t('home.released')} value={String(op.released)} sub={t('home.gatedOut', { n: op.gated_out })} />
+            <Stat label={t('insights.avgClearance')} value={op.avg_clearance_days != null ? `${op.avg_clearance_days} d` : '—'} />
+            <Stat label={t('home.paymentsProcessed')} value={String(op.payments_processed)} sub={formatMoneyList(op.amount_processed)} />
           </section>
 
           <section className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat label="Deadlines at risk (7d)" value={String(op.deadlines_at_risk)} tone={op.deadlines_at_risk > 0 ? 'warn' : undefined} />
+            <Stat label={t('insights.deadlinesAtRisk')} value={String(op.deadlines_at_risk)} tone={op.deadlines_at_risk > 0 ? 'warn' : undefined} />
             <div className="sm:col-span-2 lg:col-span-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs uppercase tracking-wide text-slate-400">Containers by status</p>
+              <p className="text-xs uppercase tracking-wide text-slate-400">{t('insights.byStatus')}</p>
               <div className="mt-2 flex flex-wrap gap-2 text-sm">
                 {Object.entries(op.by_status).map(([k, v]) => (
                   <span key={k} className="rounded-md bg-slate-100 px-2 py-1 text-slate-700">{k.replace(/_/g, ' ')}: <strong>{v}</strong></span>
@@ -50,9 +52,9 @@ export default function InsightsPage() {
           </section>
 
           <section className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold text-slate-500">Revenue by fee type (paid)</h2>
+            <h2 className="mb-3 text-sm font-semibold text-slate-500">{t('insights.revenueByFee')}</h2>
             {op.revenue_by_fee_type.length === 0 ? (
-              <p className="text-sm text-slate-500">No paid charges yet.</p>
+              <p className="text-sm text-slate-500">{t('insights.noPaidCharges')}</p>
             ) : (
               <ul className="divide-y divide-slate-50">
                 {op.revenue_by_fee_type.map((r) => (
@@ -72,14 +74,14 @@ export default function InsightsPage() {
 
       {gov && (
         <section className="mt-8">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">Government view</h2>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">{t('insights.govView')}</h2>
           <div className="grid gap-4 sm:grid-cols-3">
-            <Stat label="Collections (routed)" value={formatMoneyList(gov.collections)} />
-            <Stat label="Customs collections" value={formatMoneyList(gov.customs_collections)} />
-            <Stat label="In-port (congestion)" value={String(gov.congestion_in_port)} />
+            <Stat label={t('insights.collections')} value={formatMoneyList(gov.collections)} />
+            <Stat label={t('insights.customsCollections')} value={formatMoneyList(gov.customs_collections)} />
+            <Stat label={t('insights.inPort')} value={String(gov.congestion_in_port)} />
           </div>
           <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-slate-400">Arrivals (last 7 days)</p>
+            <p className="text-xs uppercase tracking-wide text-slate-400">{t('insights.arrivals7d')}</p>
             <div className="mt-4 flex items-end gap-3 border-b border-slate-200" style={{ height: 96 }}>
               {gov.arrivals_by_day.map((d) => {
                 const max = Math.max(1, ...gov.arrivals_by_day.map((x) => x.count));

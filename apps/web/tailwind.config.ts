@@ -19,6 +19,8 @@ const teal = {
 
 const config: Config = {
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
+  // Dark mode is driven by a `dark` class on <html> (set by ThemeProvider).
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {

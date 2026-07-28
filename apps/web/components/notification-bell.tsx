@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { NotificationSummary, UnreadCount } from '@rezo/shared-types';
 import { useAuth } from '../lib/auth';
 import { apiFetch } from '../lib/api';
+import { useT } from '../lib/i18n';
 
 const SEV_ACCENT: Record<string, string> = {
   critical: 'border-l-red-500',
@@ -15,6 +16,7 @@ const SEV_ACCENT: Record<string, string> = {
 /** Top-bar bell with unread badge + a dropdown of recent unread items (§6d). */
 export function NotificationBell() {
   const { token } = useAuth();
+  const tr = useT();
   const [open, setOpen] = useState(false);
   const [count, setCount] = useState(0);
   const [items, setItems] = useState<NotificationSummary[]>([]);
@@ -54,7 +56,7 @@ export function NotificationBell() {
 
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => setOpen((o) => !o)} className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Notifications">
+      <button onClick={() => setOpen((o) => !o)} className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label={tr('bell.title')}>
         <span className="text-lg">🔔</span>
         {count > 0 && (
           <span className="absolute right-0 top-0 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
@@ -65,12 +67,12 @@ export function NotificationBell() {
       {open && (
         <div className="absolute right-0 z-30 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2">
-            <span className="text-sm font-semibold text-slate-700">Notifications</span>
-            {count > 0 && <button onClick={markAll} className="text-xs text-sky-700 hover:underline">Mark all read</button>}
+            <span className="text-sm font-semibold text-slate-700">{tr('bell.title')}</span>
+            {count > 0 && <button onClick={markAll} className="text-xs text-sky-700 hover:underline">{tr('alerts.markAllRead')}</button>}
           </div>
           <div className="max-h-96 overflow-y-auto">
             {items.length === 0 ? (
-              <p className="p-6 text-center text-sm text-slate-400">You&apos;re all caught up 🎉</p>
+              <p className="p-6 text-center text-sm text-slate-400">{tr('bell.caughtUp')}</p>
             ) : (
               items.map((n) => (
                 <Link
@@ -86,7 +88,7 @@ export function NotificationBell() {
             )}
           </div>
           <Link href="/dashboard/alerts" onClick={() => setOpen(false)} className="block border-t border-slate-100 px-4 py-2 text-center text-xs font-medium text-sky-700 hover:bg-slate-50">
-            See all
+            {tr('bell.seeAll')}
           </Link>
         </div>
       )}

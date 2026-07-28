@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import type { ContainerDetail, ContainerSummary, PayeeSummary, ChargeSummary } from '@rezo/shared-types';
 import { useAuth } from '../../../../lib/auth';
 import { apiFetch, apiFetchEnvelope } from '../../../../lib/api';
+import { useT } from '../../../../lib/i18n';
 import { Chrome, Loading, useRequireAuth } from '../../../../components/chrome';
 import { Money, MoneyList, StatusPill } from '../../../../components/ui';
 
@@ -32,6 +33,7 @@ export default function PayeeBillingPage() {
   const payeeOrgId = params.payeeOrgId;
   const { auth, ready } = useRequireAuth();
   const { token } = useAuth();
+  const t = useT();
   const [payee, setPayee] = useState<PayeeSummary | null>(null);
   const [rows, setRows] = useState<OwedContainer[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -71,23 +73,23 @@ export default function PayeeBillingPage() {
 
   return (
     <Chrome auth={auth}>
-      <Link href="/dashboard/billing" className="text-sm text-sky-700 hover:underline">← Back to billing</Link>
+      <Link href="/dashboard/billing" className="text-sm text-sky-700 hover:underline">{t('payee.back')}</Link>
 
       <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">{payee?.name ?? 'Payee'}</h1>
-          {payee?.type && <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${PAYEE_STYLE[payee.type] ?? PAYEE_STYLE.other}`}>{payee.type}</span>}
+          <h1 className="text-2xl font-bold">{payee?.name ?? t('payee.fallback')}</h1>
+          {payee?.type && <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${PAYEE_STYLE[payee.type] ?? PAYEE_STYLE.other}`}>{t(`ptype.${payee.type}`)}</span>}
         </div>
         <div className="text-right">
-          <p className="text-xs uppercase tracking-wide text-slate-400">Total owed to this payee</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400">{t('payee.totalOwedTo')}</p>
           <MoneyList items={grandList} empty="$0.00" className="text-2xl font-bold text-slate-900" />
         </div>
       </div>
-      <p className="mt-1 text-sm text-slate-500">Each container below has charges owed to this payee. Payment is authorized on the container (one authorization routes to every payee at once).</p>
+      <p className="mt-1 text-sm text-slate-500">{t('payee.eachContainer')}</p>
 
       {loaded && rows.length === 0 && (
         <p className="mt-8 rounded-xl border border-green-200 bg-green-50 px-4 py-6 text-center text-sm text-green-700">
-          🎉 Nothing owed to this payee right now.
+          {t('payee.nothingOwed')}
         </p>
       )}
 
@@ -97,9 +99,9 @@ export default function PayeeBillingPage() {
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-3">
               <div className="flex items-center gap-3">
                 <Link href={`/dashboard/containers/${r.id}`} className="font-mono font-medium text-sky-700 hover:underline">{r.number}</Link>
-                {r.lastFreeDay && <span className="text-xs text-slate-400">last free day {new Date(r.lastFreeDay).toLocaleDateString()}</span>}
+                {r.lastFreeDay && <span className="text-xs text-slate-400">{t('payee.lastFreeDayShort', { date: new Date(r.lastFreeDay).toLocaleDateString() })}</span>}
               </div>
-              <Link href={`/dashboard/containers/${r.id}`} className="text-xs font-semibold text-sky-700 hover:underline">Review &amp; pay →</Link>
+              <Link href={`/dashboard/containers/${r.id}`} className="text-xs font-semibold text-sky-700 hover:underline">{t('payee.reviewAndPay')}</Link>
             </div>
             <table className="w-full text-left text-sm">
               <tbody>
@@ -111,7 +113,7 @@ export default function PayeeBillingPage() {
                   </tr>
                 ))}
                 <tr className="bg-slate-50">
-                  <td className="px-5 py-2 text-xs font-semibold uppercase text-slate-400" colSpan={2}>Subtotal to {payee?.name ?? 'payee'}</td>
+                  <td className="px-5 py-2 text-xs font-semibold uppercase text-slate-400" colSpan={2}>{t('payee.subtotalTo', { name: payee?.name ?? t('payee.fallback') })}</td>
                   <td className="px-5 py-2 text-right font-bold text-slate-900">
                     <MoneyList items={[...r.subtotal.entries()].map(([currency, amount]) => ({ amount, currency }))} empty="$0.00" />
                   </td>

@@ -6,6 +6,7 @@ import type { ContainerSummary, ContainerDetail, PayeeType, PayeeSummary } from 
 import { useAuth } from '../../../lib/auth';
 import { apiFetch, apiFetchEnvelope } from '../../../lib/api';
 import { formatMoneyList } from '../../../lib/format';
+import { useT } from '../../../lib/i18n';
 import { Chrome, Loading, useRequireAuth } from '../../../components/chrome';
 import { MoneyList } from '../../../components/ui';
 
@@ -31,6 +32,7 @@ interface PayeeOwed {
 export default function BillingPage() {
   const { auth, ready } = useRequireAuth();
   const { token } = useAuth();
+  const t = useT();
   const [containers, setContainers] = useState<ContainerSummary[]>([]);
   const [details, setDetails] = useState<ContainerDetail[]>([]);
   const [registry, setRegistry] = useState<PayeeSummary[]>([]);
@@ -89,34 +91,34 @@ export default function BillingPage() {
 
   return (
     <Chrome auth={auth}>
-      <h1 className="text-2xl font-bold">Billing</h1>
+      <h1 className="text-2xl font-bold">{t('billing.title')}</h1>
       <p className="mt-1 text-sm text-slate-500">
-        Bills to settle — port dues, customs &amp; agency fees, terminal and bank charges — routed directly to each payee. Trucking is arranged per container.
+        {t('billing.subtitle')}
       </p>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-3">
-        <Stat label="Total outstanding" value={totalOutstanding.length ? formatMoneyList(totalOutstanding) : '—'} />
-        <Stat label="Containers with bills" value={String(bills.length)} />
-        <Stat label="Overdue" value={String(overdueCount)} tone={overdueCount > 0 ? 'warn' : undefined} />
+        <Stat label={t('billing.totalOutstanding')} value={totalOutstanding.length ? formatMoneyList(totalOutstanding) : '—'} />
+        <Stat label={t('billing.containersWithBills')} value={String(bills.length)} />
+        <Stat label={t('billing.overdue')} value={String(overdueCount)} tone={overdueCount > 0 ? 'warn' : undefined} />
       </section>
 
       {loaded && bills.length === 0 && (
         <p className="mt-8 rounded-xl border border-green-200 bg-green-50 px-4 py-6 text-center text-sm text-green-700">
-          🎉 No outstanding bills — everything is settled.
+          {t('billing.noOutstanding')}
         </p>
       )}
 
       {payeeRows.length > 0 && (
         <section className="mt-8">
-          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">Amount owed by payee / agent</h2>
-          <p className="mb-2 text-xs text-slate-400">Click a payee to see each container and exactly what&apos;s owed to them.</p>
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">{t('billing.amountOwedByPayee')}</h2>
+          <p className="mb-2 text-xs text-slate-400">{t('billing.clickPayee')}</p>
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-100 text-xs uppercase text-slate-400">
-                  <th className="px-4 py-3 font-medium">Payee / agent</th>
-                  <th className="px-4 py-3 font-medium">Type</th>
-                  <th className="px-4 py-3 text-right font-medium">Amount owed</th>
+                  <th className="px-4 py-3 font-medium">{t('billing.colPayee')}</th>
+                  <th className="px-4 py-3 font-medium">{t('billing.colType')}</th>
+                  <th className="px-4 py-3 text-right font-medium">{t('billing.colAmountOwed')}</th>
                   <th className="px-4 py-3 font-medium"></th>
                 </tr>
               </thead>
@@ -134,13 +136,13 @@ export default function BillingPage() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        {p.type && <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PAYEE_STYLE[p.type] ?? PAYEE_STYLE.other}`}>{p.type}</span>}
+                        {p.type && <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PAYEE_STYLE[p.type] ?? PAYEE_STYLE.other}`}>{t(`ptype.${p.type}`)}</span>}
                       </td>
                       <td className={`px-4 py-3 text-right ${owes ? 'font-medium text-slate-800' : ''}`}>
                         <MoneyList items={entries} empty="$0.00" />
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {owes && <Link href={`/dashboard/billing/${p.key}`} className="text-xs font-semibold text-sky-700 hover:underline">View →</Link>}
+                        {owes && <Link href={`/dashboard/billing/${p.key}`} className="text-xs font-semibold text-sky-700 hover:underline">{t('common.view')}</Link>}
                       </td>
                     </tr>
                   );
@@ -152,12 +154,12 @@ export default function BillingPage() {
       )}
 
       <section className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-500">Container trucking</h2>
+        <h2 className="text-sm font-semibold text-slate-500">{t('billing.containerTrucking')}</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Book a hauler to move a released container. Arrange trucking from the container&apos;s page.
+          {t('billing.truckingHint')}
         </p>
         <Link href="/dashboard/containers" className="mt-3 inline-block rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-700">
-          Go to containers →
+          {t('billing.goToContainers')}
         </Link>
       </section>
     </Chrome>

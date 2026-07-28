@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { DirectoryOrg, ContainerSize, ManifestSubmitResult } from '@rezo/shared-types';
 import { useAuth } from '../../../../lib/auth';
 import { apiFetch, ApiClientError } from '../../../../lib/api';
+import { useT } from '../../../../lib/i18n';
 import { Chrome, Loading, useRequireAuth } from '../../../../components/chrome';
 
 interface ContainerRow { container_number: string; size_type: ContainerSize }
@@ -22,6 +23,7 @@ const emptyBl = (): BlRow => ({ bl_number: '', shipper: '', consignee_org_id: ''
 export default function NewManifestPage() {
   const { auth, ready } = useRequireAuth();
   const { token } = useAuth();
+  const t = useT();
 
   const [importers, setImporters] = useState<DirectoryOrg[]>([]);
   const [voyage, setVoyage] = useState({ vessel_imo: '', vessel_name: '', voyage_number: '', eta: '', port: 'Port-au-Prince' });
@@ -71,7 +73,7 @@ export default function NewManifestPage() {
       });
       setResult(res);
     } catch (err) {
-      setError(err instanceof ApiClientError ? err.message : 'Submission failed.');
+      setError(err instanceof ApiClientError ? err.message : t('manifest.failed'));
     } finally {
       setSubmitting(false);
     }
@@ -81,20 +83,19 @@ export default function NewManifestPage() {
     return (
       <Chrome auth={auth}>
         <div className="mx-auto max-w-lg rounded-xl border border-green-200 bg-green-50 p-6 text-center">
-          <h1 className="text-xl font-bold text-green-800">Manifest submitted</h1>
+          <h1 className="text-xl font-bold text-green-800">{t('manifest.submitted')}</h1>
           <p className="mt-2 text-sm text-green-700">
-            Created <strong>{result.container_ids.length}</strong> container(s). They are now visible to the
-            consignee(s) and other authorized parties — entered once, no retyping.
+            {t('manifest.createdN', { n: result.container_ids.length })}
           </p>
           <div className="mt-5 flex justify-center gap-3">
             <Link href="/dashboard/containers" className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">
-              View containers
+              {t('manifest.viewContainers')}
             </Link>
             <button
               onClick={() => { setResult(null); setBls([emptyBl()]); setVoyage({ vessel_imo: '', vessel_name: '', voyage_number: '', eta: '', port: 'Port-au-Prince' }); }}
               className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-white"
             >
-              Submit another
+              {t('manifest.submitAnother')}
             </button>
           </div>
         </div>
@@ -104,60 +105,60 @@ export default function NewManifestPage() {
 
   return (
     <Chrome auth={auth}>
-      <h1 className="text-2xl font-bold">Submit manifest</h1>
-      <p className="mt-1 text-sm text-slate-500">Enter the voyage once; Rezo creates the bills of lading and containers everyone reads.</p>
+      <h1 className="text-2xl font-bold">{t('nav.submitManifest')}</h1>
+      <p className="mt-1 text-sm text-slate-500">{t('manifest.subtitle')}</p>
 
       <form onSubmit={onSubmit} className="mt-6 space-y-6">
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-sm font-semibold text-slate-500">1. Voyage</h2>
+          <h2 className="mb-4 text-sm font-semibold text-slate-500">{t('manifest.voyageSection')}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Vessel name" value={voyage.vessel_name} onChange={(v) => setVoyage({ ...voyage, vessel_name: v })} required />
-            <Input label="Vessel IMO" value={voyage.vessel_imo} onChange={(v) => setVoyage({ ...voyage, vessel_imo: v })} required hint="7-digit IMO number" />
-            <Input label="Voyage number" value={voyage.voyage_number} onChange={(v) => setVoyage({ ...voyage, voyage_number: v })} required />
-            <Input label="Port" value={voyage.port} onChange={(v) => setVoyage({ ...voyage, port: v })} required />
-            <Input label="ETA" type="datetime-local" value={voyage.eta} onChange={(v) => setVoyage({ ...voyage, eta: v })} required hint="Estimated arrival at the port" />
+            <Input label={t('manifest.vesselName')} value={voyage.vessel_name} onChange={(v) => setVoyage({ ...voyage, vessel_name: v })} required />
+            <Input label={t('manifest.vesselImo')} value={voyage.vessel_imo} onChange={(v) => setVoyage({ ...voyage, vessel_imo: v })} required hint={t('manifest.imoHint')} />
+            <Input label={t('manifest.voyageNumber')} value={voyage.voyage_number} onChange={(v) => setVoyage({ ...voyage, voyage_number: v })} required />
+            <Input label={t('manifest.port')} value={voyage.port} onChange={(v) => setVoyage({ ...voyage, port: v })} required />
+            <Input label={t('manifest.eta')} type="datetime-local" value={voyage.eta} onChange={(v) => setVoyage({ ...voyage, eta: v })} required hint={t('manifest.etaHint')} />
           </div>
         </section>
 
         <div>
-          <h2 className="mb-3 text-sm font-semibold text-slate-500">2. Bills of lading</h2>
+          <h2 className="mb-3 text-sm font-semibold text-slate-500">{t('manifest.blSection')}</h2>
           <div className="space-y-4">
             {bls.map((bl, bi) => (
               <section key={bi} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-600">Bill of lading {bi + 1}</h3>
+                  <h3 className="text-sm font-semibold text-slate-600">{t('manifest.blN', { n: bi + 1 })}</h3>
                   {bls.length > 1 && (
                     <button type="button" onClick={() => setBls(bls.filter((_, i) => i !== bi))} className="text-xs text-red-600 hover:underline">
-                      Remove
+                      {t('manifest.remove')}
                     </button>
                   )}
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Input label="BL number" value={bl.bl_number} onChange={(v) => setBl(bi, { bl_number: v })} required />
-                  <Input label="Shipper" value={bl.shipper} onChange={(v) => setBl(bi, { shipper: v })} required />
+                  <Input label={t('manifest.blNumber')} value={bl.bl_number} onChange={(v) => setBl(bi, { bl_number: v })} required />
+                  <Input label={t('manifest.shipper')} value={bl.shipper} onChange={(v) => setBl(bi, { shipper: v })} required />
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Consignee (importer)</label>
+                    <label className="block text-sm font-medium text-slate-700">{t('manifest.consignee')}</label>
                     <select
                       value={bl.consignee_org_id}
                       onChange={(e) => setBl(bi, { consignee_org_id: e.target.value })}
                       required
                       className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
                     >
-                      <option value="">Select importer…</option>
+                      <option value="">{t('manifest.selectImporter')}</option>
                       {importers.map((o) => <option key={o.id} value={o.id}>{o.legal_name}</option>)}
                     </select>
-                    <p className="mt-1 text-xs text-slate-400">The importer this B/L is consigned to</p>
+                    <p className="mt-1 text-xs text-slate-400">{t('manifest.consigneeHint')}</p>
                   </div>
-                  <Input label="Description" value={bl.description} onChange={(v) => setBl(bi, { description: v })} />
+                  <Input label={t('manifest.description')} value={bl.description} onChange={(v) => setBl(bi, { description: v })} />
                 </div>
 
                 <div className="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-3">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Containers on this B/L</p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{t('manifest.containersOnBl')}</p>
                   <div className="space-y-2">
                     {bl.containers.map((c, ci) => (
                       <div key={ci} className="flex items-center gap-2">
                         <input
-                          placeholder="Container number"
+                          placeholder={t('manifest.containerNumber')}
                           value={c.container_number}
                           onChange={(e) => setContainer(bi, ci, { container_number: e.target.value })}
                           required
@@ -183,7 +184,7 @@ export default function NewManifestPage() {
                     onClick={() => setBl(bi, { containers: [...bl.containers, emptyContainer()] })}
                     className="mt-3 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
                   >
-                    + Add container
+                    {t('manifest.addContainer')}
                   </button>
                 </div>
               </section>
@@ -195,7 +196,7 @@ export default function NewManifestPage() {
             onClick={() => setBls([...bls, emptyBl()])}
             className="mt-4 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
           >
-            + Add bill of lading
+            {t('manifest.addBl')}
           </button>
         </div>
 
@@ -203,7 +204,7 @@ export default function NewManifestPage() {
 
         <div className="border-t border-slate-200 pt-5">
           <button type="submit" disabled={submitting} className="rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50">
-            {submitting ? 'Submitting…' : 'Submit manifest'}
+            {submitting ? t('manifest.submitting') : t('nav.submitManifest')}
           </button>
         </div>
       </form>

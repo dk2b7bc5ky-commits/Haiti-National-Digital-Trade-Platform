@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ContainerSummary } from '@rezo/shared-types';
 import { apiFetchEnvelope } from '../lib/api';
+import { useT } from '../lib/i18n';
 
 interface Result {
   key: string;
@@ -20,6 +21,7 @@ export function CommandPalette({
   open: boolean; onClose: () => void; navItems: { href: string; label: string }[]; token: string | null;
 }) {
   const router = useRouter();
+  const t = useT();
   const [q, setQ] = useState('');
   const [sel, setSel] = useState(0);
   const [containers, setContainers] = useState<ContainerSummary[]>([]);
@@ -68,11 +70,11 @@ export function CommandPalette({
             else if (e.key === 'Enter') { e.preventDefault(); go(); }
             else if (e.key === 'Escape') onClose();
           }}
-          placeholder="Search containers or jump to a page…"
+          placeholder={t('cmd.placeholder')}
           className="w-full border-b border-slate-100 px-4 py-3 text-sm outline-none placeholder:text-slate-400"
         />
         <ul className="max-h-80 overflow-y-auto p-1.5">
-          {results.length === 0 && <li className="px-3 py-6 text-center text-sm text-slate-400">No matches.</li>}
+          {results.length === 0 && <li className="px-3 py-6 text-center text-sm text-slate-400">{t('cmd.noMatches')}</li>}
           {results.map((r, i) => (
             <li key={r.key}>
               <button
@@ -81,7 +83,7 @@ export function CommandPalette({
                 className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm ${i === sel ? 'bg-sky-50 text-sky-800' : 'text-slate-700 hover:bg-slate-50'}`}
               >
                 <span className="flex items-center gap-2">
-                  <span className="text-xs text-slate-400">{r.kind === 'container' ? 'Container' : 'Go to'}</span>
+                  <span className="text-xs text-slate-400">{r.kind === 'container' ? t('cmd.container') : t('cmd.goTo')}</span>
                   <span className={r.kind === 'container' ? 'font-mono font-medium' : 'font-medium'}>{r.label}</span>
                   {r.sub && <span className="text-xs text-slate-400">{r.sub}</span>}
                 </span>
@@ -90,7 +92,7 @@ export function CommandPalette({
             </li>
           ))}
         </ul>
-        <div className="border-t border-slate-100 px-3 py-1.5 text-[11px] text-slate-400">↑↓ to navigate · ↵ to open · esc to close</div>
+        <div className="border-t border-slate-100 px-3 py-1.5 text-[11px] text-slate-400">{t('cmd.hint')}</div>
       </div>
     </div>
   );

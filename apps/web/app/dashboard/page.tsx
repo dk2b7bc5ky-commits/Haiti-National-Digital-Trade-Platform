@@ -6,6 +6,7 @@ import type { ContainerSummary, OperationalDashboard, NotificationSummary, Money
 import { useAuth } from '../../lib/auth';
 import { apiFetch, apiFetchEnvelope } from '../../lib/api';
 import { countdown } from '../../lib/format';
+import { useT, countdownLabel } from '../../lib/i18n';
 import { Chrome, Loading, useRequireAuth } from '../../components/chrome';
 import { Money, MoneyList, StatusPill, type PillTone } from '../../components/ui';
 
@@ -25,6 +26,7 @@ function sumByCurrency(items: (MoneyT | null | undefined)[]): MoneyT[] {
 export default function DashboardPage() {
   const { auth, ready } = useRequireAuth();
   const { token } = useAuth();
+  const t = useT();
   const [containers, setContainers] = useState<ContainerSummary[]>([]);
   const [op, setOp] = useState<OperationalDashboard | null>(null);
   const [activity, setActivity] = useState<NotificationSummary[]>([]);
@@ -56,33 +58,33 @@ export default function DashboardPage() {
   return (
     <Chrome auth={auth}>
       <p className="text-sm text-slate-500">
-        Bonjou, <span className="font-medium text-slate-700">{firstName}</span> · {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+        {t('home.greeting')} <span className="font-medium text-slate-700">{firstName}</span> · {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
       </p>
-      <h1 className="mt-1 text-2xl font-bold">Overview</h1>
+      <h1 className="mt-1 text-2xl font-bold">{t('home.title')}</h1>
 
       {/* Owed strip — sums of real charges, never a held balance */}
       <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Total owed" value={<MoneyList items={totalOwed} empty="$0.00" className="text-2xl font-bold text-slate-900" />} sub="across your active containers" />
+        <Stat label={t('common.totalOwed')} value={<MoneyList items={totalOwed} empty="$0.00" className="text-2xl font-bold text-slate-900" />} sub={t('home.totalOwedSub')} />
         <Stat
-          label="At risk (≤48h)"
+          label={t('home.atRisk')}
           value={<span className={`text-2xl font-bold ${atRisk.length ? 'text-red-600' : 'text-slate-900'}`}>{atRisk.length}</span>}
-          sub="last free day within 48h"
+          sub={t('home.atRiskSub')}
           tone={atRisk.length ? 'warn' : undefined}
         />
         {op && (
-          <Stat label="Payments processed" value={<span className="text-2xl font-bold text-slate-900">{op.payments_processed}</span>} sub={<MoneyList items={op.amount_processed} empty="$0.00" />} />
+          <Stat label={t('home.paymentsProcessed')} value={<span className="text-2xl font-bold text-slate-900">{op.payments_processed}</span>} sub={<MoneyList items={op.amount_processed} empty="$0.00" />} />
         )}
         {op && (
-          <Stat label="Released" value={<span className="text-2xl font-bold text-slate-900">{op.released}</span>} sub={`${op.gated_out} gated out`} />
+          <Stat label={t('home.released')} value={<span className="text-2xl font-bold text-slate-900">{op.released}</span>} sub={t('home.gatedOut', { n: op.gated_out })} />
         )}
       </section>
 
       {/* Needs your attention — the hero */}
       <section className="mt-8">
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">Needs your attention</h2>
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">{t('home.needsAttention')}</h2>
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-soft">
           {attention.length === 0 ? (
-            <p className="p-8 text-center text-sm text-slate-500">🎉 Nothing needs your attention — every container is settled.</p>
+            <p className="p-8 text-center text-sm text-slate-500">{t('home.allSettled')}</p>
           ) : (
             <ul className="divide-y divide-slate-50">
               {attention.map(({ c, cd }) => (
@@ -93,8 +95,8 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-4">
                     {c.total_owed && <Money amount={c.total_owed.amount} currency={c.total_owed.currency} className="text-sm font-semibold text-slate-800" />}
-                    {cd && <StatusPill tone={COUNTDOWN_TONE[cd.tone]} label={cd.label} />}
-                    <Link href={`/dashboard/containers/${c.id}`} className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-700">Pay</Link>
+                    {cd && <StatusPill tone={COUNTDOWN_TONE[cd.tone]} label={countdownLabel(cd, t)} />}
+                    <Link href={`/dashboard/containers/${c.id}`} className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-700">{t('common.pay')}</Link>
                   </div>
                 </li>
               ))}
@@ -106,12 +108,12 @@ export default function DashboardPage() {
       {/* Recent activity */}
       <section className="mt-8">
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Recent activity</h2>
-          <Link href="/dashboard/alerts" className="text-xs font-medium text-sky-700 hover:underline">See all →</Link>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">{t('home.recentActivity')}</h2>
+          <Link href="/dashboard/alerts" className="text-xs font-medium text-sky-700 hover:underline">{t('common.seeAll')}</Link>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white shadow-soft">
           {activity.length === 0 ? (
-            <p className="p-6 text-center text-sm text-slate-400">No recent activity yet.</p>
+            <p className="p-6 text-center text-sm text-slate-400">{t('home.noActivity')}</p>
           ) : (
             <ul className="divide-y divide-slate-50">
               {activity.map((n) => (

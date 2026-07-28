@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { NotificationSummary, NotificationPreferences, NotificationSeverity, NotificationType } from '@rezo/shared-types';
 import { useAuth } from '../../../lib/auth';
 import { apiFetch } from '../../../lib/api';
+import { useT } from '../../../lib/i18n';
 import { Chrome, Loading, useRequireAuth } from '../../../components/chrome';
 import { Money, EmptyState } from '../../../components/ui';
 
@@ -33,6 +34,7 @@ const SEV_ORDER: NotificationSeverity[] = ['critical', 'soon', 'info'];
 export default function AlertsPage() {
   const { auth, ready } = useRequireAuth();
   const { token } = useAuth();
+  const t = useT();
   const [rows, setRows] = useState<NotificationSummary[] | null>(null);
   const [container, setContainer] = useState('');
   const [type, setType] = useState('');
@@ -68,14 +70,14 @@ export default function AlertsPage() {
     <Chrome auth={auth}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Alerts</h1>
-          <p className="mt-1 text-sm text-slate-500">Everything that needs your attention — deadlines, payments, releases, gate slots, verification, trucking.</p>
+          <h1 className="text-2xl font-bold">{t('nav.alerts')}</h1>
+          <p className="mt-1 text-sm text-slate-500">{t('alerts.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowPrefs((s) => !s)} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100">
-            {showPrefs ? 'Hide preferences' : 'Preferences'}
+            {showPrefs ? t('alerts.hidePreferences') : t('alerts.preferences')}
           </button>
-          <button onClick={markAll} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100">Mark all read</button>
+          <button onClick={markAll} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100">{t('alerts.markAllRead')}</button>
         </div>
       </div>
 
@@ -84,21 +86,21 @@ export default function AlertsPage() {
       {/* Filters */}
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <select value={container} onChange={(e) => setContainer(e.target.value)} className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm">
-          <option value="">All containers</option>
+          <option value="">{t('alerts.allContainers')}</option>
           {containers.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
         <select value={type} onChange={(e) => setType(e.target.value)} className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm">
-          <option value="">All event types</option>
-          {types.map((t) => <option key={t} value={t}>{TYPE_META[t]?.label ?? t} — {t.replace(/_/g, ' ')}</option>)}
+          <option value="">{t('alerts.allEventTypes')}</option>
+          {types.map((ty) => <option key={ty} value={ty}>{TYPE_META[ty]?.label ?? ty} — {ty.replace(/_/g, ' ')}</option>)}
         </select>
         <label className="flex items-center gap-1.5 text-sm text-slate-600">
-          <input type="checkbox" checked={unreadOnly} onChange={(e) => setUnreadOnly(e.target.checked)} /> Unread only
+          <input type="checkbox" checked={unreadOnly} onChange={(e) => setUnreadOnly(e.target.checked)} /> {t('alerts.unreadOnly')}
         </label>
       </div>
 
       {rows && filtered.length === 0 && (
         <div className="mt-6 rounded-xl border border-slate-200 bg-white shadow-sm">
-          <EmptyState title="Nothing here 🎉" hint="No notifications match your filters." />
+          <EmptyState title={t('alerts.nothingHere')} hint={t('alerts.noMatch')} />
         </div>
       )}
 
@@ -108,7 +110,7 @@ export default function AlertsPage() {
         return (
           <section key={s} className="mt-6">
             <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
-              <span className={`inline-block h-2 w-2 rounded-full ${SEV[s].dot}`} /> {SEV[s].title} <span className="text-slate-400">({items.length})</span>
+              <span className={`inline-block h-2 w-2 rounded-full ${SEV[s].dot}`} /> {t(`sev.${s}`)} <span className="text-slate-400">({items.length})</span>
             </h2>
             <div className="space-y-2">
               {items.map((n) => <NotificationRow key={n.id} n={n} accent={SEV[s].accent} onRead={markOne} />)}
@@ -121,6 +123,7 @@ export default function AlertsPage() {
 }
 
 function NotificationRow({ n, accent, onRead }: { n: NotificationSummary; accent: string; onRead: (id: string) => void }) {
+  const t = useT();
   const meta = TYPE_META[n.type] ?? { icon: '•', label: n.type };
   const unread = !n.read_at;
   return (
@@ -136,23 +139,24 @@ function NotificationRow({ n, accent, onRead }: { n: NotificationSummary; accent
         <p className="mt-0.5 text-sm text-slate-500">{n.body}</p>
         <p className="mt-1 text-xs text-slate-400">
           <span className="rounded bg-slate-100 px-1.5 py-0.5">{meta.label}</span>
-          {' · '}{n.channel === 'email' ? 'emailed' : 'in-app'}
+          {' · '}{n.channel === 'email' ? t('alerts.emailed') : t('alerts.inApp')}
           {' · '}{new Date(n.created_at).toLocaleString()}
         </p>
       </div>
       <div className="flex flex-col items-end gap-1">
         {n.amount_at_risk && (
           <span className="whitespace-nowrap text-sm font-semibold text-red-600">
-            <Money amount={n.amount_at_risk.amount} currency={n.amount_at_risk.currency} /> at risk
+            <Money amount={n.amount_at_risk.amount} currency={n.amount_at_risk.currency} /> {t('alerts.atRisk')}
           </span>
         )}
-        {unread && <button onClick={() => onRead(n.id)} className="text-xs text-sky-700 hover:underline">mark read</button>}
+        {unread && <button onClick={() => onRead(n.id)} className="text-xs text-sky-700 hover:underline">{t('alerts.markRead')}</button>}
       </div>
     </div>
   );
 }
 
 function PreferencesPanel({ token }: { token: string | null }) {
+  const t = useT();
   const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -161,7 +165,7 @@ function PreferencesPanel({ token }: { token: string | null }) {
     apiFetch<NotificationPreferences>('/notifications/preferences', { token }).then(setPrefs).catch(() => {});
   }, [token]);
 
-  if (!prefs) return <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-400 shadow-sm">Loading preferences…</div>;
+  if (!prefs) return <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-400 shadow-sm">{t('alerts.loadingPrefs')}</div>;
 
   const setChannel = (type: NotificationType, key: 'in_app' | 'email', val: boolean) =>
     setPrefs({ ...prefs, preferences: prefs.preferences.map((p) => (p.type === type ? { ...p, [key]: val } : p)) });
@@ -179,14 +183,14 @@ function PreferencesPanel({ token }: { token: string | null }) {
 
   return (
     <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="mb-3 text-sm font-semibold text-slate-500">Notification preferences</h2>
+      <h2 className="mb-3 text-sm font-semibold text-slate-500">{t('alerts.prefTitle')}</h2>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-slate-100 text-xs uppercase text-slate-400">
-              <th className="py-2 font-medium">Event</th>
-              <th className="py-2 text-center font-medium">In-app</th>
-              <th className="py-2 text-center font-medium">Email</th>
+              <th className="py-2 font-medium">{t('alerts.event')}</th>
+              <th className="py-2 text-center font-medium">{t('alerts.inAppCol')}</th>
+              <th className="py-2 text-center font-medium">{t('alerts.emailCol')}</th>
             </tr>
           </thead>
           <tbody>
@@ -201,11 +205,11 @@ function PreferencesPanel({ token }: { token: string | null }) {
         </table>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
-        <span className="text-sm text-slate-600">Quiet hours (no email):</span>
-        <HourSelect value={prefs.quiet_hours.start} onChange={(v) => setPrefs({ ...prefs, quiet_hours: { ...prefs.quiet_hours, start: v } })} label="from" />
-        <HourSelect value={prefs.quiet_hours.end} onChange={(v) => setPrefs({ ...prefs, quiet_hours: { ...prefs.quiet_hours, end: v } })} label="to" />
-        <button onClick={save} className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-700">Save preferences</button>
-        {saved && <span className="text-sm text-green-700">✓ Saved</span>}
+        <span className="text-sm text-slate-600">{t('alerts.quietHours')}</span>
+        <HourSelect value={prefs.quiet_hours.start} onChange={(v) => setPrefs({ ...prefs, quiet_hours: { ...prefs.quiet_hours, start: v } })} label={t('alerts.from')} />
+        <HourSelect value={prefs.quiet_hours.end} onChange={(v) => setPrefs({ ...prefs, quiet_hours: { ...prefs.quiet_hours, end: v } })} label={t('alerts.to')} />
+        <button onClick={save} className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-700">{t('alerts.savePrefs')}</button>
+        {saved && <span className="text-sm text-green-700">{t('alerts.saved')}</span>}
       </div>
     </div>
   );
