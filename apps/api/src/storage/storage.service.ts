@@ -36,10 +36,18 @@ export class StorageService implements OnModuleInit {
   }
 
   async put(key: string, body: Buffer, contentType: string): Promise<string> {
-    await this.client.send(
-      new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: body, ContentType: contentType }),
-    );
-    this.logger.log(`Stored ${key} (${body.length} bytes) in ${this.bucket}`);
+    try {
+      await this.client.send(
+        new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: body, ContentType: contentType }),
+      );
+      this.logger.log(`Stored ${key} (${body.length} bytes) in ${this.bucket}`);
+    } catch (e) {
+      // Degrade gracefully when object storage isn't configured/reachable (e.g.
+      // a first cloud deploy with no S3 bucket yet). Document extraction reads
+      // the in-memory bytes, so ingestion still works; only the archived copy is
+      // skipped. Configure S3_* env vars to enable durable storage.
+      this.logger.warn(`Object storage unavailable — not persisting ${key}: ${(e as Error).message}`);
+    }
     return key;
   }
 

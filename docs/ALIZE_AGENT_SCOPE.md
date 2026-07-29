@@ -222,3 +222,37 @@ build. Key patterns the reader must handle:
   attachment. Reinforces the strict "is this an arrival notice?" filter.
 
 These become the test set for the reader in build phase **A1**.
+
+---
+
+## 10. Implementation status
+
+**Phase A1 — the reader — BUILT** (`apps/api/src/integration/claude-extraction.provider.ts`).
+
+- A real `ExtractionProvider` backed by Claude reads a PDF / image / text
+  arrival notice and returns the container number, B/L, arrival date, last free
+  day, and each payable charge with a per-field confidence score. It drops in
+  behind the existing interface, so the "Upload document" button now does real
+  reading end-to-end (charges → verification queue → deadlines) with no other
+  code change.
+- It's **enabled by the presence of `ANTHROPIC_API_KEY`**: set it and the real
+  reader runs; leave it unset and the deterministic mock stays wired, so the app
+  never breaks. Model is `claude-opus-5` by default, overridable with
+  `ANTHROPIC_MODEL` (e.g. a cheaper model to cut cost).
+- Document **storage degrades gracefully** — the upload/extract flow works on
+  the cloud deploy even before an S3 bucket is configured (extraction uses the
+  in-memory bytes; only the archived copy is skipped).
+
+**Known limitation to revisit (enum gap).** The platform's charge types today
+are customs / port / terminal / storage / demurrage / detention / inspection /
+scanning. Real notices also carry **agency fees, freight-collect, documentation,
+security, reefer electricity, and guarantee deposits**, which don't have their
+own type. The reader maps those to the closest type at **low confidence**, so
+they land in the Ops review queue rather than a wrong live bill — safe, but the
+displayed category is approximate. A follow-up should add dedicated charge types
+(AGENCY_FEE, FREIGHT, ELECTRICITY, DEPOSIT, …) plus their payee mapping, and
+match the specific named payees (AGEMAR, DEMSA, CPS, DECSA) instead of the
+category payee.
+
+**Still to build:** Phase A2 (email intake from `traffic@alizeimports.com`),
+A3 (a review/confirm surface), A4 (tuning + more autonomy).

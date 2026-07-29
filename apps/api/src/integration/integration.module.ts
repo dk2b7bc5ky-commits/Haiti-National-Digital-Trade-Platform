@@ -5,6 +5,8 @@ import { NOTIFICATION_ADAPTER } from './notification-adapter';
 import { MockNotificationAdapter } from './mock-notification.adapter';
 import { EXTRACTION_PROVIDER } from './extraction-provider';
 import { MockExtractionProvider } from './mock-extraction.provider';
+import { ClaudeExtractionProvider } from './claude-extraction.provider';
+import { MarketConfigService } from '../config/market-config.service';
 import { PAYMENT_RAIL } from './payment-rail';
 import { MockPaymentRail } from './mock-payment-rail.adapter';
 import { ASYCUDA_ADAPTER } from './asycuda-adapter';
@@ -21,7 +23,16 @@ import { MockAsycudaAdapter } from './mock-asycuda.adapter';
     // Swap these for real adapters here when the external APIs exist.
     { provide: TERMINAL_ADAPTER, useClass: MockTerminalAdapter },
     { provide: NOTIFICATION_ADAPTER, useClass: MockNotificationAdapter },
-    { provide: EXTRACTION_PROVIDER, useClass: MockExtractionProvider },
+    // Real Claude reader when ANTHROPIC_API_KEY is set (the Alize agent's brain);
+    // otherwise the deterministic mock, so the app still runs without a key.
+    {
+      provide: EXTRACTION_PROVIDER,
+      inject: [MarketConfigService],
+      useFactory: (config: MarketConfigService) =>
+        process.env.ANTHROPIC_API_KEY
+          ? new ClaudeExtractionProvider()
+          : new MockExtractionProvider(config),
+    },
     { provide: PAYMENT_RAIL, useClass: MockPaymentRail },
     { provide: ASYCUDA_ADAPTER, useClass: MockAsycudaAdapter },
   ],
