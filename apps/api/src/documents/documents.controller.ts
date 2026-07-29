@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -30,6 +31,13 @@ export class DocumentsController {
     @Body() dto: UploadDocumentDto,
   ) {
     return this.documents.upload(principal, file, dto);
+  }
+
+  /** Remove an uploaded document and the (unpaid) charges it produced. */
+  @Delete(':id')
+  @RequirePermissions(Permission.DOCUMENT_WRITE)
+  remove(@CurrentUser() principal: AuthPrincipal, @Param('id') id: string) {
+    return this.documents.deleteDocument(principal, id);
   }
 }
 

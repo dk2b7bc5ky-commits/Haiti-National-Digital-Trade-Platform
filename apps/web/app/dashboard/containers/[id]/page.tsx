@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import type { ContainerDetail } from '@rezo/shared-types';
+import type { ContainerDetail, DocumentSummary } from '@rezo/shared-types';
 import { useAuth } from '../../../../lib/auth';
 import { apiFetchEnvelope, apiFetch, ApiClientError } from '../../../../lib/api';
 import { apiUpload } from '../../../../lib/api';
@@ -281,6 +281,14 @@ function DocumentUpload({ containerId, token, onDone }: { containerId: string; t
   const [docType, setDocType] = useState('terminal_invoice');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [docs, setDocs] = useState<DocumentSummary[]>([]);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  const loadDocs = useCallback(() => {
+    apiFetch<DocumentSummary[]>(`/containers/${containerId}/documents`, { token }).then(setDocs).catch(() => setDocs([]));
+  }, [containerId, token]);
+
+  useEffect(() => { loadDocs(); }, [loadDocs]);
 
   async function submit() {
     if (!file) return;
@@ -294,11 +302,28 @@ function DocumentUpload({ containerId, token, onDone }: { containerId: string; t
       const res = await apiUpload<{ charges_created: number; charges_pending_review: number; verification_tasks: number }>('/documents', form, token);
       setMsg(t('doc.extracted', { n: res.charges_created, m: res.charges_pending_review }));
       setFile(null);
+      loadDocs();
       onDone();
     } catch {
       setMsg(t('doc.uploadFailed'));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function removeDoc(id: string) {
+    if (!window.confirm(t('doc.removeConfirm'))) return;
+    setRemovingId(id);
+    setMsg(null);
+    try {
+      const res = await apiFetch<{ deleted: boolean; charges_removed: number }>(`/documents/${id}`, { method: 'DELETE', token });
+      setMsg(t('doc.removed', { n: res.charges_removed }));
+      loadDocs();
+      onDone();
+    } catch {
+      setMsg(t('doc.uploadFailed'));
+    } finally {
+      setRemovingId(null);
     }
   }
 
@@ -321,6 +346,32 @@ function DocumentUpload({ containerId, token, onDone }: { containerId: string; t
         </button>
       </div>
       {msg && <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">{msg}</p>}
+
+      {/* Uploaded documents — remove one to clear the charges it added and redo. */}
+      <div className="mt-4 border-t border-slate-100 pt-3">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{t('doc.uploaded')}</p>
+        {docs.length === 0 ? (
+          <p className="text-sm text-slate-400">{t('doc.none')}</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {docs.map((d) => (
+              <li key={d.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2 text-sm">
+                <span className="min-w-0">
+                  <span className="truncate font-medium text-slate-700">{d.file_name}</span>
+                  <span className="ml-2 text-xs text-slate-400">{new Date(d.created_at).toLocaleDateString()}</span>
+                </span>
+                <button
+                  onClick={() => removeDoc(d.id)}
+                  disabled={removingId === d.id}
+                  className="shrink-0 rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                >
+                  {removingId === d.id ? t('doc.removing') : t('doc.remove')}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

@@ -178,6 +178,64 @@ export class DocumentsService {
     };
   }
 
+  /**
+   * Delete an uploaded document and the charges it produced, so a bad upload
+   * (wrong amounts) can be redone. Charges from uploaded documents aren't linked
+   * to a specific document row, so we clear the container's still-unpaid
+   * document-sourced charges (never paid ones, never charges already under a
+   * payment) and recompute deadlines. Returns how many charges were removed.
+   */
+  async deleteDocument(principal: AuthPrincipal, id: string): Promise<{ deleted: boolean; charges_removed: number }> {
+    const doc = await this.prisma.document.findUnique({ where: { id } });
+    if (!doc) throw new NotFoundException('Document not found.');
+
+    // Scope: the document's container must be visible to the caller (or, for an
+    // unmatched document, it must be one this org uploaded).
+    if (doc.containerId) {
+      const scope = await resolveContainerScope(this.prisma, principal);
+      const container = await this.prisma.container.findFirst({ where: { id: doc.containerId, ...scope } });
+      if (!container) throw new NotFoundException('Document not found.');
+    } else if (doc.uploadedByOrgId !== principal.orgId) {
+      throw new NotFoundException('Document not found.');
+    }
+
+    let chargesRemoved = 0;
+    await this.prisma.$transaction(async (tx) => {
+      if (doc.containerId) {
+        const charges = await tx.charge.findMany({
+          where: {
+            containerId: doc.containerId,
+            source: 'DOCUMENT',
+            status: { in: ['PENDING', 'PENDING_REVIEW', 'OVERDUE', 'REQUESTED'] },
+            paymentRequestId: null,
+          },
+          select: { id: true },
+        });
+        const chargeIds = charges.map((c) => c.id);
+        if (chargeIds.length > 0) {
+          await tx.verificationTask.deleteMany({ where: { chargeId: { in: chargeIds } } });
+          await tx.charge.deleteMany({ where: { id: { in: chargeIds } } });
+          chargesRemoved = chargeIds.length;
+        }
+      }
+      await tx.verificationTask.deleteMany({ where: { documentId: doc.id } });
+      await tx.document.delete({ where: { id: doc.id } });
+    });
+
+    if (doc.containerId) await this.deadlines.recomputeForContainer(doc.containerId);
+
+    await this.audit.record({
+      actorUserId: principal.userId,
+      actorOrgId: principal.orgId,
+      action: 'document.delete',
+      entity: 'Document',
+      entityId: id,
+      after: { container_id: doc.containerId, charges_removed: chargesRemoved },
+    });
+
+    return { deleted: true, charges_removed: chargesRemoved };
+  }
+
   async listForContainer(principal: AuthPrincipal, containerId: string): Promise<DocumentSummary[]> {
     const container = await this.prisma.container.findFirst({
       where: { id: containerId, ...(await resolveContainerScope(this.prisma, principal)) },
