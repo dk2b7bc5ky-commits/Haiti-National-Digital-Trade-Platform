@@ -1,5 +1,6 @@
-import { Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
 import { ContainersService } from './containers.service';
+import { QuickAddContainerDto } from './dto';
 import { CurrentUser, RequirePermissions } from '../auth/decorators';
 import { AuthPrincipal } from '../auth/auth-principal';
 import { Permission } from '../rbac/permissions';
@@ -25,6 +26,13 @@ export class ContainersController {
       normalizeLimit(limit),
       cursor,
     );
+  }
+
+  /** Quick-add a single container (importer-friendly; no full manifest). */
+  @Post()
+  @RequirePermissions(Permission.CONTAINER_CREATE)
+  quickAdd(@CurrentUser() principal: AuthPrincipal, @Body() dto: QuickAddContainerDto) {
+    return this.containers.quickAdd(principal, dto);
   }
 
   @Get(':id')

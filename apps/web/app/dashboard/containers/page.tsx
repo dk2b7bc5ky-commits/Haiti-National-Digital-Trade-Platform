@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import type { ContainerSummary, MarketConfig } from '@rezo/shared-types';
+import type { ContainerSummary, MarketConfig, ContainerSize, DirectoryOrg } from '@rezo/shared-types';
 import { useAuth } from '../../../lib/auth';
-import { apiFetch, apiFetchEnvelope } from '../../../lib/api';
+import { apiFetch, apiFetchEnvelope, ApiClientError } from '../../../lib/api';
 import { countdown } from '../../../lib/format';
 import { useT, countdownLabel } from '../../../lib/i18n';
 import { Chrome, Loading, useRequireAuth } from '../../../components/chrome';
@@ -26,6 +26,105 @@ const FREE_DAYS_DEFAULT = { demurrage: 5, electric: 3 };
 const STATUS_OPTS = ['arrived', 'cleared', 'released', 'gated_out'];
 const PAY_OPTS = ['pending', 'overdue', 'paid', 'none'];
 
+/** Importer-friendly "add a container" modal (backed by POST /containers). */
+function AddContainerModal({
+  token, canPickImporter, onClose, onAdded,
+}: {
+  token: string | null; canPickImporter: boolean; onClose: () => void; onAdded: () => void;
+}) {
+  const t = useT();
+  const [containerNumber, setContainerNumber] = useState('');
+  const [blNumber, setBlNumber] = useState('');
+  const [size, setSize] = useState<ContainerSize>('40');
+  const [arrival, setArrival] = useState('');
+  const [importerId, setImporterId] = useState('');
+  const [importers, setImporters] = useState<DirectoryOrg[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (canPickImporter) {
+      apiFetch<DirectoryOrg[]>('/organizations/directory?type=IMPORTER', { token }).then(setImporters).catch(() => {});
+    }
+  }, [canPickImporter, token]);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await apiFetch('/containers', {
+        method: 'POST',
+        token,
+        body: {
+          container_number: containerNumber.trim(),
+          size_type: size,
+          bl_number: blNumber.trim() || undefined,
+          arrival_date: arrival ? new Date(arrival).toISOString() : undefined,
+          importer_org_id: canPickImporter && importerId ? importerId : undefined,
+        },
+      });
+      onAdded();
+    } catch (err) {
+      setError(err instanceof ApiClientError ? err.message : t('containers.addFailed'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const inputCls = 'mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-[10vh]" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 bg-slate-900/40" onClick={onClose} />
+      <div className="relative w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-soft">
+        <h2 className="text-lg font-bold">{t('containers.addTitle')}</h2>
+        <p className="mt-1 text-sm text-slate-500">{t('containers.addHint')}</p>
+        <form onSubmit={submit} className="mt-4 space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">{t('manifest.containerNumber')}</label>
+            <input value={containerNumber} onChange={(e) => setContainerNumber(e.target.value)} required placeholder="MSKU1234567" className={`${inputCls} font-mono`} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">{t('manifest.blNumber')}</label>
+            <input value={blNumber} onChange={(e) => setBlNumber(e.target.value)} className={inputCls} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-slate-700">{t('containers.size')}</label>
+              <select value={size} onChange={(e) => setSize(e.target.value as ContainerSize)} className={inputCls}>
+                <option value="20">20&apos;</option>
+                <option value="40">40&apos;</option>
+                <option value="reefer">Reefer</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700">{t('containers.colArrival')}</label>
+              <input type="date" value={arrival} onChange={(e) => setArrival(e.target.value)} className={inputCls} />
+            </div>
+          </div>
+          {canPickImporter && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700">{t('containers.importer')}</label>
+              <select value={importerId} onChange={(e) => setImporterId(e.target.value)} required className={inputCls}>
+                <option value="">{t('manifest.selectImporter')}</option>
+                {importers.map((o) => <option key={o.id} value={o.id}>{o.legal_name}</option>)}
+              </select>
+            </div>
+          )}
+          {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+          <div className="flex justify-end gap-2 pt-1">
+            <button type="button" onClick={onClose} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">{t('common.cancel')}</button>
+            <button type="submit" disabled={busy || !containerNumber.trim()} className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50">
+              {busy ? t('containers.adding') : t('containers.addSave')}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function ContainersPage() {
   const { auth, ready } = useRequireAuth();
   const { token } = useAuth();
@@ -33,6 +132,7 @@ export default function ContainersPage() {
   const [rows, setRows] = useState<ContainerSummary[] | null>(null);
   const [freeDays, setFreeDays] = useState(FREE_DAYS_DEFAULT);
   const [err, setErr] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
 
   // Filters
   const [q, setQ] = useState('');
@@ -40,11 +140,17 @@ export default function ContainersPage() {
   const [pay, setPay] = useState('');
   const [atRiskOnly, setAtRiskOnly] = useState(false);
 
-  useEffect(() => {
+  const loadContainers = useCallback(() => {
     if (!token) return;
     apiFetchEnvelope<ContainerSummary[]>('/containers?limit=200', { token })
       .then(({ json }) => (json.error ? setErr(json.error.message) : setRows(json.data ?? [])))
       .catch(() => setErr(t('containers.loadError')));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    loadContainers();
     apiFetch<MarketConfig>('/markets/HT', { token })
       .then((m) => {
         const fd = (m.tariff?.free_days ?? {}) as { demurrage?: number; electric?: number };
@@ -78,12 +184,28 @@ export default function ContainersPage() {
     <Chrome auth={auth}>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t('containers.title')}</h1>
-        {auth.permissions.includes('manifest:submit') && (
-          <Link href="/dashboard/manifests/new" className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700">
-            {t('containers.submitManifest')}
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          {auth.permissions.includes('container:create') && (
+            <button onClick={() => setShowAdd(true)} className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700">
+              {t('containers.addContainer')}
+            </button>
+          )}
+          {auth.permissions.includes('manifest:submit') && (
+            <Link href="/dashboard/manifests/new" className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              {t('containers.submitManifest')}
+            </Link>
+          )}
+        </div>
       </div>
+
+      {showAdd && (
+        <AddContainerModal
+          token={token}
+          canPickImporter={auth.permissions.includes('broker:manage') || auth.permissions.includes('tenant:read_all')}
+          onClose={() => setShowAdd(false)}
+          onAdded={() => { setShowAdd(false); setRows(null); loadContainers(); }}
+        />
+      )}
       <p className="mt-1 text-sm text-slate-500">{t('containers.subtitle')}</p>
 
       {/* Filter bar */}

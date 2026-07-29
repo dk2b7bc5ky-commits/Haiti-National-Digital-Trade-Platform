@@ -73,6 +73,7 @@ export type Permission =
   | 'config:manage'
   | 'manifest:submit'
   | 'container:read'
+  | 'container:create'
   | 'charge:read'
   | 'charge:write'
   | 'payment:create'

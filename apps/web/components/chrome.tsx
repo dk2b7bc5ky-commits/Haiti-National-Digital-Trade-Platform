@@ -169,7 +169,6 @@ export function Chrome({ auth, children }: { auth: AuthContext; children: React.
             <button onClick={() => setOpen(true)} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 md:hidden" aria-label="Open menu">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
             </button>
-            <SectorChip />
             <button
               onClick={() => setPaletteOpen(true)}
               className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-400 hover:bg-slate-50 sm:flex"
@@ -192,17 +191,6 @@ export function Chrome({ auth, children }: { auth: AuthContext; children: React.
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} navItems={items} token={token} />
     </div>
-  );
-}
-
-/** Static sector indicator (the national vision: Trade live, others on the roadmap). */
-function SectorChip() {
-  const t = useT();
-  return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-medium text-slate-700">
-      <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-      {t('chrome.tradeCustoms')}
-    </span>
   );
 }
 

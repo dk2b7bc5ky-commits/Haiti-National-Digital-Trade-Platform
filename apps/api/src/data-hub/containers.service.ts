@@ -12,6 +12,8 @@ import {
   toContainerDetail,
 } from './mappers';
 import { PayeeMap } from '../charges/mappers';
+import { ManifestsService } from './manifests.service';
+import { QuickAddContainerDto } from './dto';
 import { DeadlineService } from '../deadlines/deadline.service';
 import { ASYCUDA_ADAPTER, AsycudaAdapter } from '../integration/asycuda-adapter';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -37,8 +39,66 @@ export class ContainersService {
     private readonly deadlines: DeadlineService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly manifests: ManifestsService,
     @Inject(ASYCUDA_ADAPTER) private readonly asycuda: AsycudaAdapter,
   ) {}
+
+  /**
+   * Quick-add a single container the importer-friendly way. Importers add for
+   * their own org; admins/brokers may add on behalf of an importer via
+   * importer_org_id. Internally it reuses the manifest flow to create a minimal
+   * voyage/manifest/bill so the container is a fully valid record — the rest of
+   * the platform (charges, deadlines, uploads) works with no special-casing.
+   */
+  async quickAdd(principal: AuthPrincipal, dto: QuickAddContainerDto): Promise<ContainerDetail> {
+    const myOrg = await this.prisma.organization.findUnique({ where: { id: principal.orgId } });
+    if (!myOrg) throw new NotFoundException('Organization not found.');
+
+    // An importer always files under their own org; anyone else must name one.
+    let importerOrgId: string;
+    if (myOrg.type === 'IMPORTER') {
+      importerOrgId = principal.orgId;
+    } else {
+      if (!dto.importer_org_id) throw new BadRequestException('importer_org_id is required.');
+      const importer = await this.prisma.organization.findUnique({ where: { id: dto.importer_org_id } });
+      if (!importer || importer.type !== 'IMPORTER') throw new BadRequestException('importer_org_id must be an importer.');
+      importerOrgId = importer.id;
+    }
+
+    const containerNumber = dto.container_number.trim().toUpperCase();
+    const blNumber = dto.bl_number?.trim() || `BL-${containerNumber}`;
+    const etaIso = (dto.arrival_date ? new Date(dto.arrival_date) : new Date()).toISOString();
+
+    const result = await this.manifests.submit(principal, {
+      voyage: {
+        // Per-importer synthetic vessel/voyage for manually-entered containers.
+        vessel_imo: `DIRECT-${importerOrgId}`.slice(0, 40),
+        vessel_name: dto.vessel_name?.trim() || 'Direct entry',
+        voyage_number: blNumber,
+        eta: etaIso,
+        port: 'Port-au-Prince',
+      },
+      bills_of_lading: [
+        {
+          bl_number: blNumber,
+          shipper: dto.shipper?.trim() || 'Direct entry',
+          consignee_org_id: importerOrgId,
+          containers: [{ container_number: containerNumber, size_type: dto.size_type }],
+        },
+      ],
+    });
+
+    await this.audit.record({
+      actorUserId: principal.userId,
+      actorOrgId: principal.orgId,
+      action: 'container.quick_add',
+      entity: 'Container',
+      entityId: result.container_ids[0],
+      after: { container_number: containerNumber, bl_number: blNumber, importer_org_id: importerOrgId },
+    });
+
+    return this.getById(principal, result.container_ids[0]);
+  }
 
   async list(
     principal: AuthPrincipal,

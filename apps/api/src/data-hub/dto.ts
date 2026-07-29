@@ -78,3 +78,39 @@ export class SubmitManifestDto {
   @Type(() => BillOfLadingDto)
   bills_of_lading!: BillOfLadingDto[];
 }
+
+/**
+ * Quick-add a single container — the importer-friendly path (no full manifest).
+ * Under the hood it creates a minimal voyage/manifest/bill so the container is a
+ * valid record the rest of the platform reads.
+ */
+export class QuickAddContainerDto {
+  @IsString()
+  @MinLength(1)
+  container_number!: string;
+
+  @IsIn(SIZES)
+  size_type!: ContainerSize;
+
+  @IsOptional()
+  @IsString()
+  bl_number?: string;
+
+  /** Expected or actual arrival date (ISO). Absence is treated as "now". */
+  @IsOptional()
+  @IsDateString()
+  arrival_date?: string;
+
+  /** Admin/broker adding on behalf of an importer; importers add for themselves. */
+  @IsOptional()
+  @IsString()
+  importer_org_id?: string;
+
+  @IsOptional()
+  @IsString()
+  vessel_name?: string;
+
+  @IsOptional()
+  @IsString()
+  shipper?: string;
+}

@@ -175,14 +175,62 @@ async function main(): Promise<void> {
   await seedMarketAndPayees();
   await seedShippingAgents();
   await seedFxRates();
-  await seedDemoDataset();
-  await seedSubscriptions();
-  await seedNotifications();
+  // Demo containers/charges/notifications only when SEED_DEMO=true (local demos).
+  // Production deploys start clean; any pre-existing demo dataset is removed so
+  // the Containers view shows only real, user-entered containers.
+  if (process.env.SEED_DEMO === 'true') {
+    await seedDemoDataset();
+    await seedSubscriptions();
+    await seedNotifications();
+  } else {
+    await removeDemoDataset();
+  }
 
   const orgCount = await prisma.organization.count();
   const userCount = await prisma.user.count();
   console.log(`\nSeed complete: ${orgCount} organizations, ${userCount} users.`);
   console.log(`All seeded users share the dev password: "${DEV_PASSWORD}"`);
+}
+
+/**
+ * Removes the demo dataset (the "MV Kreyòl Star" voyage and everything hanging
+ * off it) if present, in FK-safe order. Real, user-entered containers use a
+ * different vessel, so they are never touched — and once the demo vessel is
+ * gone this is a no-op, so it's safe to run on every deploy.
+ */
+async function removeDemoDataset(): Promise<void> {
+  const vessel = await prisma.vessel.findUnique({ where: { imo: 'IMO9310001' } });
+  if (!vessel) {
+    console.log('• No demo dataset present.');
+    return;
+  }
+  const voyages = await prisma.voyage.findMany({ where: { vesselId: vessel.id }, select: { id: true } });
+  const voyageIds = voyages.map((v) => v.id);
+  const manifests = await prisma.manifest.findMany({ where: { voyageId: { in: voyageIds } }, select: { id: true } });
+  const manifestIds = manifests.map((m) => m.id);
+  const bls = await prisma.billOfLading.findMany({ where: { manifestId: { in: manifestIds } }, select: { id: true } });
+  const blIds = bls.map((b) => b.id);
+  const containers = await prisma.container.findMany({ where: { blId: { in: blIds } }, select: { id: true } });
+  const ids = containers.map((c) => c.id);
+
+  if (ids.length > 0) {
+    await prisma.deadlineAlert.deleteMany({ where: { containerId: { in: ids } } });
+    await prisma.deadline.deleteMany({ where: { containerId: { in: ids } } });
+    await prisma.verificationTask.deleteMany({ where: { containerId: { in: ids } } });
+    await prisma.notification.deleteMany({ where: { containerId: { in: ids } } });
+    await prisma.paymentRouting.deleteMany({ where: { request: { containerId: { in: ids } } } });
+    await prisma.charge.deleteMany({ where: { containerId: { in: ids } } });
+    await prisma.paymentRequest.deleteMany({ where: { containerId: { in: ids } } });
+    await prisma.document.deleteMany({ where: { containerId: { in: ids } } });
+    await prisma.gateAppointment.deleteMany({ where: { containerId: { in: ids } } });
+    await prisma.transportJob.deleteMany({ where: { containerId: { in: ids } } });
+    await prisma.container.deleteMany({ where: { id: { in: ids } } });
+  }
+  await prisma.billOfLading.deleteMany({ where: { id: { in: blIds } } });
+  await prisma.manifest.deleteMany({ where: { id: { in: manifestIds } } });
+  await prisma.voyage.deleteMany({ where: { id: { in: voyageIds } } });
+  await prisma.vessel.delete({ where: { id: vessel.id } });
+  console.log(`• Removed demo dataset (${ids.length} demo container(s)).`);
 }
 
 /**
