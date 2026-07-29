@@ -7,6 +7,7 @@
  */
 import { PrismaClient, OrgType, Role, ChargeType, ChargeSource, AlertChannel } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { seedCarrierRouting, seedImporterDirectory, seedCargofax } from './cargofax';
 
 const prisma = new PrismaClient();
 
@@ -175,6 +176,38 @@ async function main(): Promise<void> {
   await seedMarketAndPayees();
   await seedShippingAgents();
   await seedFxRates();
+
+  // Real carrier → Haiti-agency routing ("who you pay"). Safe on every deploy:
+  // it only ensures payee-registry rows and never touches containers/charges,
+  // so it runs live. Wrapped so a data issue can never break the deploy.
+  let routing: Awaited<ReturnType<typeof seedCarrierRouting>> = new Map();
+  try {
+    routing = await seedCarrierRouting(prisma);
+  } catch (e) {
+    console.warn('• Carrier routing seed failed (non-fatal):', (e as Error).message);
+  }
+
+  // Importer directory (login-less orgs for "add on behalf"). Off by default so
+  // the live importer picker stays short; enable in the demo env.
+  if (process.env.SEED_IMPORTERS === 'true') {
+    try {
+      await seedImporterDirectory(prisma);
+    } catch (e) {
+      console.warn('• Importer directory seed failed (non-fatal):', (e as Error).message);
+    }
+  }
+
+  // Full CargoFax shipment/container dataset — DEMO ENVIRONMENT ONLY. It would
+  // bury the real Alize containers, so it never runs in the live (no-flag)
+  // workspace. Capped + batched to keep the deploy build fast.
+  if (process.env.SEED_CARGOFAX === 'true') {
+    try {
+      await seedCargofax(prisma, routing, HT_TARIFF);
+    } catch (e) {
+      console.warn('• CargoFax dataset seed failed (non-fatal):', (e as Error).message);
+    }
+  }
+
   // Demo containers/charges/notifications only when SEED_DEMO=true (local demos).
   // Production deploys start clean; any pre-existing demo dataset is removed so
   // the Containers view shows only real, user-entered containers.

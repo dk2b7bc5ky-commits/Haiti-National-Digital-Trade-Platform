@@ -29,14 +29,25 @@ From `cargofax_carriers_payees.csv`. Key mappings:
 
 The seed is **safe by default**: it does not flood the live workspace.
 
-- `SEED_ROUTING=true` — load the carrier→payee routing + real agency payees
-  (small, safe, recommended; powers real "who you pay").
+- **Carrier→payee routing + real agency payees** load on **every deploy**
+  (from `cargofax_carriers_payees.csv`). This is small and safe — it only
+  writes payee-registry rows, never containers or charges — so the live "who
+  you pay" is always real. Charter / private carriers whose payee is not yet
+  confirmed are created **inactive** and kept out of the main flow. (No flag.)
 - `SEED_IMPORTERS=true` — load the 788-importer directory (for admin "add on
-  behalf" + consignee matching). No logins created.
-- `SEED_CARGOFAX=true` — load the full 15,500-container demo dataset. Intended
+  behalf" + consignee matching). No logins created. Off by default so the live
+  importer picker stays short.
+- `SEED_CARGOFAX=true` — load the CargoFax shipment/container dataset. Intended
   for the government / investor demo environment, **not** the live Alize
-  workspace (it would bury real containers).
+  workspace (it would bury the real containers). Batched + capped so the deploy
+  never times out.
+  - `SEED_CARGOFAX_LIMIT` — max bills of lading to load (default **2000**;
+    set `0` to load everything). The cap is logged, never silent.
 - `SEED_DEMO=true` — the older synthetic demo dataset (separate from CargoFax).
 
-With no flags set, the seed only ensures accounts, market config, and the payee
-registry, and removes any leftover synthetic demo data.
+With no flags set, the seed ensures accounts, market config, the payee registry
+**and the live carrier routing**, and removes any leftover synthetic demo data.
+
+The **Rezo fee is never seeded** as a charge — seeded amounts are the real
+third-party (terminal / port / line) charges only; fee handling stays hidden in
+the app.
