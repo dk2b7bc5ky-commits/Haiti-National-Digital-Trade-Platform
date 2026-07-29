@@ -1,0 +1,30 @@
+carrier_normalized,container_rows,agency_code,pay_to_payee,direct_or_agent,mapped
+MSC,2564,MSC_HAITI,MSC Haiti S.A.,direct,yes
+CMA CGM,2051,JB_VITAL,Ets J.B. Vital S.A.,agent,yes
+Evergreen,1586,SAMAR,SAMAR S.A.,agent,yes
+Maersk Line,1560,AGEMAR,AGEMAR S.A.,agent,yes
+ZIM,1381,NADAL,NADAL S.A.,agent,yes
+COSCO,942,DEMSA,DEMSA,agent,yes
+Private Carrier - Apa,835,UNKNOWN_APA,Private carrier APA (confirm payee),charter,yes
+Private Carrier - Via,824,UNKNOWN_VIA,Private carrier VIA (confirm payee),charter,yes
+Seaboard Marine,738,SEABOARD_HAITI,Seaboard d'Haiti S.A.,direct,yes
+Hapag-Lloyd,617,ENMARCOLDA,ENMARCOLDA S.A.,agent,yes
+King Ocean,552,DEMSA,DEMSA,agent,yes
+Accordia Shipping,510,UNKNOWN_ACCORDIA,Accordia Shipping (agent TBD - confirm),agent,yes
+Antillean Marine,496,ANTILLEAN_HAITI,Antillean d'Haiti S.A.,direct,yes
+ONE,195,ADEKO,ADEKO Enterprises S.A.,agent,yes
+Crowley,173,ENMARCOLDA,ENMARCOLDA S.A.,agent,yes
+Private Carrier - Mas,173,UNKNOWN_MAS,Private carrier MAS (confirm payee),charter,yes
+Private Carrier - Rvam,86,RVAM,RVAM (Reginald Villard Agences Maritimes),agent,yes
+National Shipping of America,73,ANTOINE_HOGARTH,Antoine Hogarth S.A.,agent,yes
+Private Carrier - Tca,48,UNKNOWN_TCA,Private carrier TCA (confirm payee),charter,yes
+Private Carrier - Acc,38,UNKNOWN_ACC,Private carrier ACC (confirm payee),charter,yes
+Private Carrier - Mos,12,UNKNOWN_MOS,Private carrier MOS (confirm payee),charter,yes
+Private Carrier - Tsa,11,UNKNOWN_TSA,Private/tramp charter - TSA (confirm payee),charter,yes
+NYK Line,10,ANTOINE_HOGARTH,Antoine Hogarth S.A.,agent,yes
+Private Carrier - Ade,10,UNKNOWN_ADE,Private carrier ADE (confirm payee),charter,yes
+Private Carrier - Jhm,4,UNKNOWN_JHM,Private carrier JHM (confirm payee),charter,yes
+Private Carrier - Tst,4,UNKNOWN_TST,Private carrier TST (confirm payee),charter,yes
+Private Carrier - Dem,3,UNKNOWN_DEM,Private carrier DEM (confirm payee),charter,yes
+Private Carrier - Hss,2,UNKNOWN_HSS,Private carrier HSS (confirm payee),charter,yes
+Private Carrier - Qsa,2,UNKNOWN_QSA,Private carrier QSA (confirm payee),charter,yes
