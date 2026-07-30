@@ -119,8 +119,8 @@ const en: Dict = {
   'containers.addFailed': 'Could not add the container.',
   'common.cancel': 'Cancel',
   // --- Email agent (mail intake) ---
-  'nav.agent': 'Email agent',
-  'agent.title': 'Email agent',
+  'nav.agent': 'Agent',
+  'agent.title': 'Agent',
   'agent.intro':
     'Connect the mailbox where your arrival notices and port bills arrive. The agent reads them, files the container, and prepares the charges for you to confirm. It never pays anything.',
   'agent.mailbox': 'Watched mailbox',
@@ -488,8 +488,8 @@ const fr: Dict = {
   'containers.addFailed': 'Impossible d’ajouter le conteneur.',
   'common.cancel': 'Annuler',
   // --- Agent e-mail (lecture de la boîte) ---
-  'nav.agent': 'Agent e-mail',
-  'agent.title': 'Agent e-mail',
+  'nav.agent': 'Agent',
+  'agent.title': 'Agent',
   'agent.intro':
     'Connectez la boîte où arrivent vos avis d’arrivée et vos factures de port. L’agent les lit, enregistre le conteneur et prépare les frais pour que vous les confirmiez. Il ne paie jamais rien.',
   'agent.mailbox': 'Boîte surveillée',
@@ -842,8 +842,8 @@ const ht: Dict = {
   'containers.addFailed': 'Pa ka ajoute kontenè a.',
   'common.cancel': 'Anile',
   // --- Ajan imel (li bwat imel la) ---
-  'nav.agent': 'Ajan imel',
-  'agent.title': 'Ajan imel',
+  'nav.agent': 'Ajan',
+  'agent.title': 'Ajan',
   'agent.intro':
     'Konekte bwat imel kote avi darive ak fakti pò yo rive. Ajan an li yo, enrejistre kontenè a, epi pare frè yo pou ou konfime. Li pa janm peye anyen.',
   'agent.mailbox': 'Bwat imel n ap veye',
