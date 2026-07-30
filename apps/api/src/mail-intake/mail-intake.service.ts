@@ -18,7 +18,7 @@
  *    Ops verification queue; below AUTO_ALL autonomy every amount waits for a
  *    human Confirm.
  */
-import { Inject, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MailAutonomy, MailIntakeStatus, MailboxConnection, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
