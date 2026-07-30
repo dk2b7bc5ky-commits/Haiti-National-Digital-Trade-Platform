@@ -197,6 +197,10 @@ const en: Dict = {
   'agent.status.FAILED': 'Failed',
   'agent.status.PENDING': 'Pending',
   'agent.demoTitle': 'You are on the practice inbox.',
+  'agent.liveTitle': 'Connected to your real mailbox.',
+  'agent.liveBody': 'The agent is reading {address}. Anything it finds is real.',
+  'agent.secretMissingTitle': 'The mailbox password has gone missing.',
+  'agent.secretMissingBody': 'The API expects {env} but cannot find it now — check it still exists on the rezo-api service in Render.',
   'agent.demoBody':
     'Your real mail is not connected yet, so “Test connection” will always succeed here — it is not reaching your mailbox. Nothing it reads gets filed: no containers, no charges. Add your App Password as {env} on the API service and redeploy to switch to the real one.',
   'agent.testDemo': 'Reached the practice inbox — not your real mailbox yet. Nothing it reads is filed.',
@@ -602,6 +606,10 @@ const fr: Dict = {
   'agent.status.FAILED': 'Échec',
   'agent.status.PENDING': 'En attente',
   'agent.demoTitle': 'Vous êtes sur la boîte de démonstration.',
+  'agent.liveTitle': 'Connecté à votre vraie messagerie.',
+  'agent.liveBody': 'L’agent lit {address}. Tout ce qu’il trouve est réel.',
+  'agent.secretMissingTitle': 'Le mot de passe de la boîte a disparu.',
+  'agent.secretMissingBody': 'L’API attend {env} mais ne le trouve plus — vérifiez qu’il existe toujours sur le service rezo-api dans Render.',
   'agent.demoBody':
     'Votre messagerie réelle n’est pas encore connectée : « Tester la connexion » réussira donc toujours ici, sans atteindre votre boîte. Rien de ce qu’elle lit n’est enregistré : aucun conteneur, aucun frais. Ajoutez votre mot de passe d’application sous le nom {env} sur le service API, puis redéployez pour passer à la vraie.',
   'agent.testDemo': 'Boîte de démonstration atteinte — pas encore votre messagerie réelle. Rien n’y est enregistré.',
@@ -992,6 +1000,10 @@ const ht: Dict = {
   'agent.status.FAILED': 'Echwe',
   'agent.status.PENDING': 'Ap tann',
   'agent.demoTitle': 'Ou sou bwat pratik la.',
+  'agent.liveTitle': 'Konekte ak vrè imel ou.',
+  'agent.liveBody': 'Ajan an ap li {address}. Tout sa li jwenn se reyèl.',
+  'agent.secretMissingTitle': 'Modpas bwat la disparèt.',
+  'agent.secretMissingBody': 'API a ap tann {env} men li pa jwenn li kounye a — verifye li toujou la sou sèvis rezo-api nan Render.',
   'agent.demoBody':
     'Vrè imel ou poko konekte, se sak fè « Teste koneksyon an » ap toujou reyisi isit la — li pa rive nan bwat ou. Anyen li li pa anrejistre: pa gen kontenè, pa gen frè. Mete App Password ou anba non {env} sou sèvis API a epi redeplwaye pou pase sou vrè a.',
   'agent.testDemo': 'Rive nan bwat pratik la — se poko vrè imel ou. Anyen pa anrejistre.',

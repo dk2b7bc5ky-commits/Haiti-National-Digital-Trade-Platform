@@ -126,11 +126,23 @@ export default function AgentPage() {
         )}
       </div>
 
-      {/* The demo inbox always "connects", so say so loudly — otherwise a
-          successful test looks like proof the real mailbox is wired. */}
+      {/* Which mailbox am I actually reading? Stated positively when live —
+          the absence of a warning is too weak a signal to rely on. */}
       {conn?.using_demo_inbox && (
         <p className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <strong>{t('agent.demoTitle')}</strong> {t('agent.demoBody', { env: conn.secret_env_var })}
+        </p>
+      )}
+      {conn && !conn.using_demo_inbox && conn.secret_present && (
+        <p className="mt-4 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          <strong>{t('agent.liveTitle')}</strong> {t('agent.liveBody', { address: conn.address })}
+        </p>
+      )}
+      {/* The API booted expecting a real mailbox but the credential has gone
+          missing — almost always a renamed or deleted env var. */}
+      {conn && !conn.using_demo_inbox && !conn.secret_present && (
+        <p className="mt-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
+          <strong>{t('agent.secretMissingTitle')}</strong> {t('agent.secretMissingBody', { env: conn.secret_env_var })}
         </p>
       )}
 
