@@ -219,10 +219,89 @@ async function main(): Promise<void> {
     await removeDemoDataset();
   }
 
+  // Anything the built-in practice inbox filed before a real mailbox was wired
+  // is removed on EVERY deploy, whatever the flags say. Those containers are
+  // fictional and must never sit alongside real ones.
+  await removeAgentPracticeData();
+
   const orgCount = await prisma.organization.count();
   const userCount = await prisma.user.count();
   console.log(`\nSeed complete: ${orgCount} organizations, ${userCount} users.`);
   console.log(`All seeded users share the dev password: "${DEV_PASSWORD}"`);
+}
+
+
+/**
+ * Container numbers used by the built-in practice inbox
+ * (src/integration/mock-mailbox.provider.ts). Kept as literals so the seed has
+ * no dependency on application code; if that inbox's notices change, update this.
+ */
+const PRACTICE_CONTAINERS = ['DEMU1234567', 'MEDU7654321'];
+/** The practice inbox's synthetic Message-IDs all end this way. */
+const PRACTICE_MESSAGE_SUFFIX = '@example.invalid>';
+
+/**
+ * Removes everything the practice inbox filed: its intake records and the
+ * containers, documents and charges the agent created from them.
+ *
+ * Runs on every deploy and is a no-op once clean, so a workspace can never end
+ * up showing fictional containers next to real ones. Paid charges and anything
+ * under a payment request are left alone on principle — this only ever deletes
+ * data that demonstrably came from the practice inbox.
+ */
+async function removeAgentPracticeData(): Promise<void> {
+  const messages = await prisma.mailIntakeMessage.findMany({
+    where: { messageId: { endsWith: PRACTICE_MESSAGE_SUFFIX } },
+    select: { id: true, chargeIds: true, documentIds: true, containerId: true },
+  });
+
+  const chargeIds = messages.flatMap((m) => m.chargeIds);
+  const documentIds = messages.flatMap((m) => m.documentIds);
+
+  if (chargeIds.length > 0) {
+    await prisma.verificationTask.deleteMany({ where: { chargeId: { in: chargeIds } } });
+    await prisma.charge.deleteMany({ where: { id: { in: chargeIds }, paymentRequestId: null } });
+  }
+  if (documentIds.length > 0) {
+    await prisma.verificationTask.deleteMany({ where: { documentId: { in: documentIds } } });
+    await prisma.document.deleteMany({ where: { id: { in: documentIds } } });
+  }
+  if (messages.length > 0) {
+    await prisma.mailIntakeMessage.deleteMany({ where: { id: { in: messages.map((m) => m.id) } } });
+  }
+
+  // The fictional containers themselves, plus the synthetic B/L each one sits
+  // under. Deleted in FK-safe order.
+  const containers = await prisma.container.findMany({
+    where: { containerNumber: { in: PRACTICE_CONTAINERS } },
+    select: { id: true, blId: true, containerNumber: true },
+  });
+  for (const c of containers) {
+    await prisma.deadlineAlert.deleteMany({ where: { containerId: c.id } });
+    await prisma.deadline.deleteMany({ where: { containerId: c.id } });
+    await prisma.verificationTask.deleteMany({ where: { containerId: c.id } });
+    await prisma.notification.deleteMany({ where: { containerId: c.id } });
+    await prisma.paymentRouting.deleteMany({ where: { request: { containerId: c.id } } });
+    await prisma.charge.deleteMany({ where: { containerId: c.id } });
+    await prisma.paymentRequest.deleteMany({ where: { containerId: c.id } });
+    await prisma.document.deleteMany({ where: { containerId: c.id } });
+    await prisma.gateAppointment.deleteMany({ where: { containerId: c.id } });
+    await prisma.transportJob.deleteMany({ where: { containerId: c.id } });
+    await prisma.container.delete({ where: { id: c.id } });
+    // Only remove the B/L if nothing else hangs off it.
+    if ((await prisma.container.count({ where: { blId: c.blId } })) === 0) {
+      await prisma.billOfLading.deleteMany({ where: { id: c.blId } });
+    }
+  }
+
+  if (containers.length > 0 || messages.length > 0) {
+    console.log(
+      `• Removed practice-inbox data: ${containers.length} container(s), ` +
+      `${messages.length} intake record(s), ${chargeIds.length} charge(s).`,
+    );
+  } else {
+    console.log('• No practice-inbox data present.');
+  }
 }
 
 /**

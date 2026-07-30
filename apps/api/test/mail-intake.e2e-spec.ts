@@ -28,8 +28,12 @@ describe('Email intake agent (Phase A2/A3)', () => {
   const auth = (t: string) => ({ Authorization: `Bearer ${t}` });
 
   beforeAll(async () => {
-    // Ensure the deterministic mock inbox is the one under test.
+    // Ensure the deterministic mock inbox is the one under test, and allow it to
+    // write, so the full pipeline is exercised. In production the practice inbox
+    // is read-only precisely so it can't leave invented containers behind — that
+    // is asserted separately at the end of this suite.
     delete process.env.MAIL_INTAKE_PASSWORD;
+    process.env.MAIL_INTAKE_DEMO_WRITES = 'true';
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
     configureApp(app);
@@ -356,6 +360,38 @@ describe('Email intake agent (Phase A2/A3)', () => {
     expect((await http().get('/api/v1/mail-intake/connection').set(auth(tokens.trucker))).status).toBe(403);
     expect((await http().post('/api/v1/mail-intake/run').set(auth(tokens.trucker)).send({})).status).toBe(403);
     expect((await http().post('/api/v1/mail-intake/backfill').set(auth(tokens.trucker)).send({ days: 7 })).status).toBe(403);
+  });
+
+  it('the practice inbox files NOTHING by default, so a live workspace stays clean', async () => {
+    // This is the guard that keeps invented containers out of real workspaces.
+    const org = (await http().get('/api/v1/auth/me').set(auth(tokens.importer))).body.data.org.id;
+    await cleanupAgentData(prisma);
+    await http().put('/api/v1/mail-intake/connection').set(auth(tokens.importer))
+      .send({ address: 'practice@example.com', autonomy: 'AUTO_ALL', active: true });
+
+    const containersBefore = await prisma.container.count({ where: { importerOrgId: org } });
+    delete process.env.MAIL_INTAKE_DEMO_WRITES; // production behaviour
+    try {
+      const run = await http().post('/api/v1/mail-intake/run').set(auth(tokens.importer)).send({});
+      expect(run.body.data.checked).toBe(4);
+
+      // It still reads and summarizes — the screen demonstrates itself…
+      const list = await http().get('/api/v1/mail-intake/messages').set(auth(tokens.importer));
+      const read = list.body.data.filter((m: { status: string }) => m.status === 'PROCESSED');
+      expect(read.length).toBeGreaterThan(0);
+      expect(read[0].summary).toBeTruthy();
+      expect(read[0].classification).toMatch(/Practice inbox/);
+
+      // …but nothing was filed: no container, no charges, nothing to confirm.
+      for (const m of list.body.data) {
+        expect(m.container_id).toBeNull();
+        expect(m.status).not.toBe('NEEDS_REVIEW');
+      }
+      expect(await prisma.container.count({ where: { importerOrgId: org } })).toBe(containersBefore);
+      expect(await prisma.container.count({ where: { containerNumber: { in: ['DEMU1234567', 'MEDU7654321'] } } })).toBe(0);
+    } finally {
+      process.env.MAIL_INTAKE_DEMO_WRITES = 'true';
+    }
   });
 
   it('never exposes a mailbox credential through the API', async () => {

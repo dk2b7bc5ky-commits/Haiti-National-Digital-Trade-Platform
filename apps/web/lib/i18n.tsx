@@ -198,8 +198,8 @@ const en: Dict = {
   'agent.status.PENDING': 'Pending',
   'agent.demoTitle': 'You are on the practice inbox.',
   'agent.demoBody':
-    'Your real mail is not connected yet, so “Test connection” will always succeed here — it is not reaching your mailbox. Add your App Password as {env} on the API service and redeploy to switch to the real one.',
-  'agent.testDemo': 'Reached the practice inbox — not your real mailbox yet.',
+    'Your real mail is not connected yet, so “Test connection” will always succeed here — it is not reaching your mailbox. Nothing it reads gets filed: no containers, no charges. Add your App Password as {env} on the API service and redeploy to switch to the real one.',
+  'agent.testDemo': 'Reached the practice inbox — not your real mailbox yet. Nothing it reads is filed.',
   'agent.catchUpTitle': 'Catch up on older mail',
   'agent.catchUpHint':
     'A normal check only looks at new mail. Use this once to read what was already sitting in the inbox before you connected it.',
@@ -603,8 +603,8 @@ const fr: Dict = {
   'agent.status.PENDING': 'En attente',
   'agent.demoTitle': 'Vous êtes sur la boîte de démonstration.',
   'agent.demoBody':
-    'Votre messagerie réelle n’est pas encore connectée : « Tester la connexion » réussira donc toujours ici, sans atteindre votre boîte. Ajoutez votre mot de passe d’application sous le nom {env} sur le service API, puis redéployez pour passer à la vraie.',
-  'agent.testDemo': 'Boîte de démonstration atteinte — pas encore votre messagerie réelle.',
+    'Votre messagerie réelle n’est pas encore connectée : « Tester la connexion » réussira donc toujours ici, sans atteindre votre boîte. Rien de ce qu’elle lit n’est enregistré : aucun conteneur, aucun frais. Ajoutez votre mot de passe d’application sous le nom {env} sur le service API, puis redéployez pour passer à la vraie.',
+  'agent.testDemo': 'Boîte de démonstration atteinte — pas encore votre messagerie réelle. Rien n’y est enregistré.',
   'agent.catchUpTitle': 'Récupérer les anciens e-mails',
   'agent.catchUpHint':
     'Une vérification normale ne regarde que les nouveaux e-mails. Utilisez ceci une fois pour lire ce qui était déjà dans la boîte avant la connexion.',
@@ -993,8 +993,8 @@ const ht: Dict = {
   'agent.status.PENDING': 'Ap tann',
   'agent.demoTitle': 'Ou sou bwat pratik la.',
   'agent.demoBody':
-    'Vrè imel ou poko konekte, se sak fè « Teste koneksyon an » ap toujou reyisi isit la — li pa rive nan bwat ou. Mete App Password ou anba non {env} sou sèvis API a epi redeplwaye pou pase sou vrè a.',
-  'agent.testDemo': 'Rive nan bwat pratik la — se poko vrè imel ou.',
+    'Vrè imel ou poko konekte, se sak fè « Teste koneksyon an » ap toujou reyisi isit la — li pa rive nan bwat ou. Anyen li li pa anrejistre: pa gen kontenè, pa gen frè. Mete App Password ou anba non {env} sou sèvis API a epi redeplwaye pou pase sou vrè a.',
+  'agent.testDemo': 'Rive nan bwat pratik la — se poko vrè imel ou. Anyen pa anrejistre.',
   'agent.catchUpTitle': 'Reprann ansyen imel yo',
   'agent.catchUpHint':
     'Yon tchèk nòmal gade sèlman nouvo imel. Sèvi ak sa a yon fwa pou li sa ki te deja nan bwat la anvan ou te konekte l.',

@@ -153,6 +153,19 @@ export class MailIntakeService {
   }
 
   /**
+   * The practice inbox demonstrates the pipeline, but its notices are fiction —
+   * so by default it files NOTHING: no containers, no charges. Otherwise pressing
+   * "Check now" before a real mailbox is wired leaves invented containers sitting
+   * next to real ones.
+   *
+   * The e2e suite sets MAIL_INTAKE_DEMO_WRITES=true to exercise the full write
+   * path against the practice inbox.
+   */
+  private get practiceInboxReadOnly(): boolean {
+    return this.usingDemoInbox && process.env.MAIL_INTAKE_DEMO_WRITES !== 'true';
+  }
+
+  /**
    * Confirms the credentials work without ingesting anything.
    *
    * `demo` is reported explicitly: the stand-in inbox always "connects", so a
@@ -411,6 +424,7 @@ export class MailIntakeService {
     }
 
     const autonomy = conn.autonomy;
+    const readOnly = this.practiceInboxReadOnly;
     let containerId: string | null = null;
     let containerNumber: string | null = null;
     const documentIds: string[] = [];
@@ -439,6 +453,10 @@ export class MailIntakeService {
         bestConfidence = score;
         bestExtraction = extraction;
       }
+
+      // Practice mode: read and summarize only. Nothing is stored against a
+      // container, so the workspace stays exactly as the operator left it.
+      if (readOnly) continue;
 
       const doc = await this.documents.createEmailDocument({
         orgId: conn.orgId,
@@ -513,6 +531,9 @@ export class MailIntakeService {
     await this.upsertIntake(already?.id, {
       ...base,
       status,
+      classification: readOnly
+        ? `${verdict.reason} Practice inbox — read and summarized only, nothing was filed.`
+        : base.classification,
       docKind: bestExtraction.kind,
       demandsPayment,
       summary,
@@ -539,7 +560,7 @@ export class MailIntakeService {
       },
     });
 
-    await this.raiseAlert(conn, msg, {
+    if (!readOnly) await this.raiseAlert(conn, msg, {
       kind: bestExtraction.kind,
       summary,
       actionRequired,

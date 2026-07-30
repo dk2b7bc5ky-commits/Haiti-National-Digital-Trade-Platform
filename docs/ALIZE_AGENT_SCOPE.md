@@ -368,6 +368,16 @@ agency threads) and only screens out mail with no bearing on trade. A false
 accept costs one model call and is filed `not_relevant`; a false skip loses a
 real notice, which is the worse error.
 
+**The practice inbox writes nothing.** The mock mailbox exists so the pipeline and
+the review screen can be demonstrated with no credentials — but it was filing its
+fictional notices as real containers and charges, which then sat next to genuine
+ones in a live workspace. It is now read-only: it still classifies and summarizes
+(so the screen demonstrates itself) but creates no containers and no charges
+unless `MAIL_INTAKE_DEMO_WRITES=true`, which only the e2e suite sets. The seed
+additionally removes any practice-inbox data on **every** deploy, whatever the
+flags say, matching on the mock's synthetic Message-IDs and container numbers, so
+a workspace that already got polluted cleans itself up.
+
 **Still to build:** Phase A4 (tuning thresholds and sender rules against real
 volume, then graduating autonomy), OAuth2 as an alternative to the App Password,
 OCR for scanned-image notices, and the `mateo@` purchase-confirmation inbox

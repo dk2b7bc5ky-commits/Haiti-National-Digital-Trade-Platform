@@ -167,6 +167,10 @@ check the key name for typos and confirm the service finished redeploying. Once
 the real mailbox is wired the banner disappears, and a successful test then means
 your actual mail.
 
+While on the practice inbox the agent **files nothing** — it reads and summarizes
+so you can see how the screen works, but it creates no containers and no charges,
+so your container list only ever holds real boxes.
+
 **"Read 0 messages" right after connecting.**
 Two likely reasons. Either the agent already read those messages on an earlier
 check (each one is only read once), or you have no new mail since it last looked.
