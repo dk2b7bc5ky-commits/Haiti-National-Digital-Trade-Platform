@@ -1,5 +1,6 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Public } from '../auth/decorators';
 import type { HealthStatus } from '@rezo/shared-types';
 
 /**
@@ -13,6 +14,7 @@ import type { HealthStatus } from '@rezo/shared-types';
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 
+  @Public()
   @Get()
   async check(): Promise<HealthStatus> {
     try {

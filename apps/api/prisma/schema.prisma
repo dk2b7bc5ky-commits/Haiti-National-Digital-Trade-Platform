@@ -1,13 +1,11 @@
-// Rezo — Prisma schema (Step 1 scaffold)
+// Rezo — Prisma schema
 //
-// Intentionally empty of business models for now. The Data Hub entities
-// (Organization, User, Vessel, Voyage, Manifest, BL, Container, Charge,
-// Payee, PaymentRequest, PaymentRouting, ...) arrive in later build steps
-// per spec §7. This step only proves the API can connect to Postgres.
+// Step 2: Identity, Tenancy & RBAC.
+// Step 3: Data Hub core (Vessel/Voyage/Manifest/BillOfLading/Container).
 //
-// NOTE (spec non-negotiable rule #2): no model in this schema may ever
+// NON-NEGOTIABLE RULE #2 (spec §9 / §11): no model in this schema may ever
 // introduce a `balance`, `wallet`, `credit`, or `float` field. Rezo never
-// holds customer funds.
+// holds customer funds. This is enforced by an automated test.
 
 generator client {
   provider = "prisma-client-js"
@@ -18,13 +16,936 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Scaffold-only placeholder. Prisma refuses to generate a client / create a
-// migration from a schema with zero models, so this single row lets Step 1's
-// `prisma generate` + `prisma migrate` succeed and prove DB connectivity.
-// It is NOT a business entity and will be removed when the real Data Hub
-// models (Organization, User, Container, ...) land in Step 2/3.
-model SchemaMarker {
-  id        String   @id @default(uuid())
-  note      String   @default("rezo scaffold marker — replaced by real models in step 2")
-  createdAt DateTime @default(now())
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+/// The kind of party an Organization (tenant) represents.
+enum OrgType {
+  SHIPPING_LINE
+  IMPORTER
+  BROKER
+  TRUCKER
+  TERMINAL
+  CUSTOMS
+  BANK
+  GOV
+  REZO
+}
+
+enum KycStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum OrgStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+/// A user's role. Drives the RBAC permission matrix (see src/rbac).
+enum Role {
+  SHIPPING_LINE
+  IMPORTER
+  BROKER
+  TRUCKER
+  TERMINAL
+  CUSTOMS
+  BANK
+  GOV_VIEWER
+  REZO_OPS
+  REZO_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum ManifestStatus {
+  SUBMITTED
+  PROCESSED
+}
+
+/// Container size/type (spec §7: 20/40/reefer).
+enum ContainerSize {
+  TWENTY
+  FORTY
+  REEFER
+}
+
+/// Container lifecycle (spec §7 / §2.5).
+enum ContainerStatus {
+  ARRIVED
+  CLEARED
+  RELEASED
+  GATED_OUT
+}
+
+/// Charge categories (spec §7).
+enum ChargeType {
+  CUSTOMS_DUTY
+  CUSTOMS_FEE
+  PORT_DUES
+  TERMINAL_HANDLING
+  STORAGE
+  DEMURRAGE
+  DETENTION
+  INSPECTION
+  SCANNING
+  REZO_FEE
+}
+
+/// Charge lifecycle (spec §7). PENDING_REVIEW charges are excluded from the
+/// payable total until an Ops user verifies them (spec §1.3, build step 7).
+enum ChargeStatus {
+  PENDING
+  PENDING_REVIEW
+  REQUESTED
+  PAID
+  OVERDUE
+}
+
+/// Where a charge came from (spec §7). External sources are stubbed adapters.
+enum ChargeSource {
+  MANIFEST
+  ASYCUDA
+  OCTOPI
+  DOCUMENT
+  MANUAL
+}
+
+/// Verification state for extracted charges (spec §1.3; used in build step 7).
+enum ReviewState {
+  NONE
+  PENDING
+  RESOLVED
+}
+
+/// Payee category (who ultimately receives a charge).
+enum PayeeType {
+  CUSTOMS
+  PORT
+  TERMINAL
+  LINE
+  REZO
+  OTHER
+}
+
+/// Deadline kind (spec §7).
+enum DeadlineType {
+  LAST_FREE_DAY
+  ACCRUAL_START
+}
+
+/// Alert delivery channel (spec §1.5). Email/SMS go through NotificationAdapter
+/// (mock in the beta); IN_APP is served from the alert record itself.
+enum AlertChannel {
+  IN_APP
+  EMAIL
+  SMS
+}
+
+/// Alert lifecycle. PENDING/FAILED with a past scheduledFor are (re)sent by the
+/// dispatcher — a missed tick sends late, never drops (spec §1.5 reliability).
+enum AlertStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+/// Notification event types (spec §6a). Covers the whole platform, not just
+/// the scheduled deadline reminder.
+enum NotificationType {
+  DEADLINE_REMINDER
+  PAYMENT_CONFIRMED
+  PAYMENT_FAILED
+  CONTAINER_RELEASED
+  GATE_APPOINTMENT_CONFIRMED
+  GATE_REMINDER
+  VERIFICATION_NEEDED
+  CHARGE_ADDED
+  DOCUMENT_REQUIRED
+  TRUCKING_JOB_OFFERED
+  TRUCKING_JOB_ACCEPTED
+  TRUCKING_JOB_DELIVERED
+  /// The email agent read something: a plain-language summary + what to do.
+  EMAIL_SUMMARY
+}
+
+/// Notification urgency, drives the Alerts grouping + colors (spec §6c).
+enum NotificationSeverity {
+  CRITICAL
+  SOON
+  INFO
+}
+
+/// How a document reached Rezo (spec §7/§1.3).
+enum DocumentSource {
+  UPLOAD
+  EMAIL
+}
+
+enum DocType {
+  TERMINAL_INVOICE
+  CUSTOMS_DECLARATION
+  BILL_OF_LADING
+  OTHER
+}
+
+/// Document processing state. NEEDS_REVIEW when any extracted field fell below
+/// the confidence threshold (spec §1.3).
+enum DocVerificationStatus {
+  PROCESSING
+  EXTRACTED
+  NEEDS_REVIEW
+  VERIFIED
+}
+
+enum VerificationTaskStatus {
+  OPEN
+  RESOLVED
+}
+
+/// PaymentRequest lifecycle (spec §2.1). Note the deliberate absence of any
+/// "held"/"settled-to-Rezo" state — Rezo orchestrates, never custodies.
+enum PaymentRequestStatus {
+  CREATED
+  AUTHORIZED
+  ROUTING
+  PARTIALLY_SETTLED
+  SETTLED
+  FAILED
+  REVERSING
+}
+
+/// A single payer→payee movement's state (spec §2.1). NEVER a Rezo balance.
+enum PaymentRoutingStatus {
+  PENDING
+  SETTLED
+  FAILED
+  REVERSED
+}
+
+/// Subscription plan/tier (spec §2.2/§7). Prices come from market config.
+enum SubscriptionPlan {
+  SMALL_BROKER
+  LARGE_BROKER
+  LINE
+  TERMINAL
+  TRUCKER
+  IMPORTER
+}
+
+enum SubscriptionTerm {
+  MONTHLY
+  ANNUAL
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+/// Transport job lifecycle (spec §2.4).
+enum TransportJobStatus {
+  OFFERED
+  ACCEPTED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+/// Gate appointment lifecycle (spec §2.4/§7).
+enum GateAppointmentStatus {
+  REQUESTED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+// ---------------------------------------------------------------------------
+// Identity & tenancy
+// ---------------------------------------------------------------------------
+
+/// A tenant. Every user and business record belongs to one org.
+model Organization {
+  id        String    @id @default(uuid())
+  type      OrgType
+  legalName String    @map("legal_name")
+  country   String    @default("HT")
+  kycStatus KycStatus @default(PENDING) @map("kyc_status")
+  status    OrgStatus @default(ACTIVE)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  users   User[]
+  apiKeys ApiKey[]
+
+  // Data Hub back-relations
+  vessels            Vessel[]         @relation("VesselLine")
+  manifestsSubmitted Manifest[]       @relation("ManifestSubmitter")
+  billsAsConsignee   BillOfLading[]   @relation("BlConsignee")
+  containersImported Container[]      @relation("ContainerImporter")
+  containersTerminal Container[]      @relation("ContainerTerminal")
+  payees             Payee[]          @relation("OrgPayees")
+  chargesAsPayee     Charge[]         @relation("ChargePayee")
+  subscriptions      Subscription[]   @relation("OrgSubscriptions")
+  mailboxes          MailboxConnection[] @relation("OrgMailboxes")
+
+  @@map("organizations")
+}
+
+model User {
+  id           String     @id @default(uuid())
+  orgId        String     @map("org_id")
+  name         String
+  email        String     @unique
+  role         Role
+  passwordHash String     @map("password_hash")
+  status       UserStatus @default(ACTIVE)
+  // Quiet hours (spec §6e): suppress EMAIL between these hours (0–23, local).
+  // Still recorded in-app. Null = no quiet hours.
+  notifyQuietStart Int?   @map("notify_quiet_start")
+  notifyQuietEnd   Int?   @map("notify_quiet_end")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  org           Organization             @relation(fields: [orgId], references: [id])
+  notifications Notification[]           @relation("UserNotifications")
+  notifyPrefs   NotificationPreference[] @relation("UserNotifyPrefs")
+
+  @@index([orgId])
+  @@map("users")
+}
+
+/// API keys let API-connected orgs exchange a key for a short-lived JWT.
+/// Only the hash is stored; the plaintext is shown once.
+model ApiKey {
+  id         String       @id @default(uuid())
+  orgId      String       @map("org_id")
+  name       String
+  prefix     String       @unique
+  keyHash    String       @unique @map("key_hash")
+  scopes     String[]     @default([])
+  status     ApiKeyStatus @default(ACTIVE)
+  createdAt  DateTime     @default(now()) @map("created_at")
+  lastUsedAt DateTime?    @map("last_used_at")
+
+  org Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@map("api_keys")
+}
+
+// ---------------------------------------------------------------------------
+// Data Hub — the single source of truth (spec §7). Entered once, read by all.
+// ---------------------------------------------------------------------------
+
+model Vessel {
+  id        String @id @default(uuid())
+  name      String
+  imo       String @unique
+  lineOrgId String @map("line_org_id")
+
+  line    Organization @relation("VesselLine", fields: [lineOrgId], references: [id])
+  voyages Voyage[]
+
+  @@index([lineOrgId])
+  @@map("vessels")
+}
+
+model Voyage {
+  id           String   @id @default(uuid())
+  vesselId     String   @map("vessel_id")
+  voyageNumber String   @map("voyage_number")
+  eta          DateTime
+  port         String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  vessel    Vessel     @relation(fields: [vesselId], references: [id])
+  manifests Manifest[]
+
+  @@unique([vesselId, voyageNumber])
+  @@map("voyages")
+}
+
+/// A manifest is submitted ONCE by a shipping line (or admin); it creates the
+/// voyage's bills of lading and containers that everyone else then reads.
+model Manifest {
+  id               String         @id @default(uuid())
+  voyageId         String         @map("voyage_id")
+  submittedByOrgId String         @map("submitted_by_org_id")
+  status           ManifestStatus @default(SUBMITTED)
+  rawRef           String?        @map("raw_ref")
+  submittedAt      DateTime       @default(now()) @map("submitted_at")
+
+  voyage         Voyage         @relation(fields: [voyageId], references: [id])
+  submittedBy    Organization   @relation("ManifestSubmitter", fields: [submittedByOrgId], references: [id])
+  billsOfLading  BillOfLading[]
+
+  @@index([submittedByOrgId])
+  @@index([voyageId])
+  @@map("manifests")
+}
+
+model BillOfLading {
+  id            String  @id @default(uuid())
+  manifestId    String  @map("manifest_id")
+  blNumber      String  @unique @map("bl_number")
+  shipper       String
+  importerOrgId String  @map("importer_org_id")
+  description   String?
+
+  manifest   Manifest     @relation(fields: [manifestId], references: [id])
+  consignee  Organization @relation("BlConsignee", fields: [importerOrgId], references: [id])
+  containers Container[]
+
+  @@index([manifestId])
+  @@index([importerOrgId])
+  @@map("bills_of_lading")
+}
+
+model Container {
+  id              String          @id @default(uuid())
+  blId            String          @map("bl_id")
+  containerNumber String          @unique @map("container_number")
+  sizeType        ContainerSize   @map("size_type")
+  /// What is actually inside: "rice", "auto parts", "assorted electronics".
+  /// Set by hand, from the manifest commodity, or by the email agent reading a
+  /// notice. Falls back to the bill of lading's description when unset.
+  goodsDescription String?        @map("goods_description")
+  importerOrgId   String          @map("importer_org_id")
+  terminalOrgId   String?         @map("terminal_org_id")
+  arrivalDate     DateTime?       @map("arrival_date")
+  status          ContainerStatus @default(ARRIVED)
+  // Release lifecycle milestones (spec §2.5).
+  clearedAt       DateTime?       @map("cleared_at")
+  releasedAt      DateTime?       @map("released_at")
+  gatedOutAt      DateTime?       @map("gated_out_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  bl        BillOfLading   @relation(fields: [blId], references: [id])
+  importer  Organization   @relation("ContainerImporter", fields: [importerOrgId], references: [id])
+  terminal  Organization?  @relation("ContainerTerminal", fields: [terminalOrgId], references: [id])
+  charges          Charge[]
+  deadlines        Deadline[]
+  alerts           DeadlineAlert[]
+  documents        Document[]
+  paymentRequests  PaymentRequest[]
+  transportJobs    TransportJob[]
+  gateAppointments GateAppointment[]
+
+  @@index([blId])
+  @@index([importerOrgId])
+  @@index([terminalOrgId])
+  @@index([status])
+  @@map("containers")
+}
+
+// ---------------------------------------------------------------------------
+// Charges, payees & market configuration (spec §7). MONEY RULE (spec §15):
+// amounts are integer minor units + an ISO-4217 currency — never a float.
+// ---------------------------------------------------------------------------
+
+/// Registry of who gets paid. `settlementRef` is an opaque routing token used
+/// by the payment rail (build step 8); Rezo never holds funds — money moves
+/// payer → payee directly.
+model Payee {
+  id           String    @id @default(uuid())
+  orgId        String    @map("org_id")
+  name         String
+  type         PayeeType
+  settlementRef String   @map("settlement_ref")
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  org Organization @relation("OrgPayees", fields: [orgId], references: [id])
+
+  @@unique([orgId, type])
+  @@index([orgId])
+  @@map("payees")
+}
+
+model Charge {
+  id          String       @id @default(uuid())
+  containerId String       @map("container_id")
+  payeeOrgId  String       @map("payee_org_id")
+  type        ChargeType
+  amount      Int // minor units of `currency` (e.g. USD cents)
+  currency    String // ISO-4217
+  dueDate     DateTime?    @map("due_date")
+  lastFreeDay DateTime?    @map("last_free_day")
+  status      ChargeStatus @default(PENDING)
+  reviewState ReviewState  @default(NONE) @map("review_state")
+  source      ChargeSource @default(MANUAL)
+  /// Set while a (non-terminal) PaymentRequest covers this charge; cleared if
+  /// its routing fails so the charge can be re-requested (spec §2.1).
+  paymentRequestId String? @map("payment_request_id")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  container      Container       @relation(fields: [containerId], references: [id])
+  payeeOrg       Organization    @relation("ChargePayee", fields: [payeeOrgId], references: [id])
+  paymentRequest PaymentRequest? @relation(fields: [paymentRequestId], references: [id])
+
+  @@index([containerId])
+  @@index([payeeOrgId])
+  @@index([status])
+  @@map("charges")
+}
+
+/// A tracked deadline per container per payee (spec §1.5/§7). Recomputed when
+/// charge data changes. `alertSchedule` is the days-before offsets to alert on.
+model Deadline {
+  id            String       @id @default(uuid())
+  containerId   String       @map("container_id")
+  payeeOrgId    String       @map("payee_org_id")
+  type          DeadlineType
+  datetime      DateTime
+  alertSchedule Int[]        @map("alert_schedule")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  container Container       @relation(fields: [containerId], references: [id])
+  alerts    DeadlineAlert[]
+
+  @@unique([containerId, payeeOrgId, type])
+  @@index([containerId])
+  @@map("deadlines")
+}
+
+/// An ingested document (spec §7/§1.3). Files live in object storage (MinIO);
+/// `fileRef` is the storage key. `extractionConfidence` is the overall score;
+/// per-field confidence drives verification tasks.
+model Document {
+  id                   String                @id @default(uuid())
+  containerId          String?               @map("container_id")
+  uploadedByOrgId      String                @map("uploaded_by_org_id")
+  source               DocumentSource        @default(UPLOAD)
+  docType              DocType               @default(OTHER) @map("doc_type")
+  language             String                @default("fr")
+  fileRef              String                @map("file_ref")
+  fileName             String                @map("file_name")
+  rawText              String?               @map("raw_text")
+  extractionConfidence Float?                @map("extraction_confidence")
+  verificationStatus   DocVerificationStatus @default(PROCESSING) @map("verification_status")
+  createdAt            DateTime              @default(now()) @map("created_at")
+
+  container         Container?         @relation(fields: [containerId], references: [id])
+  verificationTasks VerificationTask[]
+
+  @@index([containerId])
+  @@map("documents")
+}
+
+/// A human-verification task for a low-confidence extracted field (spec §1.3/§7).
+/// Ops corrects the value; before/after are recorded for the audit trail.
+model VerificationTask {
+  id               String                 @id @default(uuid())
+  documentId       String?                @map("document_id")
+  chargeId         String?                @map("charge_id")
+  containerId      String?                @map("container_id")
+  field            String
+  confidence       Float
+  status           VerificationTaskStatus @default(OPEN)
+  beforeValue      Json?                  @map("before_value")
+  afterValue       Json?                  @map("after_value")
+  resolvedByUserId String?                @map("resolved_by_user_id")
+  createdAt        DateTime               @default(now()) @map("created_at")
+  resolvedAt       DateTime?              @map("resolved_at")
+
+  document Document? @relation(fields: [documentId], references: [id])
+
+  @@index([status])
+  @@index([documentId])
+  @@map("verification_tasks")
+}
+
+/// A scheduled alert instance. Persisted so delivery is reliable and idempotent
+/// (spec §1.5): one row per (deadline, channel, offset); the dispatcher only
+/// advances PENDING/FAILED → SENT, so re-runs never double-send.
+model DeadlineAlert {
+  id             String      @id @default(uuid())
+  deadlineId     String      @map("deadline_id")
+  containerId    String      @map("container_id")
+  recipientOrgId String      @map("recipient_org_id")
+  channel        AlertChannel
+  offsetDays     Int         @map("offset_days")
+  scheduledFor   DateTime    @map("scheduled_for")
+  status         AlertStatus @default(PENDING)
+  message        String
+  attempts       Int         @default(0)
+  sentAt         DateTime?   @map("sent_at")
+  readAt         DateTime?   @map("read_at")
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  deadline  Deadline  @relation(fields: [deadlineId], references: [id], onDelete: Cascade)
+  container Container @relation(fields: [containerId], references: [id])
+
+  @@unique([deadlineId, channel, offsetDays])
+  @@index([status, scheduledFor])
+  @@index([recipientOrgId, status])
+  @@map("deadline_alerts")
+}
+
+/// A recurring plan subscription (spec §2.2/§7). `price` is captured from the
+/// market tariff at purchase (config-driven, never hard-coded).
+model Subscription {
+  id          String             @id @default(uuid())
+  orgId       String             @map("org_id")
+  plan        SubscriptionPlan
+  term        SubscriptionTerm
+  price       Int // minor units
+  currency    String
+  status      SubscriptionStatus @default(ACTIVE)
+  startedAt   DateTime           @default(now()) @map("started_at")
+  renewalDate DateTime           @map("renewal_date")
+  cancelledAt DateTime?          @map("cancelled_at")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  org Organization @relation("OrgSubscriptions", fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+/// A trucking job for a container (spec §2.4/§7). The built-in module for
+/// haulers with no software of their own: accept, capture POD + GPS, get paid.
+model TransportJob {
+  id            String             @id @default(uuid())
+  containerId   String             @map("container_id")
+  createdByOrgId String            @map("created_by_org_id")
+  truckerOrgId  String?            @map("trucker_org_id") // null = open offer until accepted
+  pickup        String
+  dropoff       String
+  price         Int // minor units
+  currency      String
+  status        TransportJobStatus @default(OFFERED)
+  insuranceRef  String?            @map("insurance_ref")
+  podRef        String?            @map("pod_ref")
+  gpsLat        Float?             @map("gps_lat")
+  gpsLng        Float?             @map("gps_lng")
+  gpsAt         DateTime?          @map("gps_at")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  container Container @relation(fields: [containerId], references: [id])
+
+  @@index([containerId])
+  @@index([truckerOrgId])
+  @@index([status])
+  @@map("transport_jobs")
+}
+
+/// A gate appointment slot at a terminal (spec §2.4/§7).
+model GateAppointment {
+  id            String                @id @default(uuid())
+  containerId   String                @map("container_id")
+  truckerOrgId  String                @map("trucker_org_id")
+  terminalOrgId String?               @map("terminal_org_id")
+  slotTime      DateTime              @map("slot_time")
+  status        GateAppointmentStatus @default(REQUESTED)
+  createdAt     DateTime              @default(now()) @map("created_at")
+  updatedAt     DateTime              @updatedAt @map("updated_at")
+
+  container Container @relation(fields: [containerId], references: [id])
+
+  @@index([containerId])
+  @@index([terminalOrgId])
+  @@index([truckerOrgId])
+  @@map("gate_appointments")
+}
+
+/// Links a broker to the importers it clears for (spec §2.3: one broker login
+/// manages many importers). Introduced minimally here so brokers can read their
+/// importers' containers; the full broker portal is build step 10.
+model BrokerClient {
+  id            String   @id @default(uuid())
+  brokerOrgId   String   @map("broker_org_id")
+  importerOrgId String   @map("importer_org_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@unique([brokerOrgId, importerOrgId])
+  @@index([brokerOrgId])
+  @@map("broker_clients")
+}
+
+/// Per-country configuration (spec §7 addendum). Fees, currencies, languages,
+/// and enabled modules are configuration — NOT hard-coded. Haiti is row one.
+model Market {
+  id             String   @id @default(uuid())
+  code           String   @unique // e.g. "HT"
+  name           String
+  baseCurrency   String   @map("base_currency")
+  currencies     String[]
+  languages      String[]
+  tariff         Json // fee schedule, amounts in minor units
+  enabledModules String[] @map("enabled_modules")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("markets")
+}
+
+// ---------------------------------------------------------------------------
+// Payments (spec §2.1). Rezo ORCHESTRATES money; it NEVER holds it. There is
+// deliberately no balance/wallet/credit/float field anywhere below — money
+// moves payer → payee directly and we only record/confirm the movement.
+// ---------------------------------------------------------------------------
+
+/// FX rate used to convert a charge's currency → the payer's settlement
+/// currency. The rate in effect at authorization is frozen onto each routing.
+model FxRate {
+  id            String   @id @default(uuid())
+  baseCurrency  String   @map("base_currency")
+  quoteCurrency String   @map("quote_currency")
+  rate          Float // 1 base unit = `rate` quote units
+  source        String   @default("mock")
+  effectiveAt   DateTime @default(now()) @map("effective_at")
+
+  @@index([baseCurrency, quoteCurrency, effectiveAt])
+  @@map("fx_rates")
+}
+
+/// One aggregated, authorize-once request across a container's charges. Holds
+/// no funds; it is a record of what was requested and its routing outcomes.
+model PaymentRequest {
+  id                    String               @id @default(uuid())
+  idempotencyKey        String               @unique @map("idempotency_key")
+  containerId           String               @map("container_id")
+  importerOrgId         String               @map("importer_org_id")
+  settlementCurrency    String               @map("settlement_currency")
+  grossAmountSettlement Int                  @map("gross_amount_settlement") // minor units, incl. rezo fee
+  rezoFee               Int                  @map("rezo_fee") // minor units, settlement currency
+  status                PaymentRequestStatus @default(CREATED)
+  railRef               String?              @map("rail_ref")
+  createdByUserId       String?              @map("created_by_user_id")
+  createdAt             DateTime             @default(now()) @map("created_at")
+  authorizedAt          DateTime?            @map("authorized_at")
+  settledAt             DateTime?            @map("settled_at")
+
+  container Container        @relation(fields: [containerId], references: [id])
+  routings  PaymentRouting[]
+  charges   Charge[]
+
+  @@index([containerId])
+  @@index([importerOrgId])
+  @@map("payment_requests")
+}
+
+/// A single direct payer→payee movement (spec §2.1). `fxRate` is frozen at
+/// authorization. Every routing pays a real payee; the only routing that may
+/// target Rezo is the explicit rezo fee line (isRezoFee = true).
+model PaymentRouting {
+  id               String               @id @default(uuid())
+  paymentRequestId String               @map("payment_request_id")
+  payeeOrgId       String               @map("payee_org_id")
+  chargeCurrency   String               @map("charge_currency")
+  chargeAmount     Int                  @map("charge_amount") // minor units, payee's currency
+  fxRate           Float                @map("fx_rate") // frozen at authorization
+  settlementAmount Int                  @map("settlement_amount") // minor units, settlement currency
+  rail             String
+  railTxnRef       String?              @map("rail_txn_ref")
+  status           PaymentRoutingStatus @default(PENDING)
+  isRezoFee        Boolean              @default(false) @map("is_rezo_fee")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+
+  request PaymentRequest @relation(fields: [paymentRequestId], references: [id], onDelete: Cascade)
+
+  @@index([paymentRequestId])
+  @@index([status])
+  @@map("payment_routings")
+}
+
+/// A delivered notification (spec §6). One row per (recipient user, channel).
+/// The in-app feed + bell read these; email rows are "sent" via the mock
+/// NotificationAdapter. `amountAtRisk` (minor units + currency) is shown when
+/// money is on the line (e.g. demurrage). `deepLink` routes to the right page.
+model Notification {
+  id              String               @id @default(uuid())
+  type            NotificationType
+  severity        NotificationSeverity @default(INFO)
+  recipientOrgId  String               @map("recipient_org_id")
+  recipientUserId String?              @map("recipient_user_id")
+  containerId     String?              @map("container_id")
+  title           String
+  body            String
+  amountAtRisk    Int?                 @map("amount_at_risk")
+  amountCurrency  String?              @map("amount_currency")
+  channel         AlertChannel         @default(IN_APP)
+  deepLink        String?              @map("deep_link")
+  readAt          DateTime?            @map("read_at")
+  createdAt       DateTime             @default(now()) @map("created_at")
+
+  recipientUser User? @relation("UserNotifications", fields: [recipientUserId], references: [id])
+
+  @@index([recipientUserId, channel, readAt])
+  @@index([recipientOrgId])
+  @@index([containerId])
+  @@map("notifications")
+}
+
+/// Per-user, per-type notification channel preferences (spec §6e). Absent row =
+/// defaults (in-app on, email off).
+model NotificationPreference {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  inApp     Boolean          @default(true) @map("in_app")
+  email     Boolean          @default(false)
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  user User @relation("UserNotifyPrefs", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@index([userId])
+  @@map("notification_preferences")
+}
+
+/// Append-only audit trail (spec §11). Rows are only ever inserted.
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorUserId String?  @map("actor_user_id")
+  actorOrgId  String?  @map("actor_org_id")
+  action      String
+  entity      String
+  entityId    String?  @map("entity_id")
+  before      Json?
+  after       Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([entity, entityId])
+  @@index([actorOrgId])
+  @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Email intake — the Alize agent (docs/ALIZE_AGENT_SCOPE.md phases A2/A3).
+//
+// SECURITY RULE: the mailbox password/token is NEVER stored in this database.
+// `secretEnvVar` holds only the NAME of the environment variable that carries
+// the app password (kept in the host's secret store). Rotating the credential
+// is an env change; the DB never sees it.
+// ---------------------------------------------------------------------------
+
+/// How much the agent may commit without a human tapping Confirm.
+/// The agent NEVER pays, at any level (spec §9 / non-negotiable #1).
+enum MailAutonomy {
+  /// Nothing goes live: container + charges all wait for review.
+  REVIEW_ALL
+  /// Create/attach the container automatically; hold money amounts for review.
+  AUTO_CONTAINER
+  /// Write charges live too (still never pays).
+  AUTO_ALL
+}
+
+/// Lifecycle of one ingested email.
+enum MailIntakeStatus {
+  /// Fetched, not yet read by the extractor.
+  PENDING
+  /// Classified as not an arrival notice / bill — left untouched.
+  IGNORED
+  /// Read and written; nothing needed a human.
+  PROCESSED
+  /// Read; waiting on a human to confirm (per autonomy or low confidence).
+  NEEDS_REVIEW
+  /// A human confirmed it; held charges went live.
+  CONFIRMED
+  /// A human rejected it; anything it created was removed.
+  REJECTED
+  /// Fetch/extraction error. Retried on the next run.
+  FAILED
+}
+
+/// A connected mailbox the agent watches (read-only).
+model MailboxConnection {
+  id       String  @id @default(uuid())
+  orgId    String  @map("org_id")
+  /// The address being watched, e.g. traffic@example.com.
+  address  String
+  host     String  @default("imap.gmail.com")
+  port     Int     @default(993)
+  useTls   Boolean @default(true) @map("use_tls")
+  /// IMAP login; usually the same as `address`.
+  username String
+  /// NAME of the env var holding the app password — never the password itself.
+  secretEnvVar String @default("MAIL_INTAKE_PASSWORD") @map("secret_env_var")
+  folder   String  @default("INBOX")
+  autonomy MailAutonomy @default(AUTO_CONTAINER)
+  active   Boolean @default(false)
+
+  /// Watermark: highest IMAP UID already seen, so a message is read once.
+  lastUid       Int?      @map("last_uid")
+  lastCheckedAt DateTime? @map("last_checked_at")
+  lastError     String?   @map("last_error")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  org      Organization        @relation("OrgMailboxes", fields: [orgId], references: [id])
+  messages MailIntakeMessage[]
+
+  @@unique([orgId, address])
+  @@index([orgId])
+  @@map("mailbox_connections")
+}
+
+/// One email the agent has seen. Doubles as the dedupe ledger (unique
+/// Message-ID per connection) and the audit/review surface.
+model MailIntakeMessage {
+  id           String @id @default(uuid())
+  connectionId String @map("connection_id")
+  orgId        String @map("org_id")
+  /// RFC-5322 Message-ID — the dedupe key.
+  messageId    String @map("message_id")
+  uid          Int?
+  fromAddress  String @map("from_address")
+  subject      String
+  receivedAt   DateTime @map("received_at")
+
+  status               MailIntakeStatus @default(PENDING)
+  /// Why the classifier accepted or skipped it (shown in the review UI).
+  classification       String?
+  /// What the reader decided this is: arrival_notice, invoice,
+  /// booking_confirmation, release_order, … (see integration/DocumentKind).
+  docKind              String?          @map("doc_kind")
+  /// TRUE only when the mail actually demanded payment. Charges are written
+  /// only in that case — a booking confirmation quotes rates but bills nothing.
+  demandsPayment       Boolean          @default(false) @map("demands_payment")
+  /// Plain-language summary of the mail, in its own language.
+  summary              String?
+  /// The one thing the human has to do about it, if anything.
+  actionRequired       String?          @map("action_required")
+  attachmentCount      Int              @default(0) @map("attachment_count")
+  /// What the reader pulled out, for display + correction. Data only.
+  extracted            Json?
+  confidence           Float?
+  containerId          String?          @map("container_id")
+  /// Ids of rows this message created, so Reject can undo exactly them.
+  documentIds          String[]         @map("document_ids")
+  chargeIds            String[]         @map("charge_ids")
+  error                String?
+  processedAt          DateTime?        @map("processed_at")
+  reviewedByUserId     String?          @map("reviewed_by_user_id")
+  reviewedAt           DateTime?        @map("reviewed_at")
+  createdAt            DateTime         @default(now()) @map("created_at")
+
+  connection MailboxConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, messageId])
+  @@index([orgId, status])
+  @@index([containerId])
+  @@map("mail_intake_messages")
 }

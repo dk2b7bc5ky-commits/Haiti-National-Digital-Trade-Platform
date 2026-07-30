@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-lint-test:
+    name: Build, lint & e2e
+    runs-on: ubuntu-latest
+
+    services:
+      # PostgreSQL for the e2e suite. The database name matches .env.test so the
+      # suite's global-setup can migrate + seed it directly.
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rezo
+          POSTGRES_PASSWORD: rezo_dev_password
+          POSTGRES_DB: rezo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rezo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      # Mirrors apps/api/.env.test (dev/placeholder values only — no real secrets).
+      DATABASE_URL: postgresql://rezo:rezo_dev_password@localhost:5432/rezo_test?schema=public
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Start MinIO (S3-compatible object storage for document uploads)
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=rezo_minio_access \
+            -e MINIO_ROOT_PASSWORD=rezo_minio_secret \
+            minio/minio server /data
+          echo "Waiting for MinIO to become ready..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:9000/minio/health/live >/dev/null; then
+              echo "MinIO is up."; exit 0
+            fi
+            sleep 1
+          done
+          echo "MinIO did not become ready in time." >&2
+          docker logs minio >&2 || true
+          exit 1
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Build (typechecks all workspaces)
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Web unit tests
+        run: npm run test --workspace @rezo/web
+
+      - name: End-to-end tests (API)
+        run: npm run test:e2e --workspace @rezo/api

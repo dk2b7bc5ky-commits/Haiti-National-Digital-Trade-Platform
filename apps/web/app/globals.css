@@ -1,3 +1,127 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #fafaf8; /* warm off-white app background */
+    --text: #0a2a2d; /* near-black teal */
+  }
+  html.dark {
+    --bg: #0a201e; /* deep "Rezo night" teal (matches the vision route) */
+    --text: #eaf4f2;
+    color-scheme: dark;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    /* Tabular, lining figures so amounts/dates/counts align in columns. */
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
+  }
+  /* Accessible, consistent keyboard focus (GOV.UK standard): visible ring on
+     keyboard navigation, no ring on mouse click. */
+  :focus-visible {
+    outline: 2px solid #20808e;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* Restrained entrance motion (Linear-grade); disabled for reduced-motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-rise {
+    animation: rise 0.5s ease-out both;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Dark mode.
+ *
+ * The whole app is built on a small, consistent set of neutral utility
+ * classes (white / slate-* surfaces, borders, and text) plus the teal
+ * "sky" accent. Rather than sprinkle `dark:` variants across 20 screens,
+ * we remap exactly those classes here under `html.dark`. `.dark .bg-white`
+ * has higher specificity than Tailwind's `.bg-white`, so these win, and
+ * every screen goes dark coherently from this one place.
+ *
+ * Palette shares the "Rezo night" teal family with the /vision route.
+ * ------------------------------------------------------------------ */
+html.dark {
+  /* Surfaces */
+  --d-surface: #0f2a2d;   /* cards (was white) */
+  --d-surface-2: #123032; /* subtle fills (was slate-50) */
+  --d-surface-3: #16383a; /* chips / hover (was slate-100) */
+  --d-surface-4: #1c4744; /* stronger fills (was slate-200) */
+  /* Borders */
+  --d-border: #21504d;        /* slate-200 */
+  --d-border-strong: #2b625e; /* slate-300 */
+  --d-border-faint: #1a4340;  /* slate-100 */
+  --d-border-faintest: #153734; /* slate-50 */
+  /* Text */
+  --d-t-900: #eaf4f2;
+  --d-t-800: #dcebe9;
+  --d-t-700: #cfe0dd;
+  --d-t-600: #a9c1bd;
+  --d-t-500: #8ba7a2;
+  --d-t-400: #6f8d88;
+  --d-t-300: #5c7772;
+}
+
+/* Surface backgrounds */
+html.dark .bg-white { background-color: var(--d-surface); }
+html.dark .bg-white\/80 { background-color: color-mix(in srgb, var(--d-surface) 82%, transparent); }
+html.dark .bg-slate-50 { background-color: var(--d-surface-2); }
+html.dark .bg-slate-100 { background-color: var(--d-surface-3); }
+html.dark .bg-slate-200 { background-color: var(--d-surface-4); }
+html.dark .bg-slate-300 { background-color: #24534f; }
+
+/* Hover surfaces */
+html.dark .hover\:bg-white:hover { background-color: var(--d-surface); }
+html.dark .hover\:bg-slate-50:hover { background-color: var(--d-surface-3); }
+html.dark .hover\:bg-slate-100:hover { background-color: var(--d-surface-4); }
+
+/* Borders */
+html.dark .border-slate-50 { border-color: var(--d-border-faintest); }
+html.dark .border-slate-100 { border-color: var(--d-border-faint); }
+html.dark .border-slate-200 { border-color: var(--d-border); }
+html.dark .border-slate-300 { border-color: var(--d-border-strong); }
+html.dark .divide-slate-50 > * + * { border-color: var(--d-border-faintest); }
+
+/* Neutral text */
+html.dark .text-slate-300 { color: var(--d-t-300); }
+html.dark .text-slate-400 { color: var(--d-t-400); }
+html.dark .text-slate-500 { color: var(--d-t-500); }
+html.dark .text-slate-600 { color: var(--d-t-600); }
+html.dark .text-slate-700 { color: var(--d-t-700); }
+html.dark .text-slate-800 { color: var(--d-t-800); }
+html.dark .text-slate-900 { color: var(--d-t-900); }
+html.dark .placeholder\:text-slate-400::placeholder { color: var(--d-t-400); }
+
+/* Teal accent — light-mode teal text is too dark on a dark surface, so lift it.
+   (Solid teal buttons `bg-sky-600` + `text-white` stay as-is — they read well.) */
+html.dark .text-sky-600 { color: #4fb3bc; }
+html.dark .text-sky-700 { color: #57bdc6; }
+html.dark .text-sky-800 { color: #6fd0d8; }
+html.dark .bg-sky-50 { background-color: #123c43; }
+html.dark .bg-sky-100 { background-color: #154951; }
+
+/* Status tints (pills, banners): dark tint + lifted foreground for contrast. */
+html.dark .bg-green-50 { background-color: #10281d; }
+html.dark .bg-green-100 { background-color: #153a2a; }
+html.dark .text-green-700, html.dark .text-green-800 { color: #4ade80; }
+html.dark .bg-amber-50 { background-color: #2a2210; }
+html.dark .bg-amber-100 { background-color: #3a2f12; }
+html.dark .text-amber-700, html.dark .text-amber-800 { color: #fbbf24; }
+html.dark .bg-red-50 { background-color: #2c1416; }
+html.dark .bg-red-100 { background-color: #3a1a1d; }
+html.dark .text-red-700, html.dark .text-red-800 { color: #f87171; }
+html.dark .bg-blue-100 { background-color: #14283a; }
+html.dark .text-blue-700, html.dark .text-blue-800 { color: #7cc0f8; }
+
+/* Soften the elevation shadow on dark (light shadows are invisible; use depth). */
+html.dark .shadow-soft { box-shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35); }
+html.dark .shadow-sm { box-shadow: 0 1px 2px rgba(0,0,0,.35); }

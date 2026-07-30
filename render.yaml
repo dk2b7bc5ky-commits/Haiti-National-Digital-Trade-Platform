@@ -1,0 +1,89 @@
+# Rezo — Render Blueprint (Infrastructure as Code)
+#
+# One click in Render reads this file and provisions everything:
+#   • a managed PostgreSQL database
+#   • the API service (NestJS)  — runs DB migrations + first-run seed on deploy
+#   • the web service (Next.js) — points itself at the API automatically
+#
+# How to use it: see docs/DEPLOYMENT.md. In short — push this repo to GitHub,
+# then in Render choose "New +" → "Blueprint" and select the repo. Render does
+# the rest. JWT_SECRET is generated for you; you don't paste any secret here.
+#
+# NOTE: document upload / the email agent's file storage need an S3-compatible
+# bucket (Cloudflare R2 or AWS S3). Those aren't required for the core app and
+# are wired later — see docs/DEPLOYMENT.md §Storage. Everything else works
+# without them.
+
+databases:
+  - name: rezo-db
+    databaseName: rezo
+    user: rezo
+    plan: free # upgrade to a paid plan for production (free DBs expire after 30 days)
+
+services:
+  # ------------------------------------------------------------------ API ---
+  - type: web
+    name: rezo-api
+    runtime: node
+    plan: free # free web services sleep after ~15 min idle; upgrade for always-on
+    rootDir: .
+    # --include=dev forces devDependencies (nest CLI, prisma, ts-node) to install
+    # even though NODE_ENV=production. Then: generate client, build, migrate, seed.
+    buildCommand: >-
+      npm ci --include=dev &&
+      npm run prisma:generate --workspace @rezo/api &&
+      npm run build --workspace @rezo/api &&
+      cd apps/api &&
+      npx prisma migrate deploy &&
+      npx ts-node prisma/seed.ts
+    startCommand: node apps/api/dist/main.js
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rezo-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true # Render generates a strong random secret
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      # --- Email agent (docs/CONNECT_EMAIL.md) -------------------------------
+      # Both of these are declared with sync:false so Render PROMPTS for them
+      # instead of storing anything in this file. Leave them blank and the app
+      # runs fine: the reader falls back to a mock and the agent to a demo inbox.
+      #   ANTHROPIC_API_KEY    — lets the agent actually read documents
+      #   MAIL_INTAKE_PASSWORD — the mailbox App Password (never stored in Rezo's DB)
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: MAIL_INTAKE_PASSWORD
+        sync: false
+      # Set to "true" to let the agent check the mailbox every 10 minutes.
+      # Off by default so a deploy never starts reading mail unannounced.
+      - key: MAIL_INTAKE_ENABLED
+        value: "false"
+      # CORS is intentionally left unset here → the API reflects the caller's
+      # origin, so the web app just works on first deploy. Tighten later by
+      # setting CORS_ORIGINS to the web URL (see docs/DEPLOYMENT.md).
+
+  # ------------------------------------------------------------------ WEB ---
+  - type: web
+    name: rezo-web
+    runtime: node
+    plan: free
+    rootDir: .
+    buildCommand: npm ci --include=dev && npm run build --workspace @rezo/web
+    startCommand: cd apps/web && npx next start -p $PORT
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NODE_ENV
+        value: production
+      # Explicit API base URL (the browser calls this directly). Set to the
+      # deployed rezo-api service's public URL so the web app and API are
+      # reliably wired together regardless of blueprint build ordering.
+      - key: NEXT_PUBLIC_API_BASE_URL
+        value: https://rezo-api-f0iy.onrender.com/api/v1

@@ -17,10 +17,21 @@ one place**.
 This repository is being built in the exact 14-step order from the spec, one step
 at a time.
 
-**Current status: Step 1 — Scaffold.** Monorepo, local infra (Postgres / Redis /
-MinIO), NestJS API with a health endpoint, Prisma connected to Postgres, and a
-single Next.js status page that proves the frontend ↔ backend ↔ database
-round-trip. No auth, no business tables, no other UI yet.
+**Current status: Step 14 — Seeded demo dataset. ✅ PHASE 1 & 2 BETA COMPLETE.**
+The full 14-step build order is finished. A single `prisma db seed` now stands up
+a realistic, self-contained scenario so the whole platform is demoable without any
+live integration: **one voyage (MV Kreyòl Star, VY-2026-014) carrying 10 containers
+across 3 bills of lading for two importers**, a broker clearing for both, config-driven
+charges/deadlines/alerts, a low-confidence document sitting in the Ops verification
+queue, trucking jobs and gate appointments across the lifecycle, and settled payment
+records that route money payer → payee directly (Rezo holds none). Containers are
+spread across every lifecycle stage (arrived → cleared → released → gated-out) so
+dashboards, alerts, the verification queue, trucker jobs, and container timelines
+are all populated on first load. All 25 automated e2e tests (7 suites, Phase 1 + 2
+acceptance criteria + danger areas) pass. (Earlier: Phase 1 Data Hub → charges →
+consolidated view → deadlines → document ingestion; Phase 2 Payment Orchestrator,
+Fee & billing engine, Broker portal, Trucker portal + gate appointments, Container
+tracking & release, and Dashboards.)
 
 ---
 
@@ -78,14 +89,348 @@ npm install
 
 # 4. Generate the Prisma client and apply migrations to Postgres
 npm run prisma:generate
-npm run prisma:migrate            # creates the initial (empty) migration
+npm run prisma:migrate            # applies migrations
 
-# 5. Start the API  (terminal 1)  ->  http://localhost:4000/api/v1
+# 5. Seed one organization per role type + a login user for each
+npm run prisma:seed --workspace @rezo/api
+
+# 6. Start the API  (terminal 1)  ->  http://localhost:4000/api/v1
 npm run dev:api
 
-# 6. Start the web app  (terminal 2)  ->  http://localhost:3000
+# 7. Start the web app  (terminal 2)  ->  http://localhost:3000
 npm run dev:web
 ```
+
+## Demo accounts (from the seed)
+
+Every seeded user shares the dev password **`password123`**. Sign in at
+http://localhost:3000/login (the login page also has one-click buttons for each).
+
+| Email | Role | Sees |
+|---|---|---|
+| `admin@rezo.test` | REZO_ADMIN | all tenants; can create orgs/users/keys |
+| `ops@rezo.test` | REZO_OPS | all tenants (verification focus) |
+| `line@rezo.test` | SHIPPING_LINE | own org |
+| `importer@rezo.test` | IMPORTER | own org |
+| `broker@rezo.test` | BROKER | own org; can issue API keys |
+| `trucker@rezo.test` | TRUCKER | own org |
+| `terminal@rezo.test` | TERMINAL | own org |
+| `customs@rezo.test` | CUSTOMS | all tenants (read) |
+| `bank@rezo.test` | BANK | own org |
+| `gov@rezo.test` | GOV_VIEWER | all tenants (read-only) |
+
+## Auth & identity endpoints (Step 2)
+
+```http
+POST /api/v1/auth/login    { email, password }        -> { token, user, org, permissions }
+POST /api/v1/auth/token    { api_key }                 -> { token }   # API-connected orgs
+GET  /api/v1/auth/me                                    -> { user, org, permissions }
+GET  /api/v1/organizations?limit=&cursor=               -> tenant-scoped list
+POST /api/v1/organizations (org:write)                  -> create tenant
+GET  /api/v1/organizations/:id
+GET  /api/v1/users?limit=&cursor= (user:read)
+POST /api/v1/users (user:write)
+GET  /api/v1/api-keys (apikey:manage)
+POST /api/v1/api-keys (apikey:manage)                   -> plaintext key returned ONCE
+DELETE /api/v1/api-keys/:id (apikey:manage)             -> revoke
+```
+
+Every non-public route requires `Authorization: Bearer <JWT>`; org context and
+role are derived from the token. Permissions are enforced by a global RBAC guard;
+non-Rezo/gov/customs callers are restricted to their own organization's data.
+
+## Data Hub endpoints (Step 3)
+
+```http
+POST /api/v1/manifests (manifest:submit)     # single submission -> creates voyage, BLs, containers
+  body: { voyage: { vessel_imo, vessel_name, voyage_number, eta, port },
+          bills_of_lading: [ { bl_number, shipper, consignee_org_id, description?,
+                               containers: [ { container_number, size_type } ] } ] }
+  -> 201 { data: { manifest_id, container_ids: [...] } }
+GET  /api/v1/manifests?limit=&cursor= (container:read)     # submitter-scoped
+GET  /api/v1/manifests/:id
+GET  /api/v1/containers?importer_org_id=&terminal_org_id=&status=&limit=&cursor= (container:read)
+GET  /api/v1/containers/:id                                # container + (charges/deadlines follow in steps 4–6)
+GET  /api/v1/organizations/directory?type=IMPORTER (org:read)   # minimal counterparty directory
+```
+
+**Container visibility (role-scoped):** importers see containers consigned to
+them; terminals see containers assigned to them; shipping lines see containers
+from manifests they submitted; Rezo/government/customs see all. Broker container
+views arrive with the broker portal (step 10).
+
+**Try Flow A:** sign in as `line@rezo.test`, open **Submit manifest**, pick
+`Import Ayiti S.A.` as consignee, submit; then sign in as `importer@rezo.test`
+and open **Containers** — the container is there, never retyped. The seed also
+includes a demo voyage (MV Kreyòl Star) so the views aren't empty.
+
+## Charges, payees & market config (Step 4)
+
+```http
+GET  /api/v1/markets                                   # list market configs
+GET  /api/v1/markets/:code                             # e.g. HT — currencies, tariff, modules
+PATCH /api/v1/markets/:code (config:manage)            # update tariff/currencies/modules
+GET  /api/v1/payees (charge:read)                      # payee registry
+POST /api/v1/payees (config:manage)
+GET  /api/v1/containers/:containerId/charges (charge:read)
+POST /api/v1/containers/:containerId/charges (charge:write)          # manual charge
+POST /api/v1/containers/:containerId/charges/sync-terminal (charge:write)  # mock TerminalAdapter
+```
+
+- **Money** is always an integer of minor units + an ISO-4217 `currency` (spec §15) — never a float.
+- **Fees come from config**, not code: `MarketConfigService` reads the `Market.tariff`
+  row; the mock `TerminalAdapter` and any fee logic look prices up there so a
+  government concession can index/approve rates (spec §14).
+- **Adapters are swappable**: `TerminalAdapter` is bound to a DI token in
+  `IntegrationModule`; replacing the mock with a real Octopi/CPS adapter is a
+  one-line provider change — business logic never touches it.
+- The container detail groups **charges by payee** with subtotals and a
+  **total owed** (only `pending`/`requested`/`overdue` count; `pending_review`
+  is excluded per spec §1.3). Try **Sync terminal charges** on a container as
+  `admin@rezo.test` or `terminal@rezo.test`.
+
+## Consolidated view (Step 5)
+
+The container list and detail now carry the full "one screen" rollup (spec §1.4):
+
+- **`GET /containers`** and **`GET /containers/:id`** include, per container:
+  `total_owed`, `payment_status` (`none`/`pending`/`paid`/`overdue`, derived
+  from charge statuses), and `last_free_day` (earliest across payable charges).
+- **`GET /containers/:id`** charge groups add `payee_type` and a masked
+  `settlement_hint` — **who you pay** and how money will route (the opaque
+  settlement token is never shown in full).
+- The web **Containers** list shows total owed / payment status / last-free-day
+  with a live countdown per row; the **detail** shows a payment-status badge, a
+  last-free-day countdown chip, and per-payee "pay to …" routing.
+- Sign in as `importer@rezo.test` → **Containers** to see it.
+
+## Deadline & alert engine (Step 6)
+
+```http
+GET  /api/v1/alerts?status=&limit= (container:read)   # in-app alert feed (org-scoped)
+POST /api/v1/alerts/:id/read (container:read)          # mark an in-app alert read
+POST /api/v1/alerts/dispatch (config:manage)           # run the dispatcher on demand
+GET  /api/v1/containers/:id                            # now includes `deadlines`
+```
+
+- A **`Deadline`** is tracked per container per payee (earliest last-free-day
+  among that payee's charges) and **recomputed** on every charge create /
+  terminal-sync (spec §1.5). Alert offsets and channels come from market config.
+- Each deadline schedules **`DeadlineAlert`** rows (one per offset × channel).
+  In-app alerts are served from the feed; email/SMS go through the mock
+  `NotificationAdapter` (swappable for SendGrid/Twilio via its DI token).
+- A **cron dispatcher** (`@Cron`, every minute) delivers alerts whose scheduled
+  time has passed. It only advances `PENDING`/`FAILED` → `SENT`, so it's
+  idempotent and reliable — **a missed run sends late, never double-sends or
+  drops** (spec §1.5: a missed alert is a real financial loss).
+- Web: the **Alerts** page shows delivered vs scheduled reminders (in-app +
+  email), and the container detail lists deadlines with countdowns. Sign in as
+  `importer@rezo.test` → **Alerts**.
+
+## Document ingestion & verification (Step 7 — closes Phase 1)
+
+```http
+POST /api/v1/documents (document:write)                # multipart upload -> store + extract
+GET  /api/v1/containers/:containerId/documents (container:read)
+GET  /api/v1/verification-tasks?status=open (verification:read)   # Ops queue
+POST /api/v1/verification-tasks/:id/resolve (verification:resolve) # { field, corrected_value }
+```
+
+- Uploads are stored in **MinIO** (object storage); the file key is the
+  Document `file_ref`. The mock **`ExtractionProvider`** returns charge lines
+  with per-field **confidence**; a field below the **0.85** threshold (config-
+  driven) creates a `PENDING_REVIEW` charge — **excluded from `total_owed`** —
+  and an Ops **`VerificationTask`**. Resolving it moves the charge into the
+  payable total and records before/after in the audit log.
+- Adapters remain swappable: `ExtractionProvider` and `NotificationAdapter` are
+  bound by DI token in `IntegrationModule` — mocks today, real OCR/LLM/email
+  vendors later, with no change to business logic.
+- Web: upload control on the container detail, and the **Verification** console
+  (`ops@rezo.test`) to review/correct low-confidence fields.
+
+## Payment Orchestrator (Step 8 — Phase 2)
+
+```http
+POST /api/v1/payment-requests          # header: Idempotency-Key
+  body: { container_id, charge_ids: [...], settlement_currency }
+  -> 201 { payment_request_id, gross_amount_settlement, rezo_fee, routings: [...], status: "created" }
+POST /api/v1/payment-requests/:id/authorize   # freezes FX, routes each portion directly
+  body (mock only): { simulate: { "<payeeOrgId>": "settled"|"failed"|"pending" } }
+GET  /api/v1/payment-requests/:id             # poll status + routings + failed_charge_ids
+GET  /api/v1/fx-rates                          # current rates
+POST /api/v1/fx-rates (config:manage)          # override a rate (demonstrates FX freeze)
+```
+
+Non-negotiable rules enforced here:
+
+- **Rezo holds no funds.** Money moves payer → payee directly through the rail;
+  Rezo records the movement. No `balance`/`wallet`/`credit`/`float` field exists
+  anywhere (a test scans the Prisma schema and fails if one is added). The only
+  routing that may pay Rezo is the single explicit `rezo_fee` line.
+- **Idempotency.** `POST /payment-requests` requires a client `Idempotency-Key`;
+  a repeat key returns the existing request unchanged — never a second request,
+  never a double route. Each routing also carries a per-routing rail token.
+- **FX frozen at authorization.** The rate in effect when the importer authorizes
+  is frozen onto every routing; later rate changes never alter that request.
+- **Partial failure.** Routings are independent but the request is tracked as a
+  whole: all settle → `settled` (charges paid); some fail → `partially_settled`
+  (settled charges paid, **successful routings never reversed**, failed charges
+  return to payable and are surfaced as `failed_charge_ids` to retry as a **new**
+  request); unknown/timeout → routing stays `pending` and the request stays
+  `routing` for reconciliation. A charge is never marked paid without a confirmed
+  rail settlement. Release eligibility triggers only when every charge is paid.
+
+`PaymentRail` is a mock behind a DI token (like the other adapters); a real
+card/PSP/bank/mobile-money rail swaps in without changing the orchestrator.
+Web: the container detail has a **Pay charges** panel — pick a settlement
+currency, review per-payee routings + the frozen total (incl. Rezo fee),
+authorize once, and retry any failed portion.
+
+## Fee & billing engine (Step 9)
+
+```http
+GET  /api/v1/subscription-plans                 # plan catalogue + prices (from config)
+GET  /api/v1/subscriptions                       # scoped: own org, or all (Rezo/gov)
+POST /api/v1/subscriptions (config:manage)       # { org_id, plan, term } — priced from config
+POST /api/v1/subscriptions/:id/renew (config:manage)
+POST /api/v1/subscriptions/:id/cancel (config:manage)
+GET  /api/v1/billing/summary (config:manage)     # rezo fee collected + active subs + MRR
+```
+
+- **Prices are configuration, not code** (spec §14): `subscription_plans` live in
+  the market tariff; creating/renewing a subscription reads the price from there.
+- The **per-transaction Rezo fee** is attached to each `PaymentRequest` from the
+  same config (Step 8). The billing summary reports fee collected (from settled
+  rezo-fee routings) and subscription MRR.
+- Web: a **Billing** page — plan catalogue, subscriptions (scoped), admin
+  create/renew/cancel, and the summary tiles. Sign in as `admin@rezo.test`.
+
+## Dashboards (Step 13 — closes Phase 2)
+
+```http
+GET /api/v1/dashboard/operational (dashboard:view)   # scoped to caller (all for Rezo/gov)
+GET /api/v1/dashboard/government  (dashboard:gov)     # platform-wide read-only
+```
+
+- **Operational**: containers total + by status, released/gated-out, average
+  clearance time, payments processed + amount routed, **revenue by fee type**
+  (paid charges grouped), Rezo fee revenue, and deadlines at risk — all from
+  real platform data (scoped to the caller's containers unless cross-tenant).
+- **Government**: daily arrivals (last 7 days), collections routed to payees,
+  customs collections, and an in-port congestion proxy.
+- Web: a **Dashboards** page with KPI tiles, the revenue-by-fee-type table, and
+  (for government/admin) the government section. Sign in as `admin@rezo.test`.
+
+## Container tracking & release (Step 12)
+
+```http
+POST /api/v1/containers/:id/customs-clear (customs:clear)        # mock AsycudaAdapter -> cleared
+POST /api/v1/containers/:id/authorize-release (release:authorize) # requires all charges paid + cleared
+GET  /api/v1/containers/:id                                       # now includes a `timeline`
+```
+
+- Container status advances **arrived → cleared → released → gated_out**; the
+  detail returns a `timeline` of six milestones (arrived, charges settled,
+  customs cleared, release authorized, gate appointment, gated out) each with a
+  reached flag + timestamp.
+- **Release authorization** mirrors the payment orchestrator's rule: it is only
+  allowed once every charge on the container is paid **and** customs has cleared.
+- Completing a **gate appointment** (terminal) on a released container sets it
+  `gated_out`. Web: a status-timeline strip on the container detail, plus
+  **Customs clear** / **Authorize release** actions for the right roles.
+
+## Trucker portal + gate appointments (Step 11)
+
+```http
+GET  /api/v1/transport-jobs (container:read)                     # scoped: trucker sees own + open offers
+POST /api/v1/transport-jobs (transport:manage)                   # importer/broker create/offer a job
+POST /api/v1/transport-jobs/:id/accept (transport:drive)         # trucker accepts
+POST /api/v1/transport-jobs/:id/insurance|pod (transport:drive)  # multipart -> object storage; POD => delivered
+POST /api/v1/transport-jobs/:id/gps (transport:drive)            # { lat, lng } last position
+POST /api/v1/gate-appointments (transport:drive)                 # { container_id, slot_time }
+POST /api/v1/gate-appointments/:id/confirm|complete (gate:manage)  # terminal
+POST /api/v1/gate-appointments/:id/cancel (container:read)
+```
+
+- A trucker sees **open offers + its own jobs**; an importer/broker sees jobs for
+  their containers; a terminal sees gate appointments at its terminal. Insurance
+  and POD files go to MinIO; capturing POD marks the job `delivered`.
+- Web: **Trucking** (accept, insurance/POD upload, GPS, book gate), **Gate**
+  (terminal confirms/completes), and an **Arrange trucking** panel on the
+  container detail. Sign in as `trucker@rezo.test` / `terminal@rezo.test`.
+
+## Broker portal (Step 10)
+
+```http
+GET    /api/v1/broker/clients (broker:manage)     # importers this broker clears for
+POST   /api/v1/broker/clients (broker:manage)     # { importer_org_id }
+DELETE /api/v1/broker/clients/:id (broker:manage)
+POST   /api/v1/containers/:id/request-inspection (inspection:request)  # adds a config-priced inspection charge
+```
+
+- A `BrokerClient` row links a broker to the importers it clears for. Container
+  visibility for those importers flows through the scope resolver, so **one
+  broker login sees and pays every container consigned to any of its importers**
+  (spec §2.3) — verified by cross-importer payment in Step 8's flow.
+- **API path for large brokers**: issue a key (`POST /api/v1/api-keys`),
+  exchange it for a token (`POST /api/v1/auth/token`), then call the API
+  directly — no portal needed.
+- **Request inspection** records a config-priced `INSPECTION` charge payable to
+  customs (source `asycuda`) and recomputes deadlines.
+- Web: **My importers** (add/remove clients, container counts), **API keys**
+  (create/revoke, plaintext shown once), and a **Request inspection** action on
+  the container detail. Sign in as `broker@rezo.test`.
+
+## Testing (Phase 1 acceptance — spec §8/§16)
+
+Automated integration tests (isolated `rezo_test` DB, created/migrated/seeded
+automatically):
+
+```bash
+docker compose up -d                       # Postgres/Redis/MinIO must be running
+npm run test:e2e --workspace @rezo/api     # Phase 1 acceptance + payment danger-areas
+```
+
+`apps/api/test/payments.e2e-spec.ts` adds the Step-8 danger-area checks (spec
+§16): idempotency, partial failure (no reversal + retry), FX freeze, RBAC, the
+Rezo-fee-only routing rule, and the schema **no-funds-held** scan.
+
+`apps/api/test/phase2.e2e-spec.ts` covers the Phase 2 acceptance criteria (§9):
+one payment routed to 3+ payees (Rezo holds none), the Rezo fee attached +
+reported, a broker paying two importers under one login, the trucker flow
+advancing a container to gated-out, the dashboard's counts + revenue-by-fee-type,
+and full audit-logging. Plus `broker`/`transport`/`tracking`/`billing` suites.
+**All 25 tests across 7 suites pass** (Phase 1 + Phase 2 + danger areas).
+
+The suite (`apps/api/test/phase1.e2e-spec.ts`) creates + migrates + seeds a
+separate `rezo_test` database, then asserts: (1) single submission is shared with
+importer **and** broker with no re-entry; (2) an uploaded invoice extracts
+charges, a low-confidence field lands in the queue and Ops corrects it; (3) the
+consolidated view groups charges by payee with a correct total + last-free-day;
+(4) an alert fires before a deadline; (5) tenant isolation + RBAC hold and
+changes are audit-logged. **All 5 pass.**
+
+The web app additionally has **15 unit tests** (`apps/web/lib/*.test.ts`)
+covering money formatting, deadline countdowns, and API-envelope/error handling.
+
+## Continuous integration & hardening
+
+- **CI** (`.github/workflows/ci.yml`): on every push/PR — install → Prisma
+  generate → build (typechecks all workspaces) → lint → web unit tests → API
+  e2e, with Postgres + MinIO provisioned as services. The e2e DB is provisioned
+  portably (no dependency on a specific container name), so the suite runs the
+  same locally and in CI.
+- **Lint**: ESLint for the API (correctness = error, style = warning), `next
+  lint` for the web app, `tsc --noEmit` for shared types. `npm run lint` runs
+  all three.
+- **Security hardening**: `helmet` headers; CORS restricted via `CORS_ORIGINS`;
+  strict validation (`forbidNonWhitelisted`); `JWT_SECRET` required in
+  production; Prisma errors mapped to proper HTTP codes with no internal leakage.
+  The production and test apps share one middleware stack
+  (`src/common/configure-app.ts`) so tests exercise exactly what ships.
+
+See **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)** for the full engineering
+handoff (architecture, RBAC, payment orchestration, adapters, and next steps).
 
 ## What you should see
 
@@ -113,27 +458,75 @@ Every endpoint returns:
 This is applied globally (a response interceptor + an exception filter), so
 individual controllers just return their plain payload.
 
+## Quick start (one command)
+
+Prerequisites: **[Docker Desktop](https://www.docker.com/products/docker-desktop)**
+(running), **[Node.js 20+](https://nodejs.org)**, and **[Git](https://git-scm.com)**.
+Then:
+
+```bash
+git clone https://github.com/dk2b7bc5ky-commits/Haiti-National-Digital-Trade-Platform.git
+cd Haiti-National-Digital-Trade-Platform
+npm install
+npm run demo
+```
+
+`npm run demo` creates `.env`, starts Postgres/Redis/MinIO, migrates + seeds the
+database, then runs the API and web together. When it's ready, open
+**http://localhost:3000** and sign in — the form is pre-filled with the admin
+demo account (`admin@rezo.test` / `password123`). The same commands work on
+macOS, Windows, and Linux.
+
+(One-time setup only: `npm run setup`. Run servers only: `npm run start:all`.)
+
 ## Handy commands
 
 ```bash
-docker compose up -d      # start infra
+npm run demo              # one-shot: setup + run everything (see Quick start)
+npm run setup             # one-time: .env, infra, migrate, seed
+npm run start:all         # run API + web together
+docker compose up -d      # start infra only
 docker compose down       # stop infra (add -v to wipe volumes)
 npm run build             # build all workspaces
 ```
 
+## Demo dataset (Step 14)
+
+`npm run prisma:seed --workspace @rezo/api` stands up one org per role (each with a
+login user, password `password123`) plus a realistic, self-contained scenario so the
+platform is demoable with zero live integrations:
+
+- **One voyage** — `MV Kreyòl Star` / `VY-2026-014` into Port-au-Prince.
+- **10 containers across 3 bills of lading** for **two importers** (`Import Ayiti`,
+  `Import Nord Distribution`); a **broker** (`Cap Customs Brokers`) clears for both
+  under one login, and a **trucker** hauls for them.
+- **Config-driven charges** (from the HT market tariff — never hard-coded), **tracked
+  deadlines + scheduled alerts** on the boxes still in port, and one **low-confidence
+  terminal invoice** parked in the Ops **verification queue**.
+- **Containers spread across every lifecycle stage** — arrived → cleared → released →
+  gated-out — with **settled payment records** that route money **payer → payee
+  directly** (each payee + the explicit Rezo fee line; Rezo holds none).
+- **Trucking jobs and gate appointments** across the lifecycle: an open offer, an
+  accepted haul with an upcoming gate slot, and a delivered haul with proof-of-delivery,
+  GPS, and a completed gate move.
+
+The result: dashboards, alerts, the verification queue, trucker jobs, billing, and
+container timelines are all populated on first login. Extra demo logins:
+`importer2@rezo.test` (second importer). The seed is idempotent — safe to re-run.
+
 ## Roadmap (build order from the spec)
 
-1. **Scaffold** ← *you are here*
-2. Identity & tenancy (orgs, users, RBAC, login)
-3. Data Hub core (vessel/voyage/manifest/BL/container + single submission)
-4. Payee & Charge model + Market/Config
-5. Consolidated container view
-6. Deadline & alert engine
-7. Document ingestion + verification queue → **Phase 1 complete**
-8. Payment Orchestrator (mock rail, FX freeze, idempotency, partial failure, no held funds)
-9. Fee & billing engine
-10. Broker portal
-11. Trucker portal + gate appointments
-12. Container tracking & release
-13. Dashboards → **Phase 2 complete**
-14. Seeded demo dataset
+1. ~~Scaffold~~ ✅
+2. ~~Identity & tenancy (orgs, users, RBAC, login)~~ ✅
+3. ~~Data Hub core (vessel/voyage/manifest/BL/container + single submission)~~ ✅
+4. ~~Payee & Charge model + Market/Config~~ ✅
+5. ~~Consolidated container view~~ ✅
+6. ~~Deadline & alert engine~~ ✅
+7. ~~Document ingestion + verification queue → Phase 1 complete~~ ✅
+8. ~~Payment Orchestrator (mock rail, FX freeze, idempotency, partial failure, no held funds)~~ ✅
+9. ~~Fee & billing engine~~ ✅
+10. ~~Broker portal~~ ✅
+11. ~~Trucker portal + gate appointments~~ ✅
+12. ~~Container tracking & release~~ ✅
+13. ~~Dashboards → Phase 2 complete~~ ✅
+14. **Seeded demo dataset → Phase 1 & 2 beta complete** ✅ ← *you are here*

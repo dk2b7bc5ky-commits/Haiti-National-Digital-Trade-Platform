@@ -1,0 +1,789 @@
+code,legal_name,aka,address,city,sector,default_shipping_line,default_payee_code,tax_id,source,source_url,last_seen,cargofax_shipments,cargofax_dom_line,cargofax_dom_payee,cargofax_top_commodity,in_cargofax
+GB_GROUP,GB Group,Groupe Bigio,,Port-au-Prince,conglomerate,,,,public:Wikipedia: GB Group,https://en.wikipedia.org/wiki/GB_Group_(conglomerate),,,,,,no
+DEKA_GROUP,Deka Group,,,Port-au-Prince,conglomerate,,,,public:Rezo Nòdwès,https://rezonodwes.com/?p=311305,,,,,,no
+ACRA_GROUP,Acra Group,,,Port-au-Prince,conglomerate,,,,public:Caribbean Grain official,https://caribbeangrain.com/en/,,,,,,no
+GROUPE_BOULOS,Groupe Boulos,,,Port-au-Prince,conglomerate,,,,public:Groupe Boulos,https://groupeboulos.ht/,,,,,,no
+CRISTOFFERUS_S_A_CRISTO,Cristofferus S.A. (Cristo S.A.),Deka Group import arm; Bongú,,Port-au-Prince,food & grocery,,,,public:AGD Top 100 FY23-24 (#1),https://www.douane.gouv.ht/wp-content/uploads/2023/04/Top-100_importateur_24-23.pdf,,,,,,no
+DELIMART,Delimart S.A.,Groupe Boulos,,Port-au-Prince,food & grocery; retail,King Ocean,,,public:Groupe Boulos,https://groupeboulos.ht/delimart/,,8,King Ocean,DEMSA,ALIMENTS CONGELES,yes
+CARIBBEAN_SUPERMARKET,Caribbean Supermarket S.A.,,,Pétion-Ville,food & grocery; retail,King Ocean,,,public:Flash Haiti,https://flashhaiti.com/business/detail/caribbean-supermarket-telephone-number-contact-caribbean-supermarket-bakery-supermarche-port-au-prince-haiti,,26,King Ocean,DEMSA,MARCHANDISE GENERALE,yes
+BIG_STAR_MARKET,Big Star Market,,,Pétion-Ville,food & grocery; retail,,,,public:Flash Haiti,https://flashhaiti.com/business/detail/Big-Star-Super-Market-Haiti,,,,,,no
+EAGLE_MARKET,Eagle Market,,,,food & grocery; retail,,,,public:USDA FAS 2019,https://apps.fas.usda.gov/newgainapi/api/Report/DownloadReportByFileName?fileName=Opportunities+Abound+for+US+Consumer-Oriented+Products_Port-au-Prince_Haiti_11-03-2019,,,,,,no
+GIANT_SUPERMARKET,Giant Supermarket,,,,food & grocery; retail,,,,public:USDA FAS 2019,https://apps.fas.usda.gov/newgainapi/api/Report/DownloadReportByFileName?fileName=Opportunities+Abound+for+US+Consumer-Oriented+Products_Port-au-Prince_Haiti_11-03-2019,,,,,,no
+CARIBBEAN_GRAIN_COMPANY,Caribbean Grain Company S.A.,CGC; Acra Group,,Port-au-Prince,agriculture inputs; food & grocery,MSC,,,public:AGD Top 100 FY23-24 (#3),https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,10,MSC,MSC Haiti S.A.,RIZ,yes
+RICECO,Riceco S.A.,,,Port-au-Prince,agriculture inputs; food & grocery,Private/Charter (DEM),,,public:AGD Top 100 FY23-24 (#6),https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,5,Private/Charter (DEM),,RIZ,yes
+HUILERIES_HAITIENNES,Huileries Haïtiennes S.A.,HUHSA; GB Group,,Port-au-Prince,food & grocery; consumer goods,,,,public:AGD Top 100 FY23-24 (#2),https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,,,,,no
+CARIBBEAN_MILLING,Caribbean Milling S.A.,,,,food & grocery,NYK Line,,,public:AGD Top 100 FY23-24 (#8),https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,5,NYK Line,Antoine Hogarth S.A.,FROMENT DE BLE,yes
+TASHA_STORE,Tasha Store S.A.,,,,food & grocery; general trading,Maersk Line,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,78,Maersk Line,AGEMAR S.A.,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+TOTAL_DISTRIBUTION_COMPANY,Total Distribution Company S.A.,,,,food & grocery; general trading,Maersk Line,,,public:AGD Top 100 FY23-24 (#4),https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,273,Maersk Line,AGEMAR S.A.,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+NOUMA_TRADING,Nouma Trading S.A.,,,,general trading,CMA CGM,,,public:AGD Top 100 FY23-24 (#9),https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,4,CMA CGM,Ets J.B. Vital S.A.,CONSTRUCTIONS PREFABRIQUEES,yes
+GK_IMPORT_EXPORT,GK Import-Export SA,,,,general trading,,,,public:AGD Top 100 FY23-24 (#10),https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,,,,,no
+MADBRAD,Madbrad S.A.,,,,general trading,Private/Charter (JHM),,,public:AGD Top 100 FY23-24 (#11),https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,5,Private/Charter (JHM),,"CIMENTS PULVERISES OU NON,PORTLAND,ALUMI",yes
+SOGEDIPA,Sogedipa S.A.,Société de Distribution Générale,,,general trading,,,,public:iciHaiti,https://www.icihaiti.com/en/news-41042-icihaiti-economy-top-100-of-the-largest-importers-and-tax-payers-in-the-country.html,,,,,,no
+CARRIBEX,Carribex S.A.,,,,general trading,MSC,,,public:iciHaiti,https://www.icihaiti.com/en/news-41042-icihaiti-economy-top-100-of-the-largest-importers-and-tax-payers-in-the-country.html,,55,MSC,MSC Haiti S.A.,HUILES VEGETALES,yes
+ASSOCIATED_FOOD_DISTRIBUTORS,Associated Food Distributors S.A.,,,,food & grocery,King Ocean,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,42,King Ocean,DEMSA,ALIMENTS CONGELES,yes
+PREMIUM_FOOD_DISTRIBUTION,Premium Food Distribution,P.D.F.,,,food & grocery,,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,,,,,no
+ISHA_FOODS,Isha Foods Co.,,,,food & grocery,Evergreen,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,33,Evergreen,SAMAR S.A.,SUCRES,yes
+LES_CEREALES_D_HAITI,Les Céréales d'Haïti S.A.,,,,food & grocery; agriculture inputs,,,,public:DGI Top 100 2023,https://www.haitilibre.com/docs/TOP-100-dgi-2023-1.pdf,,,,,,no
+CARIBBEAN_FLOUR_COMPANY,Caribbean Flour Company S.A.,,,,food & grocery,Private/Charter (RVAM),,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,4,Private/Charter (RVAM),,FROMENT DE BLE,yes
+LES_ALIMENTS_CONGELES_S_A_SIPCO,Les Aliments Congelés S.A. / Sipco,Société d'Importation Produits Congelés,,,food & grocery,,,,public:DGI Top 100 2023,https://www.haitilibre.com/docs/TOP-100-dgi-2023-1.pdf,,,,,,no
+UNION_FOOD,Union Food SA,,,,food & grocery,Maersk Line,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,48,Maersk Line,AGEMAR S.A.,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+MINAYA_SPICES,Minaya Spices,,,,food & grocery,CMA CGM,,,public:DGI Top 100 2023,https://www.haitilibre.com/docs/TOP-100-dgi-2023-1.pdf,,15,CMA CGM,Ets J.B. Vital S.A.,AILS,yes
+GROUPE_CAROLI,Groupe Caroli,,,,agriculture inputs; food & grocery,,,,public:FEWS NET 2018,https://fews.net/sites/default/files/documents/reports/Haiti_Les_Fondamentaux_Marche_des_Denrees_de_Base_Mars_2018.pdf,,,,,,no
+TCHACO,Tchaco S.A.,Tchako S.A.,,,agriculture inputs; food & grocery,,,,public:FEWS NET 2018,https://fews.net/sites/default/files/documents/reports/Haiti_Les_Fondamentaux_Marche_des_Denrees_de_Base_Mars_2018.pdf,,,,,,no
+HAITI_FOOD_SUPPLY,Haiti Food Supply S.A.,,,,food & grocery,,,,public:DGI Top 100 2023,https://www.haitilibre.com/docs/TOP-100-dgi-2023-1.pdf,,,,,,no
+ACIERIE_D_HAITI,Aciérie d'Haïti,GB Group,,Port-au-Prince,construction & building materials,,,,public:GB Group / DGI Top 100,https://old.gbgroup.com/our-businesses/construction/acierie-dhaiti/,,,,,,no
+CIMENTERIE_NATIONALE,Cimenterie Nationale S.E.M.,CINA,,Cabaret,construction & building materials,,,,public:Flash Haiti,https://flashhaiti.com/business/detail/cina-haiti-domestic-cement-producer-fond-mombin-cabaret,,,,,,no
+CEMEX_HAITI,Cemex Haiti SA,Cemex Varreux,,Port-au-Prince,construction & building materials,,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,,,,,no
+VALERIO_CANEZ,Valerio Canez S.A.,,,Delmas,consumer goods; construction & building materials,COSCO,,,public:Flash Haiti,https://flashhaiti.com/business/detail/Valerio-Canez-Haiti,,110,COSCO,DEMSA,MEUBLES ET LEURS PARTIES (MOBILIER DE BU,yes
+DEPOT_NATIONAL_DE_CONSTRUCTION,Depot National de Construction SA,,,,construction & building materials,,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,,,,,no
+NOUVELLE_VAGUE_MAT_DE_CONSTR,Nouvelle Vague Mat. de Constr. SA,,,,construction & building materials,,,,public:DGI Top 100 2023,https://www.haitilibre.com/docs/TOP-100-dgi-2023-1.pdf,,,,,,no
+CERAMICS_EXPO_CENTER_DISTRIBUTION,Ceramics Expo Center Distribution,,,,construction & building materials,,,,public:DGI Top 100 2023,https://www.haitilibre.com/docs/TOP-100-dgi-2023-1.pdf,,,,,,no
+HAITI_HYDRAULIQUE_ORG_H2O,Haiti Hydraulique Org. H2O SA,,,,construction & building materials,,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,,,,,no
+LES_COULEURS_INFINIES,Les Couleurs Infinies SA,,,,construction & building materials,Hapag-Lloyd,,,public:DGI Top 100 2023,https://www.haitilibre.com/docs/TOP-100-dgi-2023-1.pdf,,9,Hapag-Lloyd,ENMARCOLDA S.A.,BOIS DE CHARPENTE,yes
+GRAD_C,Grad-C,,,,construction & building materials; general trading,,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,,,,,no
+DISTRIBUTEURS_NATIONAUX,Distributeurs Nationaux S.A.,DINASA; National; Rubis,,Port-au-Prince,fuel & energy,Private/Charter (RVAM),,,public:DINASA / Rubis Énergie,https://www.dinasa.ht/,,38,Private/Charter (RVAM),,ESSENCE POUR MOTEUR,yes
+SODIGAZ,Sodigaz S.A.,DINASA subsidiary,,Port-au-Prince,fuel & energy,,,,public:Haitian Truth,https://www.haitian-truth.org/gb-group-sold-its-interests-in-the-dinasa/,,,,,,no
+TOTAL_HAITI,Total Haiti S.A.,TotalEnergies lubricants,,Port-au-Prince,fuel & energy,,,,public:TotalEnergies,https://totalenergies.com/media/news/press-releases/haiti-total-sells-its-retail-business,,,,,,no
+SOCIETE_GENERALE_D_ENERGIE,Société Générale d'Énergie S.A.,Sogener,,Port-au-Prince,fuel & energy,,,,public:CNMP registry,https://www.cnmp.gouv.ht/fournisseurs/voir/1014/societe-generale-denergie-sa,,,,,,no
+GB_ENERGY,GB Energy,GB Group,,Port-au-Prince,fuel & energy,,,,public:Wikipedia: GB Group,https://en.wikipedia.org/wiki/GB_Group_(conglomerate),,,,,,no
+LABORATOIRES_PHARVAL_HAITI,Laboratoires Pharval Haïti,Agence Vallières,,Port-au-Prince,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+PROPHALAB,Prophalab S.A.,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+NUTRIPHAR,Nutriphar,,,,pharmaceuticals & medical,CMA CGM,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,5,CMA CGM,Ets J.B. Vital S.A.,PREPARATIONS ALIMENTAIRES POUR BEBE ET E,yes
+DISPROPHAR,Disprophar S.A.,,,,pharmaceuticals & medical,MSC,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,3,MSC,MSC Haiti S.A.,PREPARATIONS ET ARTICLES PHARMACEUTIQUES,yes
+UNION_PHARMA,Union Pharma,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+PROPHARMA,Propharma S.A.,,,,pharmaceuticals & medical,Hapag-Lloyd,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,2,Hapag-Lloyd,ENMARCOLDA S.A.,PRODUIT OU APPAREIL POUR TRAITEMENT ET C,yes
+PHARMEDIC,Pharmedic S.A.,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+PLURIPHARM,Pluripharm S.A.,Plurimed S.A.,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+METPHARM,Metpharm,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+PROVIPHARM,Provipharm S.A.,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+NACO,Naco S.A.,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+NOJUPHARMA,Nojupharma S.A.,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+PHARMA_2,Pharma-2 S.A.,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+PETIGO_PHARMA,Petigo Pharma S.A.,,,,pharmaceuticals & medical,MSC,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,3,MSC,MSC Haiti S.A.,PREPARATIONS ALIMENTAIRES POUR BEBE ET E,yes
+BIOMEDIC,Biomedic S.A.,,,,pharmaceuticals & medical,MSC,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,3,MSC,MSC Haiti S.A.,MEDICAMENT SOUS FORME DE DOSE (OU NON) O,yes
+COMPLEXE_MEDICAL_SUPPLIES,Complexe Medical Supplies,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+HOSPITAL_MEDICAL_SUPPLIES,Hospital & Medical Supplies,,,,pharmaceuticals & medical,Hapag-Lloyd,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,1,Hapag-Lloyd,ENMARCOLDA S.A.,PREPARATIONS ET ARTICLES PHARMACEUTIQUES,yes
+HAITI_MEDICINE,Haiti Medicine S.A.,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+IMEDIS,Imédis S.A.,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+LABORATOIRE_FARMATRIX,Laboratoire Farmatrix,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+LABORATOIRE_4C,Laboratoire 4C,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+CHITAI_PHARMA,Chitai-Pharma,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+CENTAUR_PHARMACEUTICALS,Centaur Pharmaceuticals,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+ADIMED,Adimed,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+TRANSWORLD_TRADING_CO,TransWorld Trading Co S.A.,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+PRODENTOS,Prodentos,,,,pharmaceuticals & medical,MSC,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,1,MSC,MSC Haiti S.A.,"TROUSSE DE PREMIER SOIN, KIT D'HYGIENE",yes
+REINBOLD_EXPORT_IMPORT,Reinbold Export & Import,,,,pharmaceuticals & medical; general trading,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+ENTREPRISES_MAXIMILIEN,Entreprises Maximilien S.A.,,,,pharmaceuticals & medical,,,,public:MSPP official list,https://www.mspp.gouv.ht/dpmmt/views/front/liste_importateur.php,,,,,,no
+MSC_TRADING,MSC Trading S.A.,MSC Plus; MSC Lumber,,Port-au-Prince,consumer goods; construction & building materials,CMA CGM,,,public:AGD Top 100 FY23-24 (#25),https://www.douane.gouv.ht/wp-content/uploads/2023/04/Top-100_importateur_24-23.pdf,,89,CMA CGM,Ets J.B. Vital S.A.,"CARREAU, DALLE DE REVETEMENT, EN CERAMIQ",yes
+L_E_A_TRADING_HAITI,L.E.A. Trading Haiti,,,,general trading,,,,public:AGD Top 100 FY23-24,https://www.douane.gouv.ht/wp-content/uploads/2023/04/Top-100_importateur_24-23.pdf,,,,,,no
+ANTONIO_HANDAL,Antonio Handal & Co,,,,general trading,Hapag-Lloyd,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,36,Hapag-Lloyd,ENMARCOLDA S.A.,LAIT CONCENTRE NON SUCRE,yes
+TROPIC,Tropic S.A.,,,,general trading,Maersk Line,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,73,Maersk Line,AGEMAR S.A.,SUCRES,yes
+CIE_DES_TABACS_COMME_IL_FAUT,Cie des Tabacs Comme il Faut S.A.,Comme il Faut,,Port-au-Prince,consumer goods,,,,public:DGI Top 100 2023,https://www.haitilibre.com/docs/TOP-100-dgi-2023-1.pdf,,,,,,no
+ULTRAPEX_IMPORT_EXPORT,Ultrapex Import Export,,,,general trading,,,,public:DGI Top 100 2023,https://www.haitilibre.com/docs/TOP-100-dgi-2023-1.pdf,,,,,,no
+INDUSTRIE_SAN_MIGUEL_D_HAITI,Industrie San Miguel d'Haïti S.A.,,,,consumer goods; beverages,,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,,,,,no
+LE_FLAMENGO_IMPORT_EXPORT,Le Flamengo Import-Export S.A.,,,,general trading,,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,,,,,no
+DISTRIBUTION_PARTS_CO,Distribution Parts & Co S.A.,,,,vehicles & parts; general trading,COSCO,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,46,COSCO,DEMSA,PNEUMATIQUES NEUFS,yes
+NATIONAL_TELECOM,National Telecom S.A.,Natcom,,Port-au-Prince,telecom & electronics,MSC,,,public:DGI Top 100 2023,https://www.haitilibre.com/docs/TOP-100-dgi-2023-1.pdf,,10,MSC,MSC Haiti S.A.,"BOIS EN RONDINS,POTEAUX",yes
+UNIGESTION_HOLDING,Unigestion Holding S.A.,Digicel,,Port-au-Prince,telecom & electronics,COSCO,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,8,COSCO,DEMSA,APPAREIL DE TELECOMMUNICATION,yes
+LA_MENAGERE,La Menagere S.A.,,,,consumer goods,COSCO,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,17,COSCO,DEMSA,CONGELATEURS,yes
+ALLIANCE_DISTRIBUTION,Alliance Distribution S.A.,,,,general trading,Evergreen,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,31,Evergreen,SAMAR S.A.,"OUVRAGES EN AMIANTE-CIMENT,CELLULOSE-CIM",yes
+DHL_INTERNATIONAL_HAITI,DHL International Haiti S.A.,,,Port-au-Prince,logistics & courier,,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,,,,,no
+BRASSERIE_NATIONALE_D_HAITI,Brasserie Nationale d'Haïti S.A.,BRANA; Prestige; Heineken,,Port-au-Prince,beverages,,,,public:AGD Top 100 FY23-24 (#7),https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,,,,,no
+SOCIETE_DU_RHUM_BARBANCOURT,Société du Rhum Barbancourt,Barbancourt,,Port-au-Prince,beverages,,,,public:Barbancourt official,https://barbancourt.com/en,,,,,,no
+BRASSERIE_DE_LA_COURONNE,Brasserie de la Couronne S.A.,,,,beverages,CMA CGM,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,30,CMA CGM,Ets J.B. Vital S.A.,SUCRES,yes
+LATIN_AMERICAN_SERVICES,Latin American Services S.A.,,,,beverages,,,,public:DGI Top 100 2023,https://www.haitilibre.com/docs/TOP-100-dgi-2023-1.pdf,,,,,,no
+UNIVERSAL_MOTORS,Universal Motors S.A.,Groupe Boulos; Nissan,,Port-au-Prince,vehicles & parts,Evergreen,,,public:Groupe Boulos,https://groupeboulos.ht/universal-motors-s-a/,,3,Evergreen,SAMAR S.A.,MOTOCYCLETTES,yes
+HAYTIAN_TRACTOR_EQUIPMENT_CO,Haytian Tractor & Equipment Co. S.A.,HAYTRAC; Caterpillar; John Deere,,Port-au-Prince,vehicles & parts; agriculture inputs,,,,public:CNMP registry,https://www.cnmp.gouv.ht/fournisseurs/voir/996/haitian-tractor-and-equipment-company-sa,,,,,,no
+SUNAUTO,SunAuto S.A.,GM; Honda; Hyundai,,Port-au-Prince,vehicles & parts,,,,public:SunAuto official,https://sunauto.net/,,,,,,no
+LES_MOTEURS_REUNIS,Les Moteurs Réunis SA,BMW,,Port-au-Prince,vehicles & parts,,,,public:Top 100 list,https://www.ithalatihracat.biz/?pnum=8915,,,,,,no
+NOVAMAT_MOTORS,Novamat Motors SA,,,,vehicles & parts,Evergreen,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,12,Evergreen,SAMAR S.A.,PARTIES ET ACCESSOIRES DE MOTO,yes
+AUTO_PLAZA,Auto Plaza S.A.,,,,vehicles & parts,Evergreen,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,18,Evergreen,SAMAR S.A.,MOTOCYCLES ( 3 OU 4 ROUES),yes
+AUTO_MECANIQUE,Auto & Mécanique S.A.,Automeca,,,vehicles & parts,,,,public:AGD Top 100 FY23-24,https://www.haitilibre.com/docs/Top-100_importateur_24-23.pdf,,,,,,no
+DEKA_TIRES,Deka Tires S.A.,Deka Group,,Port-au-Prince,vehicles & parts,COSCO,,,public:DGI Top 100 2023,https://www.haitilibre.com/docs/TOP-100-dgi-2023-1.pdf,,39,COSCO,DEMSA,MOTOCYCLES ( 3 OU 4 ROUES),yes
+CF0001,CRISTO SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,270,CMA CGM,Ets J.B. Vital S.A.,LAIT CONCENTRE NON SUCRE,yes
+CF0002,BRASSERIE NATIONALE D'HAITI SA,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,70,Maersk Line,AGEMAR S.A.,BOUTEILLE EN VERRE,yes
+CF0003,ANKA SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,67,MSC,MSC Haiti S.A.,"FEUILLE, BANDE ET TOLE EN ACIER OU AUTRE",yes
+CF0004,UNSOH/BANUH LOGISTICS SUPPORT BASE,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,39,MSC,MSC Haiti S.A.,AIDES HUMANITAIRES DIVERSES,yes
+CF0005,EUROCERAM PLUS SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,42,MSC,MSC Haiti S.A.,"CARREAU, DALLE DE REVETEMENT, EN CERAMIQ",yes
+CF0006,CASSIS FRERES SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,77,MSC,MSC Haiti S.A.,BISCUITS,yes
+CF0007,LES ENTREPRISES PLASTECH HAITI SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,31,Evergreen,SAMAR S.A.,"MATIERES COLORANTES SYNTHETIQUES, ORGANI",yes
+CF0008,LA COLLECTION SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,20,CMA CGM,Ets J.B. Vital S.A.,"CARREAU, DALLE DE REVETEMENT, EN CERAMIQ",yes
+CF0009,PREMIUM FOOD DISTRIBUTION (PFD),,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,112,Maersk Line,AGEMAR S.A.,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0010,FOOD FOR THE POOR,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,37,CMA CGM,Ets J.B. Vital S.A.,AIDES ALIMENTAIRES,yes
+CF0011,CLOXA IMPORT EXPORT SA,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,62,ZIM,NADAL S.A.,"CARREAU, DALLE DE REVETEMENT, EN CERAMIQ",yes
+CF0012,AGEMAR SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,82,MSC,MSC Haiti S.A.,MARCHANDISE GENERALE,yes
+CF0013,CODIGEL SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,36,COSCO,DEMSA,"DESINFECTANTS, DETERGENT",yes
+CF0014,ALL COSMETIC SUPPLIES - ACS SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,47,COSCO,DEMSA,SERVIETTE HYGIENIQUE,yes
+CF0015,PROGRAMME ALIMENTAIRE MONDIAL (PAM),,,,,National Shipping of America,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,19,National Shipping of America,Antoine Hogarth S.A.,AIDES ALIMENTAIRES,yes
+CF0016,LE FLAMENGO IMPORT EXPORT SA,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,23,ZIM,NADAL S.A.,BOIS DE CHARPENTE,yes
+CF0017,MIKADO SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,77,COSCO,DEMSA,MARCHANDISE GENERALE,yes
+CF0018,GK IMPORT EXPORT,,,,,ONE,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,10,ONE,ADEKO Enterprises S.A.,SUCRES,yes
+CF0019,SIPAL HAITI SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,30,Evergreen,SAMAR S.A.,SEL ET CHLORURE DE SODIUM,yes
+CF0020,SOCIETE DU RHUM BARBANCOURT,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,22,MSC,MSC Haiti S.A.,BOUTEILLE EN VERRE,yes
+CF0021,HUILERIES HAITIENNES SA,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,28,Maersk Line,AGEMAR S.A.,SUCRES,yes
+CF0022,REGINALD VILLARD AGENT MARITIME,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,19,COSCO,DEMSA,VOITURE SUV NEUVE,yes
+CF0023,NIMES PRODUCTS SA,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,28,Seaboard Marine,Seaboard d'Haiti S.A.,LAIT CONCENTRE NON SUCRE,yes
+CF0024,ENMARCOLDA SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,28,CMA CGM,Ets J.B. Vital S.A.,CONSTRUCTIONS PREFABRIQUEES,yes
+CF0025,SODIPAL SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,49,Evergreen,SAMAR S.A.,"WHISKIES, RHUM, GIN, VODKA, LIQUEURS AUT",yes
+CF0026,DENALI TRADING,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,20,COSCO,DEMSA,"INSECTICIDES,ANTIRONGEUR,FONGICIDE,HERBI",yes
+CF0027,CARIBBEAN FOOD MANUFACTURING SA,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,13,Seaboard Marine,Seaboard d'Haiti S.A.,SEMOULE DE MAIS,yes
+CF0028,ROLANDA IMPORT EXPORT,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,59,ZIM,NADAL S.A.,PARTIES ET ACCESSOIRES DE MOTO,yes
+CF0029,SOHDISA - SOCIETE HAITIENNE DE DISTRIBUTION,,,,,Crowley,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,21,Crowley,ENMARCOLDA S.A.,HUILES VEGETALES,yes
+CF0030,MOBILITY SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,39,Evergreen,SAMAR S.A.,PNEUMATIQUES NEUFS,yes
+CF0031,MOMPHAT-MAT SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,68,Evergreen,SAMAR S.A.,MOTOCYCLETTES,yes
+CF0032,SOGEPLAST SA,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,33,Seaboard Marine,Seaboard d'Haiti S.A.,POLYMERES DE L'ETHYLENE,yes
+CF0033,L'ETOILE SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,20,Evergreen,SAMAR S.A.,BISCUITS,yes
+CF0034,MIMA SA,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,30,Seaboard Marine,Seaboard d'Haiti S.A.,"HUILES LUBRIFIANTES, DE PETROLE POUR MOT",yes
+CF0035,FIOLA DISTRIBUTION,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,18,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0036,QUALITY FOODS SA,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,59,Maersk Line,AGEMAR S.A.,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0037,SANIER IMPORT-EXPORT,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,56,Evergreen,SAMAR S.A.,MARCHANDISE GENERALE,yes
+CF0038,CARIBBEAN BOTTLING COMPANY SA,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,15,Maersk Line,AGEMAR S.A.,FLACON ET TUBE EN PLASTIQUE ET EN AUTRE ,yes
+CF0039,CLAROSSS,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,55,Evergreen,SAMAR S.A.,MARCHANDISE GENERALE,yes
+CF0040,ACIERIE D'HAITI SA,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,12,ZIM,NADAL S.A.,BOIS DE CHARPENTE,yes
+CF0041,POWERS STORE,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,52,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0042,DOMAWANNMAT MOTORS SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,27,Evergreen,SAMAR S.A.,MOTOCYCLETTES,yes
+CF0043,BESUCO SA,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Maersk Line,AGEMAR S.A.,SUCRES,yes
+CF0044,LE PANIER DE LA NAISON SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Evergreen,SAMAR S.A.,MARCHANDISE GENERALE,yes
+CF0045,SHEY AND MORE,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,48,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0046,NOUVELLE VAGUE MATERIAUX DE CONSTRUCTION SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,MSC,MSC Haiti S.A.,"BARRE EN FER OU ACIER NON ALLIES,FORGEE",yes
+CF0047,NATIONAL FOOD INDUSTRY IMPORT EXPORT SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,29,CMA CGM,Ets J.B. Vital S.A.,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0048,DAMMARIE IMPORT EXPORT,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,King Ocean,DEMSA,SEMOULE DE MAIS,yes
+CF0049,PR ENTREPRISE SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,35,MSC,MSC Haiti S.A.,PNEUMATIQUES NEUFS,yes
+CF0050,GOLDEN ITEM LOGISTICS,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,38,Maersk Line,AGEMAR S.A.,VIANDES DE PORC FRAICHES OU REFRIGEREES ,yes
+CF0051,TIENDA DE ZAPATOS,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,41,ZIM,NADAL S.A.,CHAUSSURES NEUVES,yes
+CF0052,AUTOMECA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,11,CMA CGM,Ets J.B. Vital S.A.,CAMION NEUF,yes
+CF0053,NIPROSA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,11,CMA CGM,Ets J.B. Vital S.A.,HUILE DE PALME,yes
+CF0054,NATIONAL BAG AND TRADING CO SA,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,10,Maersk Line,AGEMAR S.A.,SUCRES,yes
+CF0055,AUTOBIZ SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,35,Evergreen,SAMAR S.A.,MOTOCYCLETTES,yes
+CF0056,POSTEL COURIER SERVICES,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,10,Evergreen,SAMAR S.A.,MOTOCYCLETTES,yes
+CF0057,BERTIL DISTRIBUTION,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,11,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0058,TOP FOOD INTERNATIONAL SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,18,COSCO,DEMSA,HUILES VEGETALES,yes
+CF0059,TOTAL LOGISTICS SOLUTIONS SA,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,34,King Ocean,DEMSA,MARCHANDISE GENERALE,yes
+CF0060,A&D IMPORT EXPORT,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,10,King Ocean,DEMSA,MARCHANDISE GENERALE,yes
+CF0061,ROSE ROUGE STORE,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,34,ZIM,NADAL S.A.,CHAUSSURES NEUVES,yes
+CF0062,CARIMPEX,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,32,CMA CGM,Ets J.B. Vital S.A.,MARCHANDISE GENERALE,yes
+CF0063,SHID SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,12,MSC,MSC Haiti S.A.,COUCHE POUR BEBE,yes
+CF0064,SPAJ STORE,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,33,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0065,APEX TRADE SOLUTIONS SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,MSC,MSC Haiti S.A.,SUCRES,yes
+CF0066,ALIZE IMPORTS SA,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,30,Maersk Line,AGEMAR S.A.,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0067,LES PAPIERS D'HAITI,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,ZIM,NADAL S.A.,PAPIER POUR IMPRESSION ET COPIE,yes
+CF0068,SKANDRA SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,11,MSC,MSC Haiti S.A.,HUILE DE PALME,yes
+CF0069,BONA JS SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,27,Evergreen,SAMAR S.A.,MARCHANDISE GENERALE,yes
+CF0070,TOPCO HAITI SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,26,Evergreen,SAMAR S.A.,AILS,yes
+CF0071,ESTANY IMPORT EXPORT,,,,,Hapag-Lloyd,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,13,Hapag-Lloyd,ENMARCOLDA S.A.,ARTICLE DE FRIPERIE,yes
+CF0072,ADEKO ENTREPRISES SA,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,20,ZIM,NADAL S.A.,CARTON,yes
+CF0073,CENTROPLUS SA,,,,,ONE,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,11,ONE,ADEKO Enterprises S.A.,AILS,yes
+CF0074,MANUFACTURE NATIONALE DE PEINTURE SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,26,MSC,MSC Haiti S.A.,MATIERE PREMIERE POUR INDUSTRIE DE PRODU,yes
+CF0075,CONTINENTAL SHIPPING LOGISTICS,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,22,ZIM,NADAL S.A.,ARTICLE DE FRIPERIE,yes
+CF0076,CHOUBLACK STORE,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,29,ZIM,NADAL S.A.,CHAUSSURES NEUVES,yes
+CF0077,SEJOURNE SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,14,MSC,MSC Haiti S.A.,FLACON ET TUBE EN PLASTIQUE ET EN AUTRE ,yes
+CF0078,ETS JB VITAL SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,19,MSC,MSC Haiti S.A.,MARCHANDISE GENERALE,yes
+CF0079,COCYTA IMP / EXP,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,MSC,MSC Haiti S.A.,BISCUITS,yes
+CF0080,AARON SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,27,CMA CGM,Ets J.B. Vital S.A.,ARTICLE DE FRIPERIE,yes
+CF0081,CHATELAIN CARGO SERVICES,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,21,COSCO,DEMSA,MARCHANDISE GENERALE,yes
+CF0082,APOLLO MOTORS SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,9,Evergreen,SAMAR S.A.,CAMION NEUF,yes
+CF0083,ALARABIA ELECTROMENAGERS,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,25,ZIM,NADAL S.A.,"BLENDEUR, MALAXEUR, MIXEUR",yes
+CF0084,MIDA IMPORT/EXPORT,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Evergreen,SAMAR S.A.,COUCHE POUR BEBE,yes
+CF0085,GLP DISTRIBUTION,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,25,Maersk Line,AGEMAR S.A.,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0086,GOLDEN UNION OF USED ITEMS,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,19,Evergreen,SAMAR S.A.,ARTICLE DE FRIPERIE,yes
+CF0087,ELECTRO REFRI SA / CASAMI,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,23,ZIM,NADAL S.A.,MEUBLES ET LEURS PARTIES (MOBILIER DE BU,yes
+CF0088,CARIBBEAN SAUSAGE COMPANY SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,14,CMA CGM,Ets J.B. Vital S.A.,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0089,DAVID DISTRIBUTION IMPORT EXPORT,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,24,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0090,MGA HAITI SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,21,COSCO,DEMSA,TISSUS ET ETOFFES POUR INDUSTRIE TEXTILE,yes
+CF0091,NEROVO SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,11,Evergreen,SAMAR S.A.,BISCUITS,yes
+CF0092,MATELEC SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,22,Evergreen,SAMAR S.A.,MARCHANDISE GENERALE,yes
+CF0093,HANSAE HAITI SA,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,23,Maersk Line,AGEMAR S.A.,TISSUS ET ETOFFES POUR INDUSTRIE TEXTILE,yes
+CF0094,GAZ INDUSTRIELS ASSOCIES SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,12,CMA CGM,Ets J.B. Vital S.A.,"FLUORURE D'HYDROGENE,DIOXYDE DE CARBONE,",yes
+CF0095,SIPCO SA,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,17,Maersk Line,AGEMAR S.A.,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0096,NJ IMPORT EXPORT,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,23,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0097,PHIFA,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,23,Seaboard Marine,Seaboard d'Haiti S.A.,"HUILES LUBRIFIANTES, DE PETROLE POUR MOT",yes
+CF0098,ISLAND DISTRIBUTION SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,COSCO,DEMSA,"FEUILLE, BANDE ET TOLE EN ACIER OU AUTRE",yes
+CF0099,HAYTIAN TRACTOR EQUIPMENT,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,21,CMA CGM,Ets J.B. Vital S.A.,"HUILES LUBRIFIANTES, DE PETROLE POUR MOT",yes
+CF0100,ANGLOLATAM FOOD AND BEVERAGE COMPANY SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,17,MSC,MSC Haiti S.A.,SEL DES ACIDES OU PEROXACIDES INORGANIQU,yes
+CF0101,NC TRADING,,,,,Crowley,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,Crowley,ENMARCOLDA S.A.,SUCRES,yes
+CF0102,HYPPOC IMPORT EXPORT,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,17,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0103,HONCH TRADING,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,20,ZIM,NADAL S.A.,CHAUSSURES NEUVES,yes
+CF0104,CED & AUDY IMPORT EXPORT,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,8,Evergreen,SAMAR S.A.,AILS,yes
+CF0105,INTERNATIONAL ORGANIZATION FOR MIGRATION,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,COSCO,DEMSA,AIDES HUMANITAIRES DIVERSES,yes
+CF0106,LEBRUN SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,19,Evergreen,SAMAR S.A.,PNEUMATIQUES NEUFS,yes
+CF0107,RG PURCHASING,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,14,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0108,PEHACHEVE SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,11,MSC,MSC Haiti S.A.,"CHLORURE (OXY,HYDROXY)",yes
+CF0109,ACRA ENTREPRISE,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,18,COSCO,DEMSA,PNEUMATIQUES NEUFS,yes
+CF0110,NOE PRODUITS CONGELES,,,,,Hapag-Lloyd,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,18,Hapag-Lloyd,ENMARCOLDA S.A.,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0111,BMF ENTREPRISE,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,15,Evergreen,SAMAR S.A.,MOTOCYCLETTES,yes
+CF0112,AMBASSADE DE LA REPUBLIQUE DE CHINE,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Evergreen,SAMAR S.A.,AIDES ALIMENTAIRES,yes
+CF0113,MR CHACHA SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,15,COSCO,DEMSA,ARTICLE DE FRIPERIE,yes
+CF0114,POLICE NATIONALE D'HAITI,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Maersk Line,AGEMAR S.A.,VOITURE PICK-UP NEUVE,yes
+CF0115,SEL IMPORT EXPORT,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,16,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0116,COMPAGNIE DES TABACS COMME IL FAUT,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,9,COSCO,DEMSA,"TABACS NON,TOTALEMENT,PARTIELLEMENT ECOT",yes
+CF0117,LEADER FOODS,,,,,Hapag-Lloyd,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,Hapag-Lloyd,ENMARCOLDA S.A.,LAIT CONCENTRE NON SUCRE,yes
+CF0118,BHP INDUSTRIES SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,10,MSC,MSC Haiti S.A.,FLACON ET TUBE EN PLASTIQUE ET EN AUTRE ,yes
+CF0119,CITADELLE UNITED SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,CMA CGM,Ets J.B. Vital S.A.,"SACS, EMBALLAGE PAPIER",yes
+CF0120,FONDATION MISSION DE L'ESPOIR,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,14,CMA CGM,Ets J.B. Vital S.A.,AIDES ALIMENTAIRES,yes
+CF0121,OBONPRIX 83,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,11,King Ocean,DEMSA,ALIMENTS CONGELES,yes
+CF0122,HAI NA SI,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,15,ZIM,NADAL S.A.,"SANDALES,PANTOUFLES",yes
+CF0123,JIMBO IMPORT EXPORT,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,14,Maersk Line,AGEMAR S.A.,OIGNONS,yes
+CF0124,ENTREPRISE LOURDES ET FILLES,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,King Ocean,DEMSA,PREPARTIONS DES TYPES UTILISES POUR ALIM,yes
+CF0125,MERIZIER DISTRIBUTION,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,9,King Ocean,DEMSA,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0126,POUMA SERVICES,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,13,King Ocean,DEMSA,MARCHANDISE GENERALE,yes
+CF0127,LTD CONSTRUCTION SA,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,12,ZIM,NADAL S.A.,"VERRE POUR BATIMENT, CONSTRUCTION, DECOR",yes
+CF0128,LEA TRADING HAITI,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,14,CMA CGM,Ets J.B. Vital S.A.,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0129,MEDS & FOOD FOR KIDS,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,9,CMA CGM,Ets J.B. Vital S.A.,AIDES ALIMENTAIRES,yes
+CF0130,EXDEVAG,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,8,COSCO,DEMSA,"RESERVOIR ET RECIPIENT SIMILAIRE,CONTENA",yes
+CF0131,LA GRACE,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,12,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0132,MIKA FOODS,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,13,King Ocean,DEMSA,ALIMENTS CONGELES,yes
+CF0133,METALLO PREFAB SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,MSC,MSC Haiti S.A.,MATERIEL METALLIQUE DE CONSTRUCTION,yes
+CF0134,ISLAND POWER SUPPLY,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,12,COSCO,DEMSA,"GROUPE ELECTROGENE,CONVERTISSEUR ROTATIF",yes
+CF0135,COMPAGNIE HAITIENNE DE MOTEURS,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,Maersk Line,AGEMAR S.A.,MOTOCYCLES ( 3 OU 4 ROUES),yes
+CF0136,TSUTEY,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,12,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0137,KGM DISTRIBUTION,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,ZIM,NADAL S.A.,ACIDES MONOCARBOXYLIQUES SATURES ET LEUR,yes
+CF0138,BANQUE DE LA REPUBLIQUE D'HAITI,,,,,Hapag-Lloyd,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Hapag-Lloyd,ENMARCOLDA S.A.,"IMPRIME,IMAGE,GRAVURE,PHOTOGRAPHIE,CATAL",yes
+CF0139,LES ALIMENTS CONGELES SA,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,12,Maersk Line,AGEMAR S.A.,ALIMENTS CONGELES,yes
+CF0140,CARINA DEPOT,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Maersk Line,AGEMAR S.A.,OIGNONS,yes
+CF0141,CLASSIC TRADING,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,11,King Ocean,DEMSA,MARCHANDISE GENERALE,yes
+CF0142,YVES AUTO PARTS SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,11,CMA CGM,Ets J.B. Vital S.A.,PARTIES ET ACCESSOIRES DE MOTO,yes
+CF0143,UNITED PLASTICS,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,COSCO,DEMSA,POLYCHLORURE DE VINYLE,yes
+CF0144,SASKO,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,10,COSCO,DEMSA,MARCHANDISE GENERALE,yes
+CF0145,POTEBOURE DISTRIBUTION SA,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,ZIM,NADAL S.A.,ARTICLE DE FRIPERIE,yes
+CF0146,UNOPS - UN OFFICE FOR PROJECT SERVICES,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,MSC,MSC Haiti S.A.,AIDES HUMANITAIRES DIVERSES,yes
+CF0147,MAGEPA SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,10,Evergreen,SAMAR S.A.,MOTOCYCLETTES,yes
+CF0148,CARIBBEAN ISLAND APPAREL SA,,,,,Crowley,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,10,Crowley,ENMARCOLDA S.A.,TISSUS ET ETOFFES POUR INDUSTRIE TEXTILE,yes
+CF0149,RALPH PERRY IMP/EXP,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,10,MSC,MSC Haiti S.A.,CARTON,yes
+CF0150,MOUNTAIN CITY,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,ZIM,NADAL S.A.,"APPAREIL POUR PELER FRUIT, PRESSE JUS",yes
+CF0151,SAFEGUARD BUSINESS LTD,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,"APPAREIL, ACCESSOIRE POUR TRAITEMENT DE ",yes
+CF0152,SOCIETE DE DISTRIBUTION GENERALE SA,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,9,King Ocean,DEMSA,"SAUCISSES, SAUCISSONS",yes
+CF0153,SOLUTION CARGO,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,9,King Ocean,DEMSA,MARCHANDISE GENERALE,yes
+CF0154,RAMADA SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Evergreen,SAMAR S.A.,SAVONS DE TOILETTE,yes
+CF0155,SOLEMIR,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,8,COSCO,DEMSA,MARCHANDISE GENERALE,yes
+CF0156,HAITI MEAT PROCESSING,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Maersk Line,AGEMAR S.A.,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0157,DROGE BENJAMIN,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,9,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0158,NAGACO,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,8,CMA CGM,Ets J.B. Vital S.A.,"INSECTICIDES,ANTIRONGEUR,FONGICIDE,HERBI",yes
+CF0159,KAY DAVE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Accordia Shipping,Accordia Shipping (confirm),"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0160,LES MOTEURS REUNIS,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,MSC,MSC Haiti S.A.,VOITURE PICK-UP D'OCCASION,yes
+CF0161,FGS DISTRIBUTOR,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,8,Evergreen,SAMAR S.A.,"BOIS CONTRE-PLAQUES,PLAQUES,STRATIFIES S",yes
+CF0162,ROSIER MODE,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Evergreen,SAMAR S.A.,MARCHANDISE GENERALE,yes
+CF0163,RALPH IMP EXP,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Maersk Line,AGEMAR S.A.,OIGNONS,yes
+CF0164,ECONOMIC TIRES,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,Seaboard Marine,Seaboard d'Haiti S.A.,"HUILES LUBRIFIANTES, DE PETROLE POUR MOT",yes
+CF0165,REPRESENTANT DE L'OPS/OMS EN HAITI,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Seaboard Marine,Seaboard d'Haiti S.A.,AIDES MEDICALES,yes
+CF0166,AN32 HAITI,,,,,Hapag-Lloyd,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,8,Hapag-Lloyd,ENMARCOLDA S.A.,EFFETS PERSONNELS,yes
+CF0167,ENERSOL SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Evergreen,SAMAR S.A.,BATTERIES,yes
+CF0168,CROCHAD STORE,,,,,Hapag-Lloyd,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,8,Hapag-Lloyd,ENMARCOLDA S.A.,ARTICLE DE FRIPERIE,yes
+CF0169,UNIPIECE SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,8,MSC,MSC Haiti S.A.,BATTERIES,yes
+CF0170,DERI SHOP,,,,,Crowley,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Crowley,ENMARCOLDA S.A.,MARCHANDISE GENERALE,yes
+CF0171,AGRO ALIMENTAIRE SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,MSC,MSC Haiti S.A.,MAIS,yes
+CF0172,INDUSTRIE SAN MIGUEL D'HAITI,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,CMA CGM,Ets J.B. Vital S.A.,JUS DE FRUITS ET DE LEGUMES,yes
+CF0173,YOU BOUTIQUE,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,8,ZIM,NADAL S.A.,CHAUSSURES NEUVES,yes
+CF0174,TERMINAL PROPANE SA,,,,,Private/Charter (TSA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,Private/Charter (TSA),,PROPANE,yes
+CF0175,FLOCOHSA,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,King Ocean,DEMSA,MARCHANDISE GENERALE,yes
+CF0176,LES ENTREPRISES COMMERCIALES JOSEPH NADAL SA,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,King Ocean,DEMSA,GAZ NATUREL,yes
+CF0177,KAONABO TRADING,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,CMA CGM,Ets J.B. Vital S.A.,MARCHANDISE GENERALE,yes
+CF0178,DNC,,,,,Private/Charter (RVAM),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (RVAM),,GAS-OIL,yes
+CF0179,GARY DOLCY,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0180,TOYA DISTRIBUTORS,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,King Ocean,DEMSA,MOUTARDE,yes
+CF0181,EPIDOR,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,King Ocean,DEMSA,ALIMENTS CONGELES,yes
+CF0182,BCS RAGS,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,MSC,MSC Haiti S.A.,ARTICLE DE FRIPERIE,yes
+CF0183,AMERICAN EMBASSY,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,CMA CGM,Ets J.B. Vital S.A.,AIDES MEDICALES,yes
+CF0184,ACDONEL DESAMOUR,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0185,BMH,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0186,SYKRIS SA,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,King Ocean,DEMSA,DEODORANT,yes
+CF0187,ISTREL MESSILAS,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0188,MARIEN SHIPPING,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,7,CMA CGM,Ets J.B. Vital S.A.,MARCHANDISE GENERALE,yes
+CF0189,FOX GROUP SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Evergreen,SAMAR S.A.,"VENTILATEUR, APPAREIL DE VENTILATION",yes
+CF0190,MAKHADI MOTO SALE,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,COSCO,DEMSA,MOTOCYCLETTES,yes
+CF0191,CLIMAREF,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,COSCO,DEMSA,CLIMATISEUR,yes
+CF0192,O'MAX DISTRIBUTION,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Maersk Line,AGEMAR S.A.,SUCRERIES SANS CACAO (Y COMPRIS CHOCOLAT,yes
+CF0193,FILS LA,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,ZIM,NADAL S.A.,PRODUIT D'ENTRETIEN DE VOITURE,yes
+CF0194,CAP INVEST,,,,,Private/Charter (RVAM),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (RVAM),,GAS-OIL,yes
+CF0195,KIMAZOU ENERGIE SA,,,,,Private/Charter (RVAM),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (RVAM),,GAS-OIL,yes
+CF0196,ZANMI LASANTE,,,,,Hapag-Lloyd,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Hapag-Lloyd,ENMARCOLDA S.A.,AIDES MEDICALES,yes
+CF0197,LES ENTREPRISES DESCHAMPS-FRISCH SA,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Antillean Marine,Antillean d'Haiti S.A.,"LIVRE,BROCHURE ET IMPRIME SIMILAIRE",yes
+CF0198,GENERAL AVIATION SERVICES SA,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,King Ocean,DEMSA,"ARTICLES, ACCESSOIRES DE MAISON",yes
+CF0199,SAJ SA,,,,,Private/Charter (MOS),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Private/Charter (MOS),,"CIMENTS PULVERISES OU NON,PORTLAND,ALUMI",yes
+CF0200,SAMOURAI ELECTROMENAGER,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,MSC,MSC Haiti S.A.,"HAUT PARLEUR, AMPLIFICATEUR, MICRO",yes
+CF0201,GAYDEM MARINE SYSTEMS LTD,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,CMA CGM,Ets J.B. Vital S.A.,MARCHANDISE GENERALE,yes
+CF0202,MEDECINS SANS FRONTIERES,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,CMA CGM,Ets J.B. Vital S.A.,AIDES MEDICALES,yes
+CF0203,BERIMPEX,,,,,Hapag-Lloyd,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Hapag-Lloyd,ENMARCOLDA S.A.,HYDROXYDE ET PEROXYDE DE SODIUM,yes
+CF0204,IMPORTADORA SHIVA SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Evergreen,SAMAR S.A.,MARCHANDISE GENERALE,yes
+CF0205,EEKOO,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Evergreen,SAMAR S.A.,"ARTICLES, ACCESSOIRES DE MAISON",yes
+CF0206,EMMANUEL JOSEPH,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0207,VETCOSA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,ARTICLE DE FRIPERIE,yes
+CF0208,JEAN CLAUDE MYRBEL,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0209,SOUVERAIN SERGO,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0210,SM LIQUIDATION MATERIAUX DE CONSTRUCTION,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,Private/Charter (APA),,MOTEUR AUTOMOBILE,yes
+CF0211,PRESTIGE SHIP SERVICES SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,6,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0212,UNICEF CAP-HAITIEN,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,CMA CGM,Ets J.B. Vital S.A.,AIDES MEDICALES,yes
+CF0213,LC RENEWABLE ENERGY SOLUTIONS,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Evergreen,SAMAR S.A.,PANNEAU SOLAIRE,yes
+CF0214,ECOBURO,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,MSC,MSC Haiti S.A.,ENVELOPPE ET CHEMISE,yes
+CF0215,SAMUEL LUXAMA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,COSCO,DEMSA,EFFETS PERSONNELS,yes
+CF0216,SOCIETE DE PROMOTION DU BOIS SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,MSC,MSC Haiti S.A.,BOIS DE CHARPENTE,yes
+CF0217,ROSE GASSOU,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,King Ocean,DEMSA,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0218,BOULANGERIE BAZAR LA POSTE,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,Maersk Line,AGEMAR S.A.,MARGARINE,yes
+CF0219,DMS ENTREPRISE SA,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,Seaboard Marine,Seaboard d'Haiti S.A.,"ACCESSOIRE DE TUYAUTERIE (RACCORD,COUDE,",yes
+CF0220,IRPDS AGRICULTURE PLUS,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,Seaboard Marine,Seaboard d'Haiti S.A.,PREPARTIONS DES TYPES UTILISES POUR ALIM,yes
+CF0221,HOPITAL ALBERT SCHWEITZER,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Maersk Line,AGEMAR S.A.,VOITURE NEUVE,yes
+CF0222,SODIPRO,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,Antillean Marine,Antillean d'Haiti S.A.,MATERIEL POUR EMBALLAGE ET STOCKAGE,yes
+CF0223,NOVA SOLAR SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Evergreen,SAMAR S.A.,MEUBLES ET LEURS PARTIES (MOBILIER DE BU,yes
+CF0224,HAITI BEST SEWING MANUFACTURING SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,COSCO,DEMSA,TISSUS ET ETOFFES POUR INDUSTRIE TEXTILE,yes
+CF0225,AE IMPORT EXPORT,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,MSC,MSC Haiti S.A.,MEUBLES ET LEURS PARTIES (MOBILIER DE BU,yes
+CF0226,ROSERA SERVICES,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0227,MAKRO,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,COSCO,DEMSA,MARCHANDISE GENERALE,yes
+CF0228,REINBOLD IMPORT-EXPORT,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Maersk Line,AGEMAR S.A.,PREPARATIONS ALIMENTAIRES POUR BEBE ET E,yes
+CF0229,CONTINENTAL TRADING,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Evergreen,SAMAR S.A.,ARTICLE DE FRIPERIE,yes
+CF0230,BARTHELEMY WILNER,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0231,MILDER CHATELAIN,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0232,ROSAN DISTRIBUTION,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,King Ocean,DEMSA,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0233,AQUA SYSTEMES SA,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Maersk Line,AGEMAR S.A.,MARCHANDISE GENERALE,yes
+CF0234,PEPIN SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,"PANNEAUX D'ISOLATION POUR TOIT,MUR ET AC",yes
+CF0235,CARIBBEAN CANADIAN CHEMICAL (4C),,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Evergreen,SAMAR S.A.,ALCOOLS ACYCLIQUES ET LEURS DERIVES,yes
+CF0236,LOUIS EVENS,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0237,MARC ANDRE DERIPHONSE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,Private/Charter (APA),,MOTEUR AUTOMOBILE,yes
+CF0238,JANEL VICTOR,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0239,EZILANDE ALERTE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0240,DISTILLERIE DE PORT AU PRINCE SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,MSC,MSC Haiti S.A.,"BOUGIES,CHANDELLES,CIERGES,ET ARTICLES S",yes
+CF0241,FRANCOIS MURAT EXCELLENT SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,COSCO,DEMSA,PRODUIT OU APPAREIL POUR TRAITEMENT ET C,yes
+CF0242,EMANIO MARCEUS,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,Private/Charter (APA),,MOTEUR AUTOMOBILE,yes
+CF0243,NIXON DUMERVE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,5,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0244,REMINGTON TRADING,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,ZIM,NADAL S.A.,CHAUSSURES NEUVES,yes
+CF0245,JECO PRODUITS ALIMENTAIRES,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Evergreen,SAMAR S.A.,AILS,yes
+CF0246,QUISQUEYA DISTRIBUTION,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Maersk Line,AGEMAR S.A.,BOUTEILLE EN VERRE,yes
+CF0247,NUVOZA IMPORT-EXPORT,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Antillean Marine,Antillean d'Haiti S.A.,"CIGARES,CIGARILLOS,CIGARETTES CONTENANT ",yes
+CF0248,GROUP SEHSA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Evergreen,SAMAR S.A.,VERRE A BOIRE,yes
+CF0249,LES CEREALES D'HAITI SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,COSCO,DEMSA,SACS ET SACHET D'EMBALLAGE,yes
+CF0250,ATLANTIC DOORS & WINDOWS MFG,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,ZIM,NADAL S.A.,BARRES ET PROFILES EN ALUMINIUM,yes
+CF0251,PYRAMIDS STAR ELECTRO MENAGER,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,MSC,MSC Haiti S.A.,MACHINE A LAVER,yes
+CF0252,ASSOC. CHRETIENNE DES TEMOINS DE JEHOVAH D'H.,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,CMA CGM,Ets J.B. Vital S.A.,"LIVRE,BROCHURE ET IMPRIME SIMILAIRE",yes
+CF0253,NELSON WISLY,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0254,FONDS DES NATIONS UNIES POUR LA POPULATION,,,,,Hapag-Lloyd,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Hapag-Lloyd,ENMARCOLDA S.A.,AIDES MEDICALES,yes
+CF0255,UNICEF PORT AU PRINCE,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,MSC,MSC Haiti S.A.,AIDES HUMANITAIRES DIVERSES,yes
+CF0256,KENSCOFF MANUFACTURING,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Antillean Marine,Antillean d'Haiti S.A.,"CIRCUITS INTEGRES,MICRO-ASSEMBLAGES,COMP",yes
+CF0257,EKO DEPOT SA,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,King Ocean,DEMSA,MARCHANDISE GENERALE,yes
+CF0258,BON KOURAN,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Maersk Line,AGEMAR S.A.,MACHINE A LAVER,yes
+CF0259,EL-AGAMY STAR,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,COSCO,DEMSA,"BLENDEUR, MALAXEUR, MIXEUR",yes
+CF0260,WINGAZ SA,,,,,Private/Charter (RVAM),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Private/Charter (RVAM),,PROPANE,yes
+CF0261,ALEX BELIZAIRE,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0262,BOBY DEPARTMENT STORE,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,MSC,MSC Haiti S.A.,MARCHANDISE GENERALE,yes
+CF0263,PL DEPOT,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0264,PACIFIC SPORTS HAITI SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,COSCO,DEMSA,TISSUS ET ETOFFES POUR INDUSTRIE TEXTILE,yes
+CF0265,EZ AUTODEAL,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,COSCO,DEMSA,MOTOCYCLETTES,yes
+CF0266,CHRISTA IMPORT-EXPORT,,,,,ONE,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,ONE,ADEKO Enterprises S.A.,AILS,yes
+CF0267,SAINT LOUIS ANNA CARMENE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0268,WADNER JOSEPH,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0269,FREDELINE CHERFILS,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0270,DEMOSTHENE ELMICIA,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0271,EDMOND PIERRE JUNIOR,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0272,CHARITABLE KATIA JEAN GILLES,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0273,ALCIME TRADING,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,PNEUMATIQUES NEUFS,yes
+CF0274,CANAL PLUS HAITI,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,"ANTENNE, ACCESSOIRES ET PARTIES",yes
+CF0275,ANGELIE JOSEPH,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0276,HELSON FLORIAL,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0277,LOUIDOR ARSENE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Private/Charter (APA),,MOTEUR AUTOMOBILE,yes
+CF0278,MISLANDE BOUCICAULT,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0279,AUGUSME OSNER,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Private/Charter (APA),,VOITURE D'OCCASION,yes
+CF0280,DES AMIS GARAGE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Private/Charter (APA),,CAMION D'OCCASION,yes
+CF0281,ED AN DISTRIBUTION,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,COSCO,DEMSA,MARCHANDISE GENERALE,yes
+CF0282,MICHELET TEODILE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0283,JEAN LUCSON,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0284,DORMELUS ALLWENS VALDERSON LILITE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,4,Private/Charter (APA),,MOTEUR AUTOMOBILE,yes
+CF0285,AGROTRAC,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Evergreen,SAMAR S.A.,"INSECTICIDES,ANTIRONGEUR,FONGICIDE,HERBI",yes
+CF0286,CLOVET STORE,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0287,CARIBBEAN STANDARD GLASS MFG SA,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Maersk Line,AGEMAR S.A.,"VERRE POUR BATIMENT, CONSTRUCTION, DECOR",yes
+CF0288,SANOPHAR,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Maersk Line,AGEMAR S.A.,PREPARATIONS ET ARTICLES PHARMACEUTIQUES,yes
+CF0289,LES ETABLISSEMENTS ROSSARD,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,CMA CGM,Ets J.B. Vital S.A.,"WHISKIES, RHUM, GIN, VODKA, LIQUEURS AUT",yes
+CF0290,NAHOMIE THOMAS,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0291,SOCIETE GENERALE DE PLASTIQUES SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,COSCO,DEMSA,POLYMERES DE L'ETHYLENE,yes
+CF0292,CHATODO,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Seaboard Marine,Seaboard d'Haiti S.A.,POLYMERES DE L'ETHYLENE,yes
+CF0293,ELINA ETELO DESTAVE,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Seaboard Marine,Seaboard d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0294,YASH TRADING IMPORT EXPORT,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,ZIM,NADAL S.A.,"SANDALES,PANTOUFLES",yes
+CF0295,SAIDEL PIERRE,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0296,CASIMIR DAPHNIDE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0297,DAPHNIDE CHAPRON,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0298,WEDNER PHANORD,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0299,CELESTIN HERLANDE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0300,RODRIGUE MILIEN,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0301,LUNDOR DUFALLY,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0302,WILTONE PIERRE,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0303,CLAUDIN PAUL,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0304,ERVELY JOSEPH,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Antillean Marine,Antillean d'Haiti S.A.,VOITURE PICK-UP D'OCCASION,yes
+CF0305,LE CONCEPT,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Evergreen,SAMAR S.A.,ARTICLES SANITAIRES,yes
+CF0306,SAUREL AIR CONDITIONING CO SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Evergreen,SAMAR S.A.,CLIMATISEUR,yes
+CF0307,BANDARI HAITI SA,,,,,Private/Charter (RVAM),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (RVAM),,GAS-OIL,yes
+CF0308,ROLIN LEO,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0309,THE WILLBES HAITIAN SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,MSC,MSC Haiti S.A.,ACCESSOIRE POUR INDUSTRIE TEXTILE,yes
+CF0310,VILLEDROUIN & CO SUCCRS,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,MSC,MSC Haiti S.A.,PREPARATIONS ALIMENTAIRES POUR BEBE ET E,yes
+CF0311,JMB MEDICAL AGENCY,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,MSC,MSC Haiti S.A.,MEDICAMENT SOUS FORME DE DOSE (OU NON) O,yes
+CF0312,TAMAX STORE,,,,,Crowley,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Crowley,ENMARCOLDA S.A.,MARCHANDISE GENERALE,yes
+CF0313,ELARAKY ELECTOMENAGERS NV,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Evergreen,SAMAR S.A.,"BLENDEUR, MALAXEUR, MIXEUR",yes
+CF0314,HAITI GREEN SOLUTIONS SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Evergreen,SAMAR S.A.,SYSTEME D'ENERGIE SOLAIRE ET PARTIES,yes
+CF0315,PJM DISTRIBUTION,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Evergreen,SAMAR S.A.,ARTICLE DE FRIPERIE,yes
+CF0316,GESNER JOSEPH,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0317,LAMY BACHOUNE,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0318,NG COMMERCIAL MARKETING,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,CMA CGM,Ets J.B. Vital S.A.,CONSOLIDATION,yes
+CF0319,KEVIN BLAISE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0320,ALLAND JOSEPH,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0321,ALCIME MARIE JUDITH,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0322,J&M CARS ALTERNATIVES,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Maersk Line,AGEMAR S.A.,VOITURE D'OCCASION,yes
+CF0323,T&C SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,CMA CGM,Ets J.B. Vital S.A.,MARCHANDISE GENERALE,yes
+CF0324,ESTHER FARAH DINA ANDRE,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Seaboard Marine,Seaboard d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0325,DANISE DAUTIN,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Antillean Marine,Antillean d'Haiti S.A.,VOITURE D'OCCASION,yes
+CF0326,JUVENSON FORESTAL,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (VIA),,TRAILER,yes
+CF0327,CLERCILIA LAZARE,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0328,JEAN DADY MESI,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0329,LOUIS JEAN MAGALIE,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0330,VALANT SANON,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0331,ERVIL JEAN,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0332,JHONNY LOPIDAS,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0333,COMPAS DIEULENE,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0334,PIERRE LUCNER LOUBEAU,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0335,ROGER JOSEPH,,,,,Private/Charter (TCA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (TCA),,EFFETS PERSONNELS,yes
+CF0336,AVANTAGE TRADING AND SURGELLES,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,King Ocean,DEMSA,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0337,GRAND NORD BATISSEMENT SA,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,King Ocean,DEMSA,PELLE MECANIQUE,yes
+CF0338,CROWN EXPRESS DEPOT,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,MARCHANDISE GENERALE,yes
+CF0339,VENOM IMPORT,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,CMA CGM,Ets J.B. Vital S.A.,MARCHANDISE GENERALE,yes
+CF0340,KENOL JOSEPH,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0341,FRANCELAINE FRANCOIS,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0342,IFODIEU RENAUD,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0343,START LAND ELECTROMENAGER IMPORT-EXPORT,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Evergreen,SAMAR S.A.,"HAUT PARLEUR, AMPLIFICATEUR, MICRO",yes
+CF0344,PIERRE WALKY,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0345,WILKENS JOACHIM,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0346,MONESTIME LIGENSON,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0347,MONTESQUIEUX PIERRE-LOUIS,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0348,JOSUE SAINT PIERRE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0349,RONALD EXIL,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0350,DELIA ENOLD,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0351,ALBERTE WILNISE CABRET,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0352,JEAN JOHN,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0353,JEAN BERNARD JACQUES,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (APA),,MOTEUR AUTOMOBILE,yes
+CF0354,QUINCAILLERIE NOUVELLE SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,MSC,MSC Haiti S.A.,PREPARATIONS CHIMIQUES,yes
+CF0355,MANOY TRADING,,,,,Hapag-Lloyd,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Hapag-Lloyd,ENMARCOLDA S.A.,MARCHANDISE GENERALE,yes
+CF0356,TALISMAN,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,COSCO,DEMSA,MARCHANDISE GENERALE,yes
+CF0357,DANIEL PIERRE,,,,,Private/Charter (MAS),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (MAS),,VOITURE D'OCCASION,yes
+CF0358,FELIX ARCHANGE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0359,JUDE POITEVIEN,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (APA),,VOITURE D'OCCASION,yes
+CF0360,VISION IMPORT ET LOGISTIQUE,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,CMA CGM,Ets J.B. Vital S.A.,MARCHANDISE GENERALE,yes
+CF0361,PIERRE LUIVARD,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0362,RONEL CHRISTIAN,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0363,JEAN FRANTZO,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0364,POLIN IMPORT-EXPORT,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,COSCO,DEMSA,CINTRES POUR VETEMENTS ET TISSUS,yes
+CF0365,BLINDHASA,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,ZIM,NADAL S.A.,CONGELATEURS,yes
+CF0366,MURACIENNE CLERCIUS,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0367,LINELS ALEXANDRE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (APA),,MOTEURS,yes
+CF0368,HERISSE JEAN CLAUDE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,3,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0369,ORIENTAL COSMETICS SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,COSCO,DEMSA,PREPARATION POUR NETTOYAGE,yes
+CF0370,GLOBAL HOME & OFFICE SMART,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,King Ocean,DEMSA,MARCHANDISE GENERALE,yes
+CF0371,GAETAN EDLORD,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0372,INCOM SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,COSCO,DEMSA,CANNELLE ET FLEURS DE CANNELIER,yes
+CF0373,JOLIMEAU LORVENSON,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Seaboard Marine,Seaboard d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0374,AMBASSADE DU CANADA,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,ZIM,NADAL S.A.,MATERIEL DIPLOMATIQUE,yes
+CF0375,JEAN THONY LORMILUS,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0376,KENTUSKY SALOMON,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0377,JEAN ODVICK FRANCOIS,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0378,DELMY THEOPHIN,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0379,YLFRID DOL,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0380,CLINISE PIERRE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0381,LUBIN JEAN WESLY,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0382,ESTHER LAGUERRE,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0383,MICHELET ST-HUBERT,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0384,BERLINE JOSEPH,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0385,MARIE ROSE SALOMON,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0386,HAROLD JOSEPH,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0387,PAULA BEAUBRUN,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0388,KENDY PAUL,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0389,FELO CREPIN,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,VOITURE D'OCCASION,yes
+CF0390,AGENCES VALLIERES,,,,,Hapag-Lloyd,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Hapag-Lloyd,ENMARCOLDA S.A.,PREPARATIONS ET ARTICLES PHARMACEUTIQUES,yes
+CF0391,ETS COMMERCIAL JAMES T MOURRA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,MSC,MSC Haiti S.A.,"VERMOUTH, VINS DE RAISINS FRAIS, VINS EN",yes
+CF0392,STAR 2000,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,MSC,MSC Haiti S.A.,PREPARATIONS ALIMENTAIRES DIVERSES,yes
+CF0393,GENERALE INDUSTRIALLE LA PERLE,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,MSC,MSC Haiti S.A.,"DESINFECTANTS, DETERGENT",yes
+CF0394,UNITED NATIONS EDUCATION SCIENTIFIC AND CULTURAL ORGANIZATION,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,MSC,MSC Haiti S.A.,MOTOCYCLETTES,yes
+CF0395,ABISHAIL CASSEUS,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0396,OFFICE STAR SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Evergreen,SAMAR S.A.,"CHAISE, TABOURET",yes
+CF0397,ESG GROUP,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Evergreen,SAMAR S.A.,MARCHANDISE GENERALE,yes
+CF0398,HAITI CHEUNG WON SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Evergreen,SAMAR S.A.,"FIL FILAMENT SYNTHETIQUE,ARTIFICIEL COND",yes
+CF0399,L'ABEILLE SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Evergreen,SAMAR S.A.,PAPIER POUR IMPRESSION ET COPIE,yes
+CF0400,CHARISME SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Evergreen,SAMAR S.A.,PIECES D'AUTO,yes
+CF0401,CLEEF SIDRENICE,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Seaboard Marine,Seaboard d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0402,CAPACITY SHIPPING AND SERVICES,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Seaboard Marine,Seaboard d'Haiti S.A.,"PRODUIT DE PARFUMERIE, TOILETTE, RASAGE,",yes
+CF0403,HAITI MSF-BELGIQUE,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,AIDES MEDICALES,yes
+CF0404,BARTHELEMY LUCKNER,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0405,LAROCHE HELDER,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0406,LIBEKA LUCIO,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0407,GUICHEL BEAUVIL,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0408,JOREL PETIT HOMME,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0409,WOODMAEL FERGISTE,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0410,ESTHER EMMANUEL,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0411,SANDRA ANTOINE JEANLUS,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0412,FRITZNER ISAAC,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0413,PIERRE BERNARD,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0414,FRANTZ ELANCIEUX,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0415,JEAN BAPTISTE ANIEL,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0416,AROMES DES CARAIBES SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,ALCOOLS ACYCLIQUES ET LEURS DERIVES,yes
+CF0417,FRITZQUINT VINCENT CHARLES,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,King Ocean,DEMSA,VOITURE D'OCCASION,yes
+CF0418,PEGUY GEORGES,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0419,CIMENTERIE NATIONALE SEM,,,,,Private/Charter (HSS),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (HSS),,"CIMENTS PULVERISES OU NON,PORTLAND,ALUMI",yes
+CF0420,WORLD VISION,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,MSC,MSC Haiti S.A.,AIDES MEDICALES,yes
+CF0421,GRACE TRADING,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,MSC,MSC Haiti S.A.,PAPIER,yes
+CF0422,ACRA DISTRIBUTION COMPANY SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,COSCO,DEMSA,MARCHANDISE GENERALE,yes
+CF0423,MAKAY,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Seaboard Marine,Seaboard d'Haiti S.A.,JUS DE FRUITS ET DE LEGUMES,yes
+CF0424,PROPLAST HT SA,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Seaboard Marine,Seaboard d'Haiti S.A.,POLYMERES DE L'ETHYLENE,yes
+CF0425,LS DISTRIBUTION,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,ZIM,NADAL S.A.,ARTICLE DE FRIPERIE,yes
+CF0426,GAGNANT-G SA,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0427,KAY CLAUDY SA,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Maersk Line,AGEMAR S.A.,"PRODUIT POUR BOULANGERIE, PATISSERIE",yes
+CF0428,PREVILUS PATRICK,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Evergreen,SAMAR S.A.,EFFETS PERSONNELS,yes
+CF0429,COMPAGNIE H DE C DE BIEN ET SERVICES,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Evergreen,SAMAR S.A.,MOTOCYCLES ( 3 OU 4 ROUES),yes
+CF0430,SOPRODEX,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Evergreen,SAMAR S.A.,MARCHANDISE GENERALE,yes
+CF0431,PIERRE GERSELINE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0432,JOSEPH FENELON,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0433,PHILIUS FRANCOEUR,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0434,WILKEN PIERRE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0435,WALKENS FORESTAL,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0436,DESTILUS LOVELINA,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0437,PIERRE JACKLES,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0438,EMMANUEL GARCON,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0439,PAUL MYRLANDE RODRIGUE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0440,KARLENE BENJAMIN,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0441,JEAN JESULA,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0442,JAMESLY PETIT,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0443,AUTOMALL,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,ZIM,NADAL S.A.,PIECES D'AUTO,yes
+CF0444,JOEL GEORGES THOMAS,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0445,WILLIAMSON ESTIMABLE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0446,DAVID DORLEAN,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0447,MARIE BELENE JN-LOUIS,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0448,ROSE KERLINE LOUISSAINT,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0449,CHARLES RODNET,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),CAMION D'OCCASION,yes
+CF0450,LABADY CLERMITE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0451,DEZEME BIKENSON,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0452,THERNELAN YOLETTE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0453,YVES LAINE,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,MOTOCYCLETTES,yes
+CF0454,ZAMI ST NEL,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,CAMION D'OCCASION,yes
+CF0455,JAMES CHARLES,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,VOITURE D'OCCASION,yes
+CF0456,DELPHONSE PHENEL,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,VOITURE D'OCCASION,yes
+CF0457,MARC ECHARD BERTHOUMIEUX,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,VOITURE D'OCCASION,yes
+CF0458,MARIE SAVENA CHALESTIN,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,VOITURE D'OCCASION,yes
+CF0459,DESIR ANDRE ROLAND,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,PELLE MECANIQUE,yes
+CF0460,MYRLANDE VALCIUS,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,VOITURE D'OCCASION,yes
+CF0461,MOMPHAT NEW VISON,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,REMORQUE CITERNE,yes
+CF0462,JEAN MERLIN,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,VOITURE PICK-UP D'OCCASION,yes
+CF0463,MICHEL FRANCK LEGER,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,TRAILER,yes
+CF0464,SAYETTE QUETANT,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,VOITURE D'OCCASION,yes
+CF0465,MIKELDA JOSEPH,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,VOITURE D'OCCASION,yes
+CF0466,WEBERT LAINE,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,VOITURE D'OCCASION,yes
+CF0467,D HAITI ODLEY ANTHONY,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,VOITURE D'OCCASION,yes
+CF0468,COQUILLON MACKENSON,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,VOITURE D'OCCASION,yes
+CF0469,EUSTACHE REGINALD,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0470,BERNADIN MICHEL,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0471,MICHENOLD PIERRE,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0472,ALTY JOAKENSON,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0473,JEAN SAINT FLEUR ROMILUS,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0474,MILHOMME YVES,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0475,LANCIA DOUZE,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0476,JACKY JEUDI,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0477,EMERSON GERMAIN,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0478,LIFAITE NOEL,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0479,OLINE GILET NONCENT,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,CAMION D'OCCASION,yes
+CF0480,JUNIORE LEONARD,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0481,MICHAEL JEAN,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0482,PROMISE LAND 7 INC,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0483,BARTHELEMY EPHESIEN,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,VOITURE D'OCCASION,yes
+CF0484,MERLANDE ROMAIN,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0485,JESSICA EUNICE DUBREZIL,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0486,OSNEL SANON,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0487,JOLICIE ANDRISE LUCSAINT,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0488,JOSEPH JOLET,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0489,JEAN AUBERSON LAMY,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0490,CHARLES JOEL,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0491,KAMMERY MORVENS ANTOKUS SYLVAINCE,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0492,FEVRIER ANCHELO,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0493,JOHN BERLUS,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0494,FRIDLARD JEAN,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0495,BOB YRIS,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,VOITURE PICK-UP D'OCCASION,yes
+CF0496,JEAN LOUIS SHILTON,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0497,DAVE WINE DENOZIL,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0498,ROSE OLGA MARTHONE,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0499,EMMANUEL WOODELINE,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0500,JESUFAITE DENIS,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0501,CASIMIR JEAN MAX,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,MOTEUR AUTOMOBILE,yes
+CF0502,WENNILSEN GUERRIER,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0503,BRUNO GUERRIER,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0504,ADONIS MARKENSON,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0505,AMBROISE FENIEL,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0506,DAMBREVILLE LINDA,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0507,FANES OMIDAS,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0508,MAKENDY MUZEAU,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0509,CELIUS MACKENDY,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0510,JOANIS YVES RODGER,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0511,CHARLES BECHELET,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0512,DARLENE MARLINA MERSILUS,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0513,GUITO JOSEPH,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0514,DAGUILLARD MARIELLE,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0515,BERNIDE LUMAINE,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0516,JEAN BAPTISTE DUMASSAIS,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0517,GARRY AUGUSTIN,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0518,FELISME DERSON,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0519,LISIANE PLAISIR,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0520,ISMAELLE ALEXANDRE,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0521,ROODY ALCENAT,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0522,NADAL ANTOINE,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0523,PATRICK GUERRIER,,,,,Private/Charter (VIA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (VIA),,EFFETS PERSONNELS,yes
+CF0524,MEBSH,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,AIDES HUMANITAIRES DIVERSES,yes
+CF0525,POTENTIEL BUSINESS,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,King Ocean,DEMSA,"VIANDES ET ABATS DE VOLAILLES (POULES, C",yes
+CF0526,CHARLES FEQUIERE SA,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,King Ocean,DEMSA,MARCHANDISE GENERALE,yes
+CF0527,MAM DISTRIBUTION,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,King Ocean,DEMSA,MARCHANDISE GENERALE,yes
+CF0528,DESIR GREGORY,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0529,CYLEX SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,ARTICLE DE FRIPERIE,yes
+CF0530,ALCIME GUIMAX,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0531,WILEMANE DERAVINE,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0532,GS INDUSTRIES SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,"LIANT,PRODUIT CHIMIQUE,PREPARATION INDUS",yes
+CF0533,IMPRIMERIE LE NATAL,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,COSCO,DEMSA,"MATERIEL, FOURNITURE D'IMPRESSION",yes
+CF0534,TOUSSAINT CHANCY,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,COSCO,DEMSA,BUS D'OCCASION,yes
+CF0535,NOEL JEAN BERTEAU,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,COSCO,DEMSA,BUS D'OCCASION,yes
+CF0536,JANINE SAINT LOUIS,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,COSCO,DEMSA,BUS D'OCCASION,yes
+CF0537,FREDERIQUE WESNER,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,COSCO,DEMSA,BUS D'OCCASION,yes
+CF0538,ARCHILLES DENIS,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,COSCO,DEMSA,BUS D'OCCASION,yes
+CF0539,DUVERSAINT FARAH,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,COSCO,DEMSA,BUS D'OCCASION,yes
+CF0540,BELFOND JUDETTE,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Evergreen,SAMAR S.A.,EFFETS PERSONNELS,yes
+CF0541,MEFA GROUP SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Evergreen,SAMAR S.A.,PNEUMATIQUES NEUFS POUR MOTOCYCLETTE,yes
+CF0542,MARINE MOTORS SA,,,,,Evergreen,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Evergreen,SAMAR S.A.,"MOTEUR A PISTON (A EXPLOSION,DIESEL,SEMI",yes
+CF0543,CYNTHIA COSMETIC DISTRIBUTION,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Maersk Line,AGEMAR S.A.,"PRODUIT DE BEAUTE, MAQUILLAGE, POUR SOIN",yes
+CF0544,PETIOTE WILNA,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Seaboard Marine,Seaboard d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0545,EMMANUEL SEME,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Seaboard Marine,Seaboard d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0546,VENANT FARAH,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Seaboard Marine,Seaboard d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0547,GERLINE VALESTINE,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Seaboard Marine,Seaboard d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0548,ARCHEVECHE DE PORT-AU-PRINCE,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,ZIM,NADAL S.A.,AIDES HUMANITAIRES DIVERSES,yes
+CF0549,ROSE CARLINE ALPHONSE GILLES,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0550,DORIVAL ETNY,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0551,OGE RONALD,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0552,RENEL VERDIEU,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0553,SEIDE FRITO,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0554,CHERMEIL FANEL,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0555,ROSEMANIE DERILUS,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0556,PROPHETE DOUMICK,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0557,ALEXANDRE WILMAN,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0558,GERILUS RENE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0559,JEANTY MYRLENE INNOCENT,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0560,PHILOZIA ODALUS,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0561,GUERLINE MOISE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0562,MERANCIA DORMEUS,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0563,JUNIOR PETIT MONSIEUR,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0564,FRANTZ MAXI,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0565,EMMANUEL PIERRE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0566,ST-LOUIS JACQUES FLORVEUS,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0567,JUSTIN NEVERT,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0568,CHERILUS EDSON,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0569,RACHELLE ORELUS,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0570,MEDY POINT DU JOUR,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0571,ESPERENCIA ALCINE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,TRAILER,yes
+CF0572,JEPHTE DALSY,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,CAMION D'OCCASION,yes
+CF0573,JEAN GILLES NERY,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,VOITURE D'OCCASION,yes
+CF0574,MANASSE RONALD,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0575,SIMEON DIEUNA,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0576,AUGUSTIN MACKENZY,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0577,PRESENDIEU RODNIDE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0578,FRANCENER OCCIDORT,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0579,EXIL REGINALD,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0580,JEAN LOUBENS GRAND PIERRE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,VOITURE D'OCCASION,yes
+CF0581,BENETTE GENEUS,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0582,JEAN MICHEL,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0583,RENE GESNEL,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0584,FENOL THERMIDOR,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0585,MERCINA JOSEPH,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0586,MILIEN ANES,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0587,JEANTILUS EDZER,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0588,TIOFIN NERLUS,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0589,MARCKENTORCHE PHILOGENE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0590,PIERRE LOUIS DESPLUMES DANIELLA,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0591,ELISEE FLEURINORD,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0592,BERRY JOSEPH,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0593,NORIUS JOSEPH,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0594,OSTINVIL ROBENS,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0595,SAGET JEFFERSON,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0596,ALDORPHE MARC ANTOINE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0597,FRANTZ LOUINORD,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,VOITURE D'OCCASION,yes
+CF0598,ROSE DARLINE LEGROS,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,VOITURE D'OCCASION,yes
+CF0599,EDMOND YVANO-VITCH,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,VOITURE D'OCCASION,yes
+CF0600,FENOLD JEAN BAPTISTE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,REMORQUE CITERNE,yes
+CF0601,BERSON ERY,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,TRAILER,yes
+CF0602,FILS CLENER JEAN WADSON,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,CAMION D'OCCASION,yes
+CF0603,GUERLANDE FELUSMA,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,VOITURE D'OCCASION,yes
+CF0604,DJEF YVES BERTIL,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,VOITURE D'OCCASION,yes
+CF0605,JOHN WIKS PIERRE,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,VOITURE D'OCCASION,yes
+CF0606,PHETE SCHINA MARIE DARBOUSE JOSEPH,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0607,CAP TERMINAL SA,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,CHASSIS ET ACCESSOIRES DE CHASSIS,yes
+CF0608,AURORE SHOP,,,,,Hapag-Lloyd,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Hapag-Lloyd,ENMARCOLDA S.A.,ARTICLE DE FRIPERIE,yes
+CF0609,CHERELUS HEROLD,,,,,Private/Charter (MAS),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (MAS),,VOITURE D'OCCASION,yes
+CF0610,PATRICK CLAKSEMA,,,,,Private/Charter (MAS),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (MAS),,VOITURE D'OCCASION,yes
+CF0611,MADSEN JEAN-LOUIS,,,,,Private/Charter (ACC),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (ACC),,EFFETS PERSONNELS,yes
+CF0612,GUIDE PHALEY DIEUJUSTE,,,,,Private/Charter (ACC),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (ACC),,EFFETS PERSONNELS,yes
+CF0613,CELIANE PROSPER,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,CAMION D'OCCASION,yes
+CF0614,PREVAL WALTER,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,VOITURE D'OCCASION,yes
+CF0615,JOSEPH ETIENNE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,CAMION D'OCCASION,yes
+CF0616,FRITZ NARCISSE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,MOTEUR AUTOMOBILE,yes
+CF0617,TOUTOUTE JOUDAIN,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,TRAILER,yes
+CF0618,ODEL EXAVIER FACIUS,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0619,KEMPSY DORILAS,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0620,NEGOCIOS Y SERVICIOS DIVERSOS,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,MARCHANDISE GENERALE,yes
+CF0621,MICHELET AUTO PARTS,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,MOTOCYCLETTES,yes
+CF0622,PYRAMID ENTREPRISE,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,"VENTILATEUR, APPAREIL DE VENTILATION",yes
+CF0623,JEAN ERICKSON,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0624,MARCELLUS JEAN PAUL,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0625,MYRLANDE PIERRE,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0626,JEAN NOEL PIERRE DENISE,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0627,CARLINE JEAN-BAPTISTE,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0628,ROCHEL DORCINE,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0629,TCHAKO SA,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),RIZ,yes
+CF0630,GUILLAUME BENOIT,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0631,VERDELUS CALOT,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0632,MOMPREMIER DALUCSON,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0633,YOLETTE LOZIN,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0634,ANDREUS DJEFF,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0635,PETERSON MICHEL OBAS,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0636,FERNAND BASILE,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0637,JACQUES OCELEN,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0638,MARIE FANILIA LATOUR,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,EFFETS PERSONNELS,yes
+CF0639,MOURRA ET FILS,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,"VERMOUTH, VINS DE RAISINS FRAIS, VINS EN",yes
+CF0640,JEAN BONHEUR OCTAVE,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0641,FERLANDA DOCILMA,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,VOITURE D'OCCASION,yes
+CF0642,INDUSTRIAL DYNAMICS,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,CARBURES,yes
+CF0643,UNIBANK SA,,,,,COSCO,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,COSCO,DEMSA,TISSUS ET ETOFFES POUR INDUSTRIE TEXTILE,yes
+CF0644,ELOIM AUTO PARTS,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,ZIM,NADAL S.A.,PIECES D'AUTO,yes
+CF0645,JEABE FOOD SA,,,,,MSC,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,MSC,MSC Haiti S.A.,"PREPARATIONS POUR SOUPES, POTAGES OU BOU",yes
+CF0646,FARMATRIX SA,,,,,King Ocean,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,King Ocean,DEMSA,ETAGERES DE TOUT GENRE ET ACCESSOIRES,yes
+CF0647,CHERENFANT FRANCOIS,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0648,JOSEPH FRANTZ,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0649,JEAN DILAVOIS SAINT FLEUR,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0650,PIERRE CLAUDIN,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0651,OBRY LOUIS,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0652,JEAN RICARDO,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0653,RENETTE MOLTIMER TOUSSAINT,,,,,Accordia Shipping,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Accordia Shipping,Accordia Shipping (confirm),EFFETS PERSONNELS,yes
+CF0654,TALABERT EUGENE,,,,,Private/Charter (MAS),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (MAS),,CAMION D'OCCASION,yes
+CF0655,LIVERT SERGOT,,,,,Private/Charter (TCA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (TCA),,VOITURE D'OCCASION,yes
+CF0656,TROIS CARAVELLES AGENCE,,,,,Private/Charter (TCA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (TCA),,MARCHANDISE GENERALE,yes
+CF0657,LINDA MENTOR LEGROS,,,,,Hapag-Lloyd,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Hapag-Lloyd,ENMARCOLDA S.A.,MARCHANDISE GENERALE,yes
+CF0658,DEPOT LE BON BERGER,,,,,Maersk Line,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Maersk Line,AGEMAR S.A.,JUS DE FRUITS ET DE LEGUMES,yes
+CF0659,MERCIANA ISRAEL,,,,,Seaboard Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Seaboard Marine,Seaboard d'Haiti S.A.,EFFETS PERSONNELS,yes
+CF0660,EVYOO SA,,,,,ZIM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,ZIM,NADAL S.A.,MARCHANDISE GENERALE,yes
+CF0661,ASNEL DOSSOUS,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,VOITURE D'OCCASION,yes
+CF0662,LEONCE AUGUSTIN,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,VOITURE D'OCCASION,yes
+CF0663,LOCHARD JEAN RENE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,CAMION D'OCCASION,yes
+CF0664,GERMAIN JOSEPH,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,VOITURE D'OCCASION,yes
+CF0665,HOSMERE ROBERTO,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,MOTEURS ET MACHINES GENERATRICES DE COUR,yes
+CF0666,ADECLAT BERMAN,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,VOITURE D'OCCASION,yes
+CF0667,DJENNY HERMANDA CANCIA,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,VOITURE D'OCCASION,yes
+CF0668,FRANTZCY MATHURIN,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,VOITURE PICK-UP D'OCCASION,yes
+CF0669,WILFRID TILUS,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,VOITURE D'OCCASION,yes
+CF0670,CLAUDINETA SANDRIA THERMITUS,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0671,FELISMA DORVILUS,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0672,CONSTANT EMMANUEL,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0673,BOX KEN BERRY,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0674,FRANCINE FELIX,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0675,FRANCOIS GARDY,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0676,JACQUES JOANEL,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0677,REGINALD ABRAHAM,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0678,RALPH RAPHAEL,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0679,DUCLAIR CHRISTANIE DOLCINE,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,CAMION D'OCCASION,yes
+CF0680,DUCKENE DEVALON,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0681,IZAMA MAREUS,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0682,PIERRE JIRADEN,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0683,OSTIN CHERLANDA,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,EFFETS PERSONNELS,yes
+CF0684,YRMA DALCY,,,,,Private/Charter (APA),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (APA),,VOITURE PICK-UP D'OCCASION,yes
+CF0685,HAITI INTERNATIONAL FORWARDING SA,,,,,CMA CGM,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,CMA CGM,Ets J.B. Vital S.A.,ARTICLE DE FRIPERIE,yes
+CF0686,INNOVATIONS SA,,,,,Antillean Marine,,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Antillean Marine,Antillean d'Haiti S.A.,MARCHANDISE GENERALE,yes
+CF0687,BUREAU D’INGENIERIE ET D’EXPERTISE NATIONALE,,,,,Private/Charter (MAS),,,CargoFax Atlas HT,https://ht.cargofax.co/,2026-07,2,Private/Charter (MAS),,VOITURE D'OCCASION,yes
