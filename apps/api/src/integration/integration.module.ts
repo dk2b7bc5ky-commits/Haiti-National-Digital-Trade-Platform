@@ -11,6 +11,9 @@ import { PAYMENT_RAIL } from './payment-rail';
 import { MockPaymentRail } from './mock-payment-rail.adapter';
 import { ASYCUDA_ADAPTER } from './asycuda-adapter';
 import { MockAsycudaAdapter } from './mock-asycuda.adapter';
+import { MAILBOX_PROVIDER } from './mailbox-provider';
+import { ImapMailboxProvider } from './imap-mailbox.provider';
+import { MockMailboxProvider } from './mock-mailbox.provider';
 
 /**
  * Integration layer (spec §5). Every external system is bound to a DI token so
@@ -33,9 +36,19 @@ import { MockAsycudaAdapter } from './mock-asycuda.adapter';
           ? new ClaudeExtractionProvider()
           : new MockExtractionProvider(config),
     },
+    // Real IMAP reader once a mailbox app password is present in the host's
+    // secret store; otherwise a deterministic mock inbox, so the intake screen
+    // and pipeline are demoable without credentials.
+    {
+      provide: MAILBOX_PROVIDER,
+      useFactory: () =>
+        process.env[process.env.MAIL_INTAKE_SECRET_VAR ?? 'MAIL_INTAKE_PASSWORD']
+          ? new ImapMailboxProvider()
+          : new MockMailboxProvider(),
+    },
     { provide: PAYMENT_RAIL, useClass: MockPaymentRail },
     { provide: ASYCUDA_ADAPTER, useClass: MockAsycudaAdapter },
   ],
-  exports: [TERMINAL_ADAPTER, NOTIFICATION_ADAPTER, EXTRACTION_PROVIDER, PAYMENT_RAIL, ASYCUDA_ADAPTER],
+  exports: [TERMINAL_ADAPTER, NOTIFICATION_ADAPTER, EXTRACTION_PROVIDER, MAILBOX_PROVIDER, PAYMENT_RAIL, ASYCUDA_ADAPTER],
 })
 export class IntegrationModule {}

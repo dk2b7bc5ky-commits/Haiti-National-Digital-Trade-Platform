@@ -254,5 +254,72 @@ displayed category is approximate. A follow-up should add dedicated charge types
 match the specific named payees (AGEMAR, DEMSA, CPS, DECSA) instead of the
 category payee.
 
-**Still to build:** Phase A2 (email intake from `traffic@alizeimports.com`),
-A3 (a review/confirm surface), A4 (tuning + more autonomy).
+**Phase A2 — email intake — BUILT** (`apps/api/src/mail-intake/`).
+
+- **`MailboxProvider`** seam (`src/integration/mailbox-provider.ts`) with a real
+  **IMAP** implementation for Gmail / Google Workspace and a deterministic mock.
+  The mailbox is opened **read-only**, so the agent can never flag, move, delete,
+  or send in what is a live human inbox. "Already read" is tracked by a UID
+  watermark in Rezo's own database instead.
+- **Credentials never touch Rezo.** The database stores only the *name* of the
+  environment variable holding the mailbox App Password (`secretEnvVar`), and the
+  API has no field that accepts a password. Rotating it is an env change.
+- **A rule-based classifier** (`src/mail-intake/classifier.ts`) decides what is
+  an arrival notice / port-agency bill before any model is called — free,
+  instant, auditable, and deliberately conservative (a missed notice costs one
+  manual entry; a false accept writes a wrong bill). Newsletters, HR mail, and
+  casual mentions of containers are skipped, each with a recorded reason.
+- **Same pipeline as the upload button.** `DocumentsService.ingestExtraction()`
+  was factored out of `upload()` and is now shared, so a notice that arrives by
+  mail is handled exactly like one a human uploads — same confidence threshold,
+  same verification queue, same deadline recomputation. Documents are stored with
+  `source: EMAIL`.
+- **Container matching** goes: extracted container number → a number found in the
+  subject/body → the B/L number. If nothing matches, the container is created via
+  the same `quickAdd` path a human uses, so email-created containers are
+  indistinguishable from hand-entered ones.
+- **Dedupe** is `(connection, Message-ID)`, so re-running a check can never
+  double-bill. Only previously-FAILED messages are retried.
+- **Scheduling** is a 10-minute cron, off unless `MAIL_INTAKE_ENABLED=true`, with
+  a per-run message cap and a first-sync age bound so connecting a years-old
+  inbox doesn't ingest all of it. Overlapping runs are guarded.
+
+**Phase A3 — review surface — BUILT** (`apps/web/app/dashboard/agent/page.tsx`).
+
+A trilingual "Email agent" screen: connect/edit the mailbox, test the connection,
+"Check now", and a **Waiting for you** queue showing each email, why the agent
+acted or skipped it, exactly what it read (container, B/L, every charge with its
+confidence), and **Confirm** / **Reject**. Confirm makes the held charges payable;
+Reject removes precisely the rows that email created (never anything paid or
+under a payment request) and keeps the container. Below the queue, an audit list
+of everything the agent has ever seen.
+
+**Autonomy (decision §6.2 — RESOLVED).** Three levels, set in the UI:
+
+| Level | Container | Money amounts |
+|---|---|---|
+| `REVIEW_ALL` | waits for you | waits for you |
+| `AUTO_CONTAINER` *(default)* | filed automatically | **held for your Confirm** |
+| `AUTO_ALL` | filed automatically | live (subject to the confidence threshold) |
+
+The default is the middle one: you stop typing containers, but no amount becomes
+payable until a human agrees. **At every level the agent never pays.**
+
+**Prompt-injection posture.** Email bodies and attachments are untrusted input
+authored by third parties. They are only ever parsed for fields, via a fixed
+system prompt and a forced tool schema; a "notice" instructing the reader to mark
+things paid simply fails to parse as a charge. The agent has no payment
+capability to abuse, and it acts through a principal carrying the real permission
+set of an importer user — never more.
+
+**Verified** by `apps/api/test/mail-intake.e2e-spec.ts` (10 tests): the classifier
+accepts notices and rejects newsletters/HR/chatter; the pipeline reads a notice,
+ignores noise, creates the container, holds the money; a second run re-reads
+nothing and cannot double-bill; Confirm makes charges payable but never paid;
+Reject removes exactly what was created; a trucker gets 403; and no endpoint ever
+returns a credential.
+
+**Still to build:** Phase A4 (tuning thresholds and sender rules against real
+volume, then graduating autonomy), OAuth2 as an alternative to the App Password,
+OCR for scanned-image notices, and the `mateo@` purchase-confirmation inbox
+(matching a purchase to its incoming container).

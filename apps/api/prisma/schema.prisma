@@ -296,6 +296,7 @@ model Organization {
   payees             Payee[]          @relation("OrgPayees")
   chargesAsPayee     Charge[]         @relation("ChargePayee")
   subscriptions      Subscription[]   @relation("OrgSubscriptions")
+  mailboxes          MailboxConnection[] @relation("OrgMailboxes")
 
   @@map("organizations")
 }
@@ -823,4 +824,112 @@ model AuditLog {
   @@index([entity, entityId])
   @@index([actorOrgId])
   @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Email intake — the Alize agent (docs/ALIZE_AGENT_SCOPE.md phases A2/A3).
+//
+// SECURITY RULE: the mailbox password/token is NEVER stored in this database.
+// `secretEnvVar` holds only the NAME of the environment variable that carries
+// the app password (kept in the host's secret store). Rotating the credential
+// is an env change; the DB never sees it.
+// ---------------------------------------------------------------------------
+
+/// How much the agent may commit without a human tapping Confirm.
+/// The agent NEVER pays, at any level (spec §9 / non-negotiable #1).
+enum MailAutonomy {
+  /// Nothing goes live: container + charges all wait for review.
+  REVIEW_ALL
+  /// Create/attach the container automatically; hold money amounts for review.
+  AUTO_CONTAINER
+  /// Write charges live too (still never pays).
+  AUTO_ALL
+}
+
+/// Lifecycle of one ingested email.
+enum MailIntakeStatus {
+  /// Fetched, not yet read by the extractor.
+  PENDING
+  /// Classified as not an arrival notice / bill — left untouched.
+  IGNORED
+  /// Read and written; nothing needed a human.
+  PROCESSED
+  /// Read; waiting on a human to confirm (per autonomy or low confidence).
+  NEEDS_REVIEW
+  /// A human confirmed it; held charges went live.
+  CONFIRMED
+  /// A human rejected it; anything it created was removed.
+  REJECTED
+  /// Fetch/extraction error. Retried on the next run.
+  FAILED
+}
+
+/// A connected mailbox the agent watches (read-only).
+model MailboxConnection {
+  id       String  @id @default(uuid())
+  orgId    String  @map("org_id")
+  /// The address being watched, e.g. traffic@example.com.
+  address  String
+  host     String  @default("imap.gmail.com")
+  port     Int     @default(993)
+  useTls   Boolean @default(true) @map("use_tls")
+  /// IMAP login; usually the same as `address`.
+  username String
+  /// NAME of the env var holding the app password — never the password itself.
+  secretEnvVar String @default("MAIL_INTAKE_PASSWORD") @map("secret_env_var")
+  folder   String  @default("INBOX")
+  autonomy MailAutonomy @default(AUTO_CONTAINER)
+  active   Boolean @default(false)
+
+  /// Watermark: highest IMAP UID already seen, so a message is read once.
+  lastUid       Int?      @map("last_uid")
+  lastCheckedAt DateTime? @map("last_checked_at")
+  lastError     String?   @map("last_error")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  org      Organization        @relation("OrgMailboxes", fields: [orgId], references: [id])
+  messages MailIntakeMessage[]
+
+  @@unique([orgId, address])
+  @@index([orgId])
+  @@map("mailbox_connections")
+}
+
+/// One email the agent has seen. Doubles as the dedupe ledger (unique
+/// Message-ID per connection) and the audit/review surface.
+model MailIntakeMessage {
+  id           String @id @default(uuid())
+  connectionId String @map("connection_id")
+  orgId        String @map("org_id")
+  /// RFC-5322 Message-ID — the dedupe key.
+  messageId    String @map("message_id")
+  uid          Int?
+  fromAddress  String @map("from_address")
+  subject      String
+  receivedAt   DateTime @map("received_at")
+
+  status               MailIntakeStatus @default(PENDING)
+  /// Why the classifier accepted or skipped it (shown in the review UI).
+  classification       String?
+  attachmentCount      Int              @default(0) @map("attachment_count")
+  /// What the reader pulled out, for display + correction. Data only.
+  extracted            Json?
+  confidence           Float?
+  containerId          String?          @map("container_id")
+  /// Ids of rows this message created, so Reject can undo exactly them.
+  documentIds          String[]         @map("document_ids")
+  chargeIds            String[]         @map("charge_ids")
+  error                String?
+  processedAt          DateTime?        @map("processed_at")
+  reviewedByUserId     String?          @map("reviewed_by_user_id")
+  reviewedAt           DateTime?        @map("reviewed_at")
+  createdAt            DateTime         @default(now()) @map("created_at")
+
+  connection MailboxConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, messageId])
+  @@index([orgId, status])
+  @@index([containerId])
+  @@map("mail_intake_messages")
 }

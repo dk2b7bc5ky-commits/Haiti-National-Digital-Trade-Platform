@@ -11,7 +11,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { AuthPrincipal } from '../auth/auth-principal';
 import { resolveContainerScope } from '../data-hub/scoping';
 import { apiToChargeType } from '../charges/mappers';
-import { EXTRACTION_PROVIDER, ExtractionProvider } from '../integration/extraction-provider';
+import { EXTRACTION_PROVIDER, ExtractionProvider, ExtractionResult } from '../integration/extraction-provider';
 import { toDocumentSummary } from './mappers';
 import { UploadDocumentDto } from './dto';
 import type { DocumentIngestResult, DocumentSummary } from '@rezo/shared-types';
@@ -90,64 +90,10 @@ export class DocumentsService {
       });
     }
 
-    const threshold = await this.config.confidenceThreshold();
-    let created = 0;
-    let pendingReview = 0;
-    let tasks = 0;
-
-    if (container) {
-      for (const line of extraction.charges) {
-        const type = apiToChargeType(line.type);
-        if (!type) continue;
-        const payeeOrgId = await this.resolvePayeeOrgId(type, container.terminalOrgId);
-        const belowThreshold = line.confidence < threshold;
-        const status: ChargeStatus = belowThreshold ? 'PENDING_REVIEW' : 'PENDING';
-        const reviewState: ReviewState = belowThreshold ? 'PENDING' : 'NONE';
-
-        const charge = await this.prisma.charge.create({
-          data: {
-            containerId: container.id,
-            payeeOrgId,
-            type,
-            amount: line.amount,
-            currency: line.currency,
-            lastFreeDay: line.lastFreeDayIso ? new Date(line.lastFreeDayIso) : null,
-            dueDate: line.lastFreeDayIso ? new Date(line.lastFreeDayIso) : null,
-            status,
-            reviewState,
-            source: 'DOCUMENT',
-          },
-        });
-        created++;
-        if (belowThreshold) {
-          pendingReview++;
-          await this.prisma.verificationTask.create({
-            data: {
-              documentId: doc.id,
-              chargeId: charge.id,
-              containerId: container.id,
-              field: 'amount',
-              confidence: line.confidence,
-              beforeValue: { type: line.type, amount: line.amount, currency: line.currency },
-            },
-          });
-          tasks++;
-        }
-      }
-      await this.deadlines.recomputeForContainer(container.id);
-      if (tasks > 0) {
-        // Verification is an Ops task — notify the Rezo (orchestrator) org.
-        const rezo = await this.prisma.organization.findFirst({ where: { type: 'REZO' } });
-        if (rezo) {
-          await this.notifications.notify({
-            type: 'VERIFICATION_NEEDED', severity: 'SOON', orgId: rezo.id, containerId: container.id,
-            title: 'Verification needed',
-            body: `${tasks} low-confidence charge(s) on ${container.containerNumber} need review before they can be paid.`,
-            deepLink: '/dashboard/ops/verification',
-          });
-        }
-      }
-    }
+    const ingest = container
+      ? await this.ingestExtraction(doc.id, container, extraction)
+      : { created: 0, pendingReview: 0, tasks: 0, chargeIds: [] as string[] };
+    const { created, pendingReview, tasks } = ingest;
 
     const updated = await this.prisma.document.update({
       where: { id: doc.id },
@@ -176,6 +122,135 @@ export class DocumentsService {
       verification_tasks: tasks,
       matched_container_id: container?.id ?? null,
     };
+  }
+
+  /**
+   * The shared ingestion core (spec §1.3): turn an ExtractionResult into Charge
+   * rows on a container, sending anything below the confidence threshold to the
+   * Ops verification queue instead of live billing, then recompute deadlines.
+   *
+   * Used by BOTH the manual "Upload document" button and the email-intake agent,
+   * so a notice that arrives by mail is handled exactly like one a human
+   * uploads — same thresholds, same review queue, same deadlines.
+   *
+   * `holdAllForReview` forces every charge into PENDING_REVIEW regardless of
+   * confidence. The agent uses it for its lower autonomy levels, so money
+   * amounts never go live until a person confirms them.
+   */
+  async ingestExtraction(
+    documentId: string,
+    container: { id: string; containerNumber: string; terminalOrgId: string | null },
+    extraction: ExtractionResult,
+    opts: { holdAllForReview?: boolean } = {},
+  ): Promise<{ created: number; pendingReview: number; tasks: number; chargeIds: string[] }> {
+    const threshold = await this.config.confidenceThreshold();
+    let created = 0;
+    let pendingReview = 0;
+    let tasks = 0;
+    const chargeIds: string[] = [];
+
+    for (const line of extraction.charges) {
+      const type = apiToChargeType(line.type);
+      if (!type) continue;
+      const payeeOrgId = await this.resolvePayeeOrgId(type, container.terminalOrgId);
+      const belowThreshold = line.confidence < threshold;
+      const hold = belowThreshold || opts.holdAllForReview === true;
+      const status: ChargeStatus = hold ? 'PENDING_REVIEW' : 'PENDING';
+      const reviewState: ReviewState = hold ? 'PENDING' : 'NONE';
+
+      const charge = await this.prisma.charge.create({
+        data: {
+          containerId: container.id,
+          payeeOrgId,
+          type,
+          amount: line.amount,
+          currency: line.currency,
+          lastFreeDay: line.lastFreeDayIso ? new Date(line.lastFreeDayIso) : null,
+          dueDate: line.lastFreeDayIso ? new Date(line.lastFreeDayIso) : null,
+          status,
+          reviewState,
+          source: 'DOCUMENT',
+        },
+      });
+      created++;
+      chargeIds.push(charge.id);
+      if (hold) {
+        pendingReview++;
+        await this.prisma.verificationTask.create({
+          data: {
+            documentId,
+            chargeId: charge.id,
+            containerId: container.id,
+            field: 'amount',
+            confidence: line.confidence,
+            beforeValue: { type: line.type, amount: line.amount, currency: line.currency },
+          },
+        });
+        tasks++;
+      }
+    }
+
+    await this.deadlines.recomputeForContainer(container.id);
+    if (tasks > 0) {
+      // Verification is an Ops task — notify the Rezo (orchestrator) org.
+      const rezo = await this.prisma.organization.findFirst({ where: { type: 'REZO' } });
+      if (rezo) {
+        await this.notifications.notify({
+          type: 'VERIFICATION_NEEDED', severity: 'SOON', orgId: rezo.id, containerId: container.id,
+          title: 'Verification needed',
+          body: `${tasks} low-confidence charge(s) on ${container.containerNumber} need review before they can be paid.`,
+          deepLink: '/dashboard/ops/verification',
+        });
+      }
+    }
+    return { created, pendingReview, tasks, chargeIds };
+  }
+
+  /**
+   * Persist a document that arrived by email (source EMAIL) rather than via the
+   * upload button. Storage failures are non-fatal — extraction runs off the
+   * in-memory bytes, so intake still works before a bucket is configured.
+   */
+  async createEmailDocument(params: {
+    orgId: string;
+    containerId: string | null;
+    fileName: string;
+    contentType: string;
+    bytes: Buffer;
+    docTypeHint?: string;
+  }): Promise<{ id: string; fileRef: string }> {
+    const key = `documents/${params.orgId}/email/${randomUUID()}-${params.fileName}`;
+    await this.storage.put(key, params.bytes, params.contentType);
+    const doc = await this.prisma.document.create({
+      data: {
+        containerId: params.containerId,
+        uploadedByOrgId: params.orgId,
+        source: 'EMAIL',
+        docType: DOC_TYPE_MAP[(params.docTypeHint ?? 'other').toLowerCase()] ?? 'OTHER',
+        fileRef: key,
+        fileName: params.fileName,
+      },
+    });
+    return { id: doc.id, fileRef: key };
+  }
+
+  /** Finalize an email-sourced document once extraction + matching are done. */
+  async finalizeEmailDocument(
+    documentId: string,
+    containerId: string | null,
+    extraction: ExtractionResult,
+    tasks: number,
+  ): Promise<void> {
+    await this.prisma.document.update({
+      where: { id: documentId },
+      data: {
+        containerId,
+        language: extraction.language,
+        rawText: extraction.rawText,
+        extractionConfidence: extraction.overallConfidence,
+        verificationStatus: tasks > 0 ? 'NEEDS_REVIEW' : containerId ? 'EXTRACTED' : 'PROCESSING',
+      },
+    });
   }
 
   /**

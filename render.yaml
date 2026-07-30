@@ -51,6 +51,20 @@ services:
         generateValue: true # Render generates a strong random secret
       - key: JWT_EXPIRES_IN
         value: 1d
+      # --- Email agent (docs/CONNECT_EMAIL.md) -------------------------------
+      # Both of these are declared with sync:false so Render PROMPTS for them
+      # instead of storing anything in this file. Leave them blank and the app
+      # runs fine: the reader falls back to a mock and the agent to a demo inbox.
+      #   ANTHROPIC_API_KEY    — lets the agent actually read documents
+      #   MAIL_INTAKE_PASSWORD — the mailbox App Password (never stored in Rezo's DB)
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: MAIL_INTAKE_PASSWORD
+        sync: false
+      # Set to "true" to let the agent check the mailbox every 10 minutes.
+      # Off by default so a deploy never starts reading mail unannounced.
+      - key: MAIL_INTAKE_ENABLED
+        value: "false"
       # CORS is intentionally left unset here → the API reflects the caller's
       # origin, so the web app just works on first deploy. Tighten later by
       # setting CORS_ORIGINS to the web URL (see docs/DEPLOYMENT.md).

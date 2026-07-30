@@ -90,7 +90,84 @@ export type Permission =
   | 'release:authorize'
   | 'dashboard:view'
   | 'dashboard:gov'
-  | 'notification:read';
+  | 'notification:read'
+  | 'mail_intake:read'
+  | 'mail_intake:manage';
+
+/** How much the email-intake agent may commit without a human Confirm. */
+export type MailAutonomy = 'REVIEW_ALL' | 'AUTO_CONTAINER' | 'AUTO_ALL';
+
+export type MailIntakeStatus =
+  | 'PENDING'
+  | 'IGNORED'
+  | 'PROCESSED'
+  | 'NEEDS_REVIEW'
+  | 'CONFIRMED'
+  | 'REJECTED'
+  | 'FAILED';
+
+/** The watched mailbox as the API reports it — never includes a credential. */
+export interface MailboxConnectionInfo {
+  id: string;
+  address: string;
+  host: string;
+  port: number;
+  use_tls: boolean;
+  username: string;
+  folder: string;
+  /** Name of the env var holding the app password. */
+  secret_env_var: string;
+  /** Whether the host has that env var set — never its value. */
+  secret_present: boolean;
+  autonomy: MailAutonomy;
+  active: boolean;
+  last_checked_at: string | null;
+  last_error: string | null;
+  scheduler_enabled: boolean;
+}
+
+export interface MailIntakeExtractedCharge {
+  type: string;
+  amount: number;
+  currency: string;
+  confidence: number;
+  last_free_day: string | null;
+}
+
+/** What the agent read out of one email, for the review screen. */
+export interface MailIntakeExtracted {
+  container_number: string | null;
+  bl_number: string | null;
+  doc_type: string | null;
+  language: string | null;
+  container_created: boolean;
+  charges_created: number;
+  charges: MailIntakeExtractedCharge[];
+}
+
+export interface MailIntakeMessageSummary {
+  id: string;
+  from_address: string;
+  subject: string;
+  received_at: string;
+  status: MailIntakeStatus;
+  classification: string | null;
+  attachment_count: number;
+  confidence: number | null;
+  container_id: string | null;
+  extracted: MailIntakeExtracted | null;
+  error: string | null;
+  reviewed_at: string | null;
+}
+
+export interface MailIntakeRunSummary {
+  checked: number;
+  ignored: number;
+  processed: number;
+  needsReview: number;
+  failed: number;
+  error?: string;
+}
 
 export interface OrgSummary {
   id: string;

@@ -16,5 +16,6 @@ import { DeadlinesModule } from '../deadlines/deadlines.module';
   imports: [BillingModule, DeadlinesModule],
   controllers: [DocumentsController, ContainerDocumentsController, VerificationController],
   providers: [DocumentsService, VerificationService],
+  exports: [DocumentsService],
 })
 export class DocumentsModule {}
