@@ -169,6 +169,23 @@ screen at all.
 **The agent never pays anything.** Confirming only makes a charge payable — you
 still choose when and what to pay.
 
+## Nothing on the platform is demo data
+
+Every deploy enforces three rules, so placeholder data cannot accumulate:
+
+- **A charge survives only if a document said so, or a person typed it.** Anything
+  the platform generated itself — the stand-in terminal system, the stand-in
+  customs system, bulk reference data — is removed if unpaid. Stated as a rule, so
+  any future stand-in is covered automatically.
+- **Old empty containers are removed.** A container more than 60 days past arrival
+  with nothing owed and nothing paid is a husk left by reading historical mail. A
+  container that still has a real charge is always kept, however old. Tune with
+  `PURGE_CONTAINERS_OLDER_THAN_DAYS`.
+- **Organizations carry their real names.** No "(Demo)" labels: your workspace is
+  `Alize Imports S.A.` (set `IMPORTER_ORG_NAME` to change it), and money routes to
+  the real AGD, APN and CPS. Where a placeholder duplicated a real party, the two
+  are merged into one.
+
 ## Where the charges on a container come from
 
 **Only from documents the agent read.** Nothing is estimated, assumed, or pulled
@@ -273,4 +290,6 @@ Set these on the rezo-api service only if you need to change the defaults.
 | `MAIL_INTAKE_FIRST_SYNC_DAYS` | `14` | on first connect, how far back to look |
 | `MAIL_INTAKE_BACKFILL_BATCH` | `8` | emails per "catch up" batch (it repeats automatically) |
 | `MAIL_INTAKE_MAX_SHIPMENT_AGE_DAYS` | `45` | notices about older shipments are filed as history, not new containers |
+| `PURGE_CONTAINERS_OLDER_THAN_DAYS` | `60` | old containers with nothing owed are removed on deploy |
+| `IMPORTER_ORG_NAME` | `Alize Imports S.A.` | the name your workspace shows |
 | `ANTHROPIC_MODEL` | `claude-opus-5` | the reader's model |

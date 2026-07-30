@@ -129,7 +129,9 @@ export class ContainersService {
     const rows = await this.prisma.container.findMany({
       where,
       include: containerInclude,
-      orderBy: { createdAt: 'desc' },
+      // Newest ARRIVALS first: what is at the port now matters more than what
+      // happened to be entered most recently.
+      orderBy: [{ arrivalDate: 'desc' }, { createdAt: 'desc' }],
       ...cursorArgs(limit, cursor),
     });
     const { items, nextCursor } = splitPage(rows, limit);

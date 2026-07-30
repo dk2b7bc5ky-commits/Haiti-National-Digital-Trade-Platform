@@ -150,6 +150,10 @@ export default function ContainersPage() {
   const [status, setStatus] = useState('');
   const [pay, setPay] = useState('');
   const [atRiskOnly, setAtRiskOnly] = useState(false);
+  // Default to recent arrivals so the list reflects what is moving now. Older
+  // containers are never hidden silently — the count is shown with a way to
+  // include them.
+  const [withinDays, setWithinDays] = useState(30);
 
   const loadContainers = useCallback(() => {
     if (!token) return;
@@ -178,6 +182,11 @@ export default function ContainersPage() {
       // Search covers the cargo as well, so "rice" or "auto parts" finds the box.
       const haystack = `${c.container_number} ${c.bl_number} ${c.voyage.vessel.name} ${c.goods ?? ''}`;
       if (needle && !haystack.toLowerCase().includes(needle)) return false;
+      if (withinDays > 0) {
+        const arrived = c.arrival_date ? new Date(c.arrival_date).getTime() : null;
+        // Keep containers with no arrival date — hiding them would lose them.
+        if (arrived !== null && Date.now() - arrived > withinDays * 86_400_000) return false;
+      }
       if (status && c.status !== status) return false;
       if (pay && c.payment_status !== pay) return false;
       if (atRiskOnly) {
@@ -186,10 +195,11 @@ export default function ContainersPage() {
       }
       return true;
     });
-  }, [rows, q, status, pay, atRiskOnly]);
+  }, [rows, q, status, pay, atRiskOnly, withinDays]);
 
-  const anyFilter = q || status || pay || atRiskOnly;
-  const clear = () => { setQ(''); setStatus(''); setPay(''); setAtRiskOnly(false); };
+  const anyFilter = q || status || pay || atRiskOnly || withinDays > 0;
+  const clear = () => { setQ(''); setStatus(''); setPay(''); setAtRiskOnly(false); setWithinDays(0); };
+  const hiddenByDate = (rows?.length ?? 0) - filtered.length;
 
   if (!ready || !auth) return <Loading />;
 
@@ -240,8 +250,30 @@ export default function ContainersPage() {
         <label className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm ${atRiskOnly ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-slate-300 text-slate-600'}`}>
           <input type="checkbox" checked={atRiskOnly} onChange={(e) => setAtRiskOnly(e.target.checked)} /> {t('containers.atRiskOnly')}
         </label>
+        <select
+          value={withinDays}
+          onChange={(e) => setWithinDays(Number(e.target.value))}
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600"
+        >
+          <option value={14}>{t('containers.within14')}</option>
+          <option value={30}>{t('containers.within30')}</option>
+          <option value={90}>{t('containers.within90')}</option>
+          <option value={0}>{t('containers.withinAll')}</option>
+        </select>
         {anyFilter && <button onClick={clear} className="text-sm text-sky-700 hover:underline">{t('common.clear')}</button>}
-        {rows && <span className="ml-auto text-xs text-slate-400">{t('common.ofCount', { a: filtered.length, b: rows.length })}</span>}
+        {rows && (
+          <span className="ml-auto text-xs text-slate-400">
+            {t('common.ofCount', { a: filtered.length, b: rows.length })}
+            {withinDays > 0 && hiddenByDate > 0 && (
+              <>
+                {' · '}
+                <button onClick={() => setWithinDays(0)} className="text-sky-700 hover:underline">
+                  {t('containers.showOlder', { n: String(hiddenByDate) })}
+                </button>
+              </>
+            )}
+          </span>
+        )}
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-soft">

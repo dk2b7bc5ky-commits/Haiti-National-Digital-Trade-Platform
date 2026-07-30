@@ -92,45 +92,56 @@ interface SeedOrg {
   users: { name: string; email: string; role: Role }[];
 }
 
+/**
+ * The importer this workspace belongs to. These are the real institutions, not
+ * placeholders: the customs, port and terminal organizations below are the actual
+ * parties money is routed to, so the payee registry points at them. Nothing here
+ * is labelled "Demo", because it all appears in the live UI.
+ *
+ * IMPORTER_ORG_NAME lets another importer deploy the same platform under their
+ * own name without touching code.
+ */
+const IMPORTER_ORG_NAME = process.env.IMPORTER_ORG_NAME ?? 'Alize Imports S.A.';
+
 const SEED: SeedOrg[] = [
   {
-    type: 'SHIPPING_LINE',
-    legalName: 'CMA CGM Haiti (Demo)',
-    users: [{ name: 'Line Agent', email: 'line@rezo.test', role: 'SHIPPING_LINE' }],
-  },
-  {
     type: 'IMPORTER',
-    legalName: 'Import Ayiti S.A. (Demo)',
+    legalName: IMPORTER_ORG_NAME,
     users: [{ name: 'Import Manager', email: 'importer@rezo.test', role: 'IMPORTER' }],
   },
   {
+    type: 'CUSTOMS',
+    legalName: 'Administration Générale des Douanes (AGD)',
+    users: [{ name: 'Customs Officer', email: 'customs@rezo.test', role: 'CUSTOMS' }],
+  },
+  {
+    type: 'TERMINAL',
+    legalName: 'Caribbean Port Services (CPS), Port-au-Prince',
+    users: [{ name: 'Terminal Operator', email: 'terminal@rezo.test', role: 'TERMINAL' }],
+  },
+  {
+    type: 'SHIPPING_LINE',
+    legalName: 'CMA CGM Haiti S.A.',
+    users: [{ name: 'Line Agent', email: 'line@rezo.test', role: 'SHIPPING_LINE' }],
+  },
+  {
     type: 'BROKER',
-    legalName: 'Cap Customs Brokers (Demo)',
+    legalName: 'Customs broker',
     users: [{ name: 'Broker Lead', email: 'broker@rezo.test', role: 'BROKER' }],
   },
   {
     type: 'TRUCKER',
-    legalName: 'Transpò Rapid (Demo)',
+    legalName: 'Trucking partner',
     users: [{ name: 'Fleet Dispatcher', email: 'trucker@rezo.test', role: 'TRUCKER' }],
   },
   {
-    type: 'TERMINAL',
-    legalName: 'CPS Terminal Port-au-Prince (Demo)',
-    users: [{ name: 'Terminal Operator', email: 'terminal@rezo.test', role: 'TERMINAL' }],
-  },
-  {
-    type: 'CUSTOMS',
-    legalName: 'AGD — Administration Générale des Douanes (Demo)',
-    users: [{ name: 'Customs Officer', email: 'customs@rezo.test', role: 'CUSTOMS' }],
-  },
-  {
     type: 'BANK',
-    legalName: 'Unibank (Demo)',
+    legalName: 'Unibank S.A.',
     users: [{ name: 'Bank Liaison', email: 'bank@rezo.test', role: 'BANK' }],
   },
   {
     type: 'GOV',
-    legalName: 'Ministère des Finances (Demo)',
+    legalName: 'Ministère de l\'Économie et des Finances',
     users: [{ name: 'Gov Viewer', email: 'gov@rezo.test', role: 'GOV_VIEWER' }],
   },
   {
@@ -143,8 +154,103 @@ const SEED: SeedOrg[] = [
   },
 ];
 
+/**
+ * Old placeholder names → what they are actually called. Applied before the
+ * seed loop so an existing workspace is renamed in place rather than gaining a
+ * duplicate organization (users, containers and payees all keep pointing at the
+ * same row).
+ */
+const ORG_RENAMES: [from: string, to: string][] = [
+  ['Import Ayiti S.A. (Demo)', IMPORTER_ORG_NAME],
+  ['AGD — Administration Générale des Douanes (Demo)', 'Administration Générale des Douanes (AGD)'],
+  ['CPS Terminal Port-au-Prince (Demo)', 'Caribbean Port Services (CPS), Port-au-Prince'],
+  ['CMA CGM Haiti (Demo)', 'CMA CGM Haiti S.A.'],
+  ['Cap Customs Brokers (Demo)', 'Customs broker'],
+  ['Transpò Rapid (Demo)', 'Trucking partner'],
+  ['Unibank (Demo)', 'Unibank S.A.'],
+  ['Ministère des Finances (Demo)', 'Ministère de l\'Économie et des Finances'],
+  ['Autorité Portuaire Nationale (APN) (Demo)', 'Autorité Portuaire Nationale (APN)'],
+  ['Import Nord Distribution S.A. (Demo)', 'Import Nord Distribution S.A.'],
+];
+
+/**
+ * Ensures no organization is labelled "(Demo)" — they all appear in the live UI.
+ *
+ * Known placeholders get their proper name from ORG_RENAMES; anything else simply
+ * has the " (Demo)" suffix stripped, so a name added later is covered without
+ * touching this function. Where the proper name is already taken by another row
+ * (the agency registry creates the real ones), the two are MERGED rather than
+ * left as a confusing pair.
+ */
+async function renamePlaceholderOrgs(): Promise<void> {
+  let renamed = 0;
+  let merged = 0;
+
+  const targets = new Map(ORG_RENAMES);
+  const stragglers = await prisma.organization.findMany({
+    where: { legalName: { contains: '(Demo)' } },
+    select: { legalName: true },
+  });
+  // Rule, not list: strip the suffix from anything the map doesn't cover.
+  for (const o of stragglers) {
+    if (!targets.has(o.legalName)) targets.set(o.legalName, o.legalName.replace(/\s*\(Demo\)\s*/g, '').trim());
+  }
+
+  for (const [from, to] of targets) {
+    const existing = await prisma.organization.findFirst({ where: { legalName: from } });
+    if (!existing) continue;
+    const canonical = await prisma.organization.findFirst({ where: { legalName: to, id: { not: existing.id } } });
+
+    if (!canonical) {
+      await prisma.organization.update({ where: { id: existing.id }, data: { legalName: to } });
+      renamed++;
+      continue;
+    }
+
+    // The real organization already exists. Move everything the placeholder owns
+    // onto it, then drop the placeholder, so one party is one row.
+    const from_ = existing.id;
+    const to_ = canonical.id;
+    await prisma.user.updateMany({ where: { orgId: from_ }, data: { orgId: to_ } });
+    await prisma.vessel.updateMany({ where: { lineOrgId: from_ }, data: { lineOrgId: to_ } });
+    await prisma.manifest.updateMany({ where: { submittedByOrgId: from_ }, data: { submittedByOrgId: to_ } });
+    await prisma.billOfLading.updateMany({ where: { importerOrgId: from_ }, data: { importerOrgId: to_ } });
+    await prisma.container.updateMany({ where: { importerOrgId: from_ }, data: { importerOrgId: to_ } });
+    await prisma.container.updateMany({ where: { terminalOrgId: from_ }, data: { terminalOrgId: to_ } });
+    await prisma.charge.updateMany({ where: { payeeOrgId: from_ }, data: { payeeOrgId: to_ } });
+    await prisma.mailboxConnection.updateMany({ where: { orgId: from_ }, data: { orgId: to_ } });
+    // Payees are unique per (org, type), so only move ones the target lacks.
+    for (const payee of await prisma.payee.findMany({ where: { orgId: from_ } })) {
+      const held = await prisma.payee.findFirst({ where: { orgId: to_, type: payee.type } });
+      if (held) await prisma.payee.delete({ where: { id: payee.id } });
+      else await prisma.payee.update({ where: { id: payee.id }, data: { orgId: to_ } });
+    }
+    await prisma.subscription.deleteMany({ where: { orgId: from_ } });
+    await prisma.brokerClient.deleteMany({ where: { OR: [{ brokerOrgId: from_ }, { importerOrgId: from_ }] } });
+    try {
+      await prisma.organization.delete({ where: { id: from_ } });
+      merged++;
+    } catch {
+      // Something still references it; at least drop the "(Demo)" label.
+      await prisma.organization.update({ where: { id: from_ }, data: { legalName: `${to} (2)` } });
+      renamed++;
+    }
+  }
+
+  const left = await prisma.organization.count({ where: { legalName: { contains: '(Demo)' } } });
+  console.log(
+    renamed + merged > 0
+      ? `• Organization names cleaned: ${renamed} renamed, ${merged} merged into the real party. ${left} still labelled "(Demo)".`
+      : '• Organization names already real.',
+  );
+}
+
 async function main(): Promise<void> {
   const passwordHash = await bcrypt.hash(DEV_PASSWORD, 10);
+
+  // Rename before seeding, so an existing workspace is updated in place instead
+  // of gaining a second organization alongside the old "(Demo)" one.
+  await renamePlaceholderOrgs();
 
   for (const s of SEED) {
     // One org per type. Match on (type, legalName) so re-runs don't duplicate.
@@ -223,7 +329,8 @@ async function main(): Promise<void> {
   // is removed on EVERY deploy, whatever the flags say. Those containers are
   // fictional and must never sit alongside real ones.
   await removeAgentPracticeData();
-  await removeFabricatedTerminalCharges();
+  await removePlatformGeneratedCharges();
+  await removeStaleEmptyContainers();
 
   const orgCount = await prisma.organization.count();
   const userCount = await prisma.user.count();
@@ -306,45 +413,104 @@ async function removeAgentPracticeData(): Promise<void> {
 }
 
 /**
- * Removes unpaid terminal-sourced (OCTOPI) charges.
+ * ONE RULE FOR WHAT MAY BE OWED: a charge survives only if it came from a
+ * document the agent actually read (`DOCUMENT`) or a human entered it by hand
+ * (`MANUAL`).
  *
- * No real terminal system is connected, so every charge with that source was
- * invented from the tariff by the stand-in adapter — plausible-looking terminal
- * handling / port dues / scanning amounts that nobody is actually owed, sitting
- * on top of the real figures read from documents. That is what made a container's
- * "everything you owe" list look duplicated.
+ * Everything else was generated by the platform rather than by a bill —
+ * OCTOPI (the stand-in terminal system), ASYCUDA (the stand-in customs system),
+ * MANIFEST (bulk-loaded reference data). Those amounts are plausible-looking but
+ * nobody is owed them, and mixed in with real figures they make a container's
+ * "everything you owe" meaningless.
  *
- * Only ever touches unpaid charges that no payment request covers, and is a
- * no-op once clean. The sync endpoint that created them now refuses to run
- * unless TERMINAL_SYNC_ENABLED=true, so they cannot come back by accident.
+ * Runs on every deploy, only ever touches unpaid charges that no payment request
+ * covers, and is a no-op once clean. Stating it as a rule rather than a list is
+ * deliberate: any future stand-in adapter is covered automatically.
  */
-async function removeFabricatedTerminalCharges(): Promise<void> {
+async function removePlatformGeneratedCharges(): Promise<void> {
   const rows = await prisma.charge.findMany({
     where: {
-      source: 'OCTOPI',
+      source: { notIn: ['DOCUMENT', 'MANUAL'] },
       status: { in: ['PENDING', 'PENDING_REVIEW', 'OVERDUE', 'REQUESTED'] },
       paymentRequestId: null,
     },
-    select: { id: true, containerId: true },
+    select: { id: true, containerId: true, source: true },
   });
   if (rows.length === 0) {
-    console.log('• No fabricated terminal charges present.');
+    console.log('• No platform-generated charges present (only document/manual charges remain).');
     return;
   }
   const ids = rows.map((r) => r.id);
   await prisma.verificationTask.deleteMany({ where: { chargeId: { in: ids } } });
   await prisma.charge.deleteMany({ where: { id: { in: ids } } });
 
-  // Deadlines are derived from charges, so drop any that no longer have one.
-  const containerIds = Array.from(new Set(rows.map((r) => r.containerId)));
-  for (const containerId of containerIds) {
-    const remaining = await prisma.charge.count({ where: { containerId, lastFreeDay: { not: null } } });
-    if (remaining === 0) {
+  // Deadlines are derived from charges; drop any container's if none remain.
+  for (const containerId of Array.from(new Set(rows.map((r) => r.containerId)))) {
+    if ((await prisma.charge.count({ where: { containerId, lastFreeDay: { not: null } } })) === 0) {
       await prisma.deadlineAlert.deleteMany({ where: { containerId } });
       await prisma.deadline.deleteMany({ where: { containerId } });
     }
   }
-  console.log(`• Removed ${ids.length} fabricated terminal charge(s) across ${containerIds.length} container(s).`);
+  const bySource = rows.reduce<Record<string, number>>((acc, r) => {
+    acc[r.source] = (acc[r.source] ?? 0) + 1;
+    return acc;
+  }, {});
+  console.log(
+    `• Removed ${ids.length} platform-generated charge(s): ` +
+    Object.entries(bySource).map(([k, v]) => `${k}=${v}`).join(', ') +
+    '. Only document-read and hand-entered charges remain.',
+  );
+}
+
+/**
+ * Removes containers that are both OLD and EMPTY — nothing owed on them, nothing
+ * paid, no payment ever requested.
+ *
+ * These are the husks left by reading historical mail: a notice from a previous
+ * year got filed as a container, and once its invented charges are gone there is
+ * nothing there. Keeping them buries this month's shipments under last year's.
+ *
+ * Deliberately conservative: a container is kept if it has ANY charge left (that
+ * means a real bill was read for it) or any payment record. Tune the window with
+ * PURGE_CONTAINERS_OLDER_THAN_DAYS.
+ */
+async function removeStaleEmptyContainers(): Promise<void> {
+  const days = Number(process.env.PURGE_CONTAINERS_OLDER_THAN_DAYS ?? '60');
+  const cutoff = new Date(Date.now() - days * 86_400_000);
+
+  const candidates = await prisma.container.findMany({
+    where: {
+      arrivalDate: { lt: cutoff },
+      charges: { none: {} },
+      paymentRequests: { none: {} },
+    },
+    select: { id: true, blId: true, containerNumber: true, arrivalDate: true },
+  });
+  if (candidates.length === 0) {
+    console.log(`• No stale empty containers (older than ${days} days with nothing owed).`);
+    return;
+  }
+
+  for (const c of candidates) {
+    await prisma.deadlineAlert.deleteMany({ where: { containerId: c.id } });
+    await prisma.deadline.deleteMany({ where: { containerId: c.id } });
+    await prisma.verificationTask.deleteMany({ where: { containerId: c.id } });
+    await prisma.notification.deleteMany({ where: { containerId: c.id } });
+    await prisma.document.deleteMany({ where: { containerId: c.id } });
+    await prisma.gateAppointment.deleteMany({ where: { containerId: c.id } });
+    await prisma.transportJob.deleteMany({ where: { containerId: c.id } });
+    await prisma.mailIntakeMessage.updateMany({ where: { containerId: c.id }, data: { containerId: null } });
+    await prisma.container.delete({ where: { id: c.id } });
+    if ((await prisma.container.count({ where: { blId: c.blId } })) === 0) {
+      await prisma.billOfLading.deleteMany({ where: { id: c.blId } });
+    }
+  }
+  // Name them so the removal is auditable rather than silent.
+  console.log(
+    `• Removed ${candidates.length} stale empty container(s) older than ${days} days: ` +
+    candidates.map((c) => c.containerNumber).slice(0, 20).join(', ') +
+    (candidates.length > 20 ? ', …' : ''),
+  );
 }
 
 /**
@@ -538,7 +704,7 @@ async function seedMarketAndPayees(): Promise<void> {
   });
 
   // Port authority (APN) as a GOV org, used as the port-dues payee.
-  const apnName = 'Autorité Portuaire Nationale (APN) (Demo)';
+  const apnName = 'Autorité Portuaire Nationale (APN)';
   const apn =
     (await prisma.organization.findFirst({ where: { legalName: apnName } })) ??
     (await prisma.organization.create({
@@ -546,9 +712,9 @@ async function seedMarketAndPayees(): Promise<void> {
     }));
 
   const payees: { orgId: string; name: string; type: 'CUSTOMS' | 'PORT' | 'TERMINAL' | 'REZO'; ref: string }[] = [
-    { orgId: customs.id, name: 'AGD — Customs duties & fees', type: 'CUSTOMS', ref: 'stlm_agd_ht' },
-    { orgId: apn.id, name: 'APN — Port dues & scanning', type: 'PORT', ref: 'stlm_apn_ht' },
-    { orgId: terminal.id, name: 'CPS — Terminal charges', type: 'TERMINAL', ref: 'stlm_cps_ht' },
+    { orgId: customs.id, name: 'AGD — customs duties & fees', type: 'CUSTOMS', ref: 'stlm_agd_ht' },
+    { orgId: apn.id, name: 'APN — port dues & scanning', type: 'PORT', ref: 'stlm_apn_ht' },
+    { orgId: terminal.id, name: 'CPS — terminal charges', type: 'TERMINAL', ref: 'stlm_cps_ht' },
     { orgId: rezo.id, name: 'Rezo — platform fee', type: 'REZO', ref: 'stlm_rezo_ht' },
   ];
   for (const p of payees) {
@@ -599,11 +765,11 @@ async function seedDemoDataset(): Promise<void> {
   // importer[0] alphabetically must stay "Import Ayiti" (the e2e suites act as
   // importer@rezo.test against directory[0]); name the second importer so it
   // sorts after it.
-  const importer1 = await prisma.organization.findFirstOrThrow({ where: { legalName: 'Import Ayiti S.A. (Demo)' } });
+  const importer1 = await prisma.organization.findFirstOrThrow({ where: { legalName: IMPORTER_ORG_NAME } });
   const importer2 =
-    (await prisma.organization.findFirst({ where: { legalName: 'Import Nord Distribution S.A. (Demo)' } })) ??
+    (await prisma.organization.findFirst({ where: { legalName: 'Import Nord Distribution S.A.' } })) ??
     (await prisma.organization.create({
-      data: { type: 'IMPORTER', legalName: 'Import Nord Distribution S.A. (Demo)', country: 'HT', kycStatus: 'VERIFIED' },
+      data: { type: 'IMPORTER', legalName: 'Import Nord Distribution S.A.', country: 'HT', kycStatus: 'VERIFIED' },
     }));
   await prisma.user.upsert({
     where: { email: 'importer2@rezo.test' },
