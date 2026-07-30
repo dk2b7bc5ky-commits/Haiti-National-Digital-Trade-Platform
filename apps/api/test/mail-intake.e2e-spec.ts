@@ -10,10 +10,11 @@ import { PrismaService } from '../src/prisma/prisma.service';
  * Phase A2/A3 — the email-intake agent.
  *
  * Runs against the MockMailboxProvider (wired whenever no mailbox password is
- * present), whose demo inbox holds one arrival notice and one newsletter. That
- * gives a deterministic assertion that the agent reads the notice, ignores the
- * noise, creates the container, holds the money for review, and that
- * Confirm/Reject do exactly what they claim.
+ * present), whose demo inbox holds two arrival notices and one newsletter. That
+ * gives a deterministic assertion that the agent reads the notices, ignores the
+ * noise, creates the containers, holds the money for review, that Confirm/Reject
+ * do exactly what they claim, and that the backfill can reach history a normal
+ * forward-only check would skip.
  */
 describe('Email intake agent (Phase A2/A3)', () => {
   let app: INestApplication;
@@ -40,26 +41,20 @@ describe('Email intake agent (Phase A2/A3)', () => {
     // The seed is idempotent but does not clear intake state, so a previous run
     // would leave a UID watermark that makes this suite read nothing. Start from
     // a clean mailbox (and drop the containers a prior run's agent created).
-    const org = (await http().get('/api/v1/auth/me').set(auth(tokens.importer))).body.data.org.id;
-    await prisma.mailIntakeMessage.deleteMany({ where: { orgId: org } });
-    await prisma.mailboxConnection.deleteMany({ where: { orgId: org } });
-    const stale = await prisma.container.findMany({
-      where: { containerNumber: 'DEMU1234567' },
-      select: { id: true, blId: true },
-    });
-    for (const c of stale) {
-      await prisma.verificationTask.deleteMany({ where: { containerId: c.id } });
-      await prisma.deadlineAlert.deleteMany({ where: { containerId: c.id } });
-      await prisma.deadline.deleteMany({ where: { containerId: c.id } });
-      await prisma.notification.deleteMany({ where: { containerId: c.id } });
-      await prisma.charge.deleteMany({ where: { containerId: c.id } });
-      await prisma.document.deleteMany({ where: { containerId: c.id } });
-      await prisma.container.delete({ where: { id: c.id } });
-      await prisma.billOfLading.deleteMany({ where: { id: c.blId } });
-    }
+    await cleanupAgentData(prisma);
   });
 
-  afterAll(async () => { await app?.close(); });
+  afterAll(async () => {
+    // Leave the database as we found it. The agent creates containers and
+    // verification tasks; left behind they crowd the shared Ops queue that other
+    // suites assert against (and pile up across local re-runs).
+    try {
+      await cleanupAgentData(prisma);
+    } catch {
+      /* best effort — never fail the suite on teardown */
+    }
+    await app?.close();
+  });
 
   // -- The classifier is the guardrail on a live human inbox. ----------------
   describe('classifier', () => {
@@ -117,11 +112,12 @@ describe('Email intake agent (Phase A2/A3)', () => {
   });
 
   it('reads the arrival notice, ignores the newsletter, and creates the container', async () => {
+    // The demo inbox holds two arrival notices and one newsletter.
     const run = await http().post('/api/v1/mail-intake/run').set(auth(tokens.importer)).send({});
     expect(run.status).toBe(200);
-    expect(run.body.data.checked).toBe(2);
+    expect(run.body.data.checked).toBe(3);
     expect(run.body.data.ignored).toBe(1);      // the newsletter
-    expect(run.body.data.needsReview).toBe(1);  // the notice, held for review
+    expect(run.body.data.needsReview).toBe(2);  // both notices, held for review
     expect(run.body.data.failed).toBe(0);
 
     const list = await http().get('/api/v1/mail-intake/messages').set(auth(tokens.importer));
@@ -208,9 +204,79 @@ describe('Email intake agent (Phase A2/A3)', () => {
     expect((await http().get(`/api/v1/containers/${containerId}`).set(auth(tokens.importer))).status).toBe(200);
   });
 
+  // -- Backfill: reading history that predates the watching mark. -----------
+  describe('catch up on older mail', () => {
+    beforeEach(async () => {
+      // Fresh ledger + watermark so "history" exists to be caught up on.
+      const org = (await http().get('/api/v1/auth/me').set(auth(tokens.importer))).body.data.org.id;
+      await prisma.mailIntakeMessage.deleteMany({ where: { orgId: org } });
+      await prisma.mailboxConnection.updateMany({ where: { orgId: org }, data: { lastUid: 9999 } });
+    });
+
+    it('reads mail from before the mailbox was connected, which a normal check will not', async () => {
+      // The watermark is ahead of everything, so a normal run finds nothing…
+      const normal = await http().post('/api/v1/mail-intake/run').set(auth(tokens.importer)).send({});
+      expect(normal.body.data.checked).toBe(0);
+
+      // …but the backfill goes and gets the history.
+      const back = await http().post('/api/v1/mail-intake/backfill').set(auth(tokens.importer)).send({ days: 30 });
+      expect(back.status).toBe(200);
+      expect(back.body.data.checked).toBeGreaterThan(0);
+      expect(back.body.data.total).toBeGreaterThan(0);
+      expect(back.body.data.needsReview).toBeGreaterThan(0);
+    });
+
+    it('reports what is left so the caller can keep going, and finishes at zero', async () => {
+      let guard = 0;
+      let last = await http().post('/api/v1/mail-intake/backfill').set(auth(tokens.importer)).send({ days: 30 });
+      while (last.body.data.remaining > 0 && guard++ < 20) {
+        last = await http().post('/api/v1/mail-intake/backfill').set(auth(tokens.importer)).send({ days: 30 });
+      }
+      expect(last.body.data.remaining).toBe(0);
+
+      // Once everything is read, a further pass is a no-op rather than a re-read.
+      const again = await http().post('/api/v1/mail-intake/backfill').set(auth(tokens.importer)).send({ days: 30 });
+      expect(again.body.data.checked).toBe(0);
+      expect(again.body.data.remaining).toBe(0);
+    });
+
+    it('cannot double-bill a container by catching up twice', async () => {
+      await http().post('/api/v1/mail-intake/backfill').set(auth(tokens.importer)).send({ days: 30 });
+      const list = await http().get('/api/v1/mail-intake/messages').set(auth(tokens.importer));
+      const notice = list.body.data.find((m: { container_id: string | null }) => m.container_id);
+      expect(notice).toBeTruthy();
+      const before = (await http().get(`/api/v1/containers/${notice.container_id}`).set(auth(tokens.importer)))
+        .body.data.charges.length;
+
+      // Run it again over the same window.
+      await http().post('/api/v1/mail-intake/backfill').set(auth(tokens.importer)).send({ days: 30 });
+      const after = (await http().get(`/api/v1/containers/${notice.container_id}`).set(auth(tokens.importer)))
+        .body.data.charges.length;
+      expect(after).toBe(before);
+    });
+
+    it('rejects an out-of-range window', async () => {
+      const bad = await http().post('/api/v1/mail-intake/backfill').set(auth(tokens.importer)).send({ days: 5000 });
+      expect(bad.status).toBe(400);
+    });
+  });
+
+  it('discloses that the demo inbox is in use, so a passing test is not mistaken for a live one', async () => {
+    // This suite deliberately runs without a mailbox password.
+    const conn = await http().get('/api/v1/mail-intake/connection').set(auth(tokens.importer));
+    expect(conn.body.data.using_demo_inbox).toBe(true);
+    expect(conn.body.data.secret_present).toBe(false);
+
+    const test = await http().post('/api/v1/mail-intake/connection/test').set(auth(tokens.importer)).send({});
+    expect(test.body.data.ok).toBe(true);
+    // …but flagged as the demo, which is what the UI keys its warning off.
+    expect(test.body.data.demo).toBe(true);
+  });
+
   it('enforces RBAC: a trucker cannot see or drive the agent', async () => {
     expect((await http().get('/api/v1/mail-intake/connection').set(auth(tokens.trucker))).status).toBe(403);
     expect((await http().post('/api/v1/mail-intake/run').set(auth(tokens.trucker)).send({})).status).toBe(403);
+    expect((await http().post('/api/v1/mail-intake/backfill').set(auth(tokens.trucker)).send({ days: 7 })).status).toBe(403);
   });
 
   it('never exposes a mailbox credential through the API', async () => {
@@ -221,3 +287,31 @@ describe('Email intake agent (Phase A2/A3)', () => {
     expect(res.body.data).not.toHaveProperty('secret');
   });
 });
+
+/** Container numbers the demo inbox's notices refer to. */
+const DEMO_CONTAINERS = ['DEMU1234567', 'MEDU7654321'];
+
+/**
+ * Remove everything the agent creates from the demo inbox, in FK-safe order.
+ * Used before the suite (so a previous run's UID watermark can't make it read
+ * nothing) and after it (so the shared Ops verification queue isn't polluted for
+ * the other suites).
+ */
+async function cleanupAgentData(prisma: PrismaService): Promise<void> {
+  await prisma.mailIntakeMessage.deleteMany({});
+  await prisma.mailboxConnection.deleteMany({});
+  const stale = await prisma.container.findMany({
+    where: { containerNumber: { in: DEMO_CONTAINERS } },
+    select: { id: true, blId: true },
+  });
+  for (const c of stale) {
+    await prisma.verificationTask.deleteMany({ where: { containerId: c.id } });
+    await prisma.deadlineAlert.deleteMany({ where: { containerId: c.id } });
+    await prisma.deadline.deleteMany({ where: { containerId: c.id } });
+    await prisma.notification.deleteMany({ where: { containerId: c.id } });
+    await prisma.charge.deleteMany({ where: { containerId: c.id } });
+    await prisma.document.deleteMany({ where: { containerId: c.id } });
+    await prisma.container.delete({ where: { id: c.id } });
+    await prisma.billOfLading.deleteMany({ where: { id: c.blId } });
+  }
+}

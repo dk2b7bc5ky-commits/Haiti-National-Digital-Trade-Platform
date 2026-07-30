@@ -33,9 +33,23 @@ export class MockMailboxProvider implements MailboxProvider {
     return { ok: true, mailboxCount: 2 };
   }
 
+  async listUidsSince(): Promise<number[]> {
+    return this.messages().map((m) => m.uid);
+  }
+
   async fetchSince(creds: MailboxCredentials, opts: FetchOptions): Promise<MailMessage[]> {
+    const all = this.messages();
+    // Backfill asks for specific UIDs; a normal run walks forward from the mark.
+    if (opts.uids && opts.uids.length > 0) {
+      const want = new Set(opts.uids);
+      return all.filter((m) => want.has(m.uid)).slice(0, opts.limit);
+    }
     const since = opts.sinceUid ?? 0;
-    const all: MailMessage[] = [
+    return all.filter((m) => m.uid > since).slice(0, opts.limit);
+  }
+
+  private messages(): MailMessage[] {
+    return [
       {
         messageId: '<demo-arrival-notice-1@example.invalid>',
         uid: 1,
@@ -56,7 +70,20 @@ export class MockMailboxProvider implements MailboxProvider {
         bodyText: 'This week in logistics: rates, congestion, and an upcoming webinar.',
         attachments: [],
       },
+      // A second notice, so "catch up on older mail" has something to find
+      // after the first two have already been read.
+      {
+        messageId: '<demo-arrival-notice-3@example.invalid>',
+        uid: 3,
+        fromAddress: 'ops@mschaiti.example',
+        fromName: 'MSC Haiti',
+        subject: 'Arrival Notice — MEDU7654321 — B/L DEMOBL0009999',
+        receivedAt: new Date('2026-07-22T09:15:00.000Z'),
+        bodyText: NOTICE_BODY.replace('DEMU1234567', 'MEDU7654321')
+          .replace('DEMOBL0001234', 'DEMOBL0009999')
+          .replace('40HC', '20GP'),
+        attachments: [],
+      },
     ];
-    return all.filter((m) => m.uid > since).slice(0, opts.limit);
   }
 }

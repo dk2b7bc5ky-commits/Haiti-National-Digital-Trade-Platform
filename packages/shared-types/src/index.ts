@@ -119,6 +119,12 @@ export interface MailboxConnectionInfo {
   secret_env_var: string;
   /** Whether the host has that env var set — never its value. */
   secret_present: boolean;
+  /**
+   * True when the agent is reading the built-in demo inbox rather than a real
+   * mailbox. The demo inbox always "connects", so this is what tells you whether
+   * a successful test actually reached your mail.
+   */
+  using_demo_inbox: boolean;
   autonomy: MailAutonomy;
   active: boolean;
   last_checked_at: string | null;
@@ -167,6 +173,12 @@ export interface MailIntakeRunSummary {
   needsReview: number;
   failed: number;
   error?: string;
+}
+
+/** A "catch up on older mail" pass, plus how much history is still unread. */
+export interface MailIntakeBackfillSummary extends MailIntakeRunSummary {
+  remaining: number;
+  total: number;
 }
 
 export interface OrgSummary {

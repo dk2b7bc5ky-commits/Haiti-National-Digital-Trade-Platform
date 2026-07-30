@@ -40,6 +40,12 @@ import type { ContainerSize as ApiContainerSize } from '@rezo/shared-types';
 const PER_RUN_LIMIT = Number(process.env.MAIL_INTAKE_BATCH ?? '25');
 /** On a first sync, ignore mail older than this. */
 const FIRST_SYNC_DAYS = Number(process.env.MAIL_INTAKE_FIRST_SYNC_DAYS ?? '14');
+/**
+ * Messages read per backfill call. Deliberately small: each one may involve a
+ * document read, and a single HTTP request has to finish well inside the host's
+ * timeout. The caller repeats until `remaining` hits zero.
+ */
+const BACKFILL_BATCH = Number(process.env.MAIL_INTAKE_BACKFILL_BATCH ?? '8');
 /** ISO 6346 container number. */
 const CONTAINER_RE = /\b([A-Z]{4}\d{7})\b/;
 
@@ -50,6 +56,14 @@ export interface RunSummary {
   needsReview: number;
   failed: number;
   error?: string;
+}
+
+/** A backfill pass, plus how much history is still unread. */
+export interface BackfillSummary extends RunSummary {
+  /** Messages in the requested window still to be read after this pass. */
+  remaining: number;
+  /** How many messages the window contains in total. */
+  total: number;
 }
 
 @Injectable()
@@ -121,19 +135,31 @@ export class MailIntakeService {
     return conn;
   }
 
-  /** Confirms the credentials work without ingesting anything. */
-  async testConnection(principal: AuthPrincipal): Promise<{ ok: boolean; error?: string; mailbox_count?: number }> {
+  /** True when no real mailbox is wired and the demo inbox is standing in. */
+  get usingDemoInbox(): boolean {
+    return !this.mailbox.requiresCredential;
+  }
+
+  /**
+   * Confirms the credentials work without ingesting anything.
+   *
+   * `demo` is reported explicitly: the stand-in inbox always "connects", so a
+   * bare success must never be mistaken for having reached the real mailbox.
+   */
+  async testConnection(
+    principal: AuthPrincipal,
+  ): Promise<{ ok: boolean; demo: boolean; error?: string; mailbox_count?: number }> {
     const conn = await this.requireConnection(principal);
     const password = this.secretFor(conn);
     if (!password && this.mailbox.requiresCredential) {
-      return { ok: false, error: `No password found. Set the ${conn.secretEnvVar} environment variable on the API service, then redeploy.` };
+      return { ok: false, demo: false, error: `No password found. Set the ${conn.secretEnvVar} environment variable on the API service, then redeploy.` };
     }
     const res = await this.mailbox.verify(this.credsFor(conn, password ?? ''));
     await this.prisma.mailboxConnection.update({
       where: { id: conn.id },
       data: { lastError: res.ok ? null : res.error ?? 'Unknown error' },
     });
-    return { ok: res.ok, error: res.error, mailbox_count: res.mailboxCount };
+    return { ok: res.ok, demo: this.usingDemoInbox, error: res.error, mailbox_count: res.mailboxCount };
   }
 
   // -------------------------------------------------------------------------
@@ -161,6 +187,106 @@ export class MailIntakeService {
   async runNow(principal: AuthPrincipal): Promise<RunSummary> {
     const conn = await this.requireConnection(principal);
     return this.runForConnection(conn);
+  }
+
+  /**
+   * "Catch up on older mail" — read history that predates the watching mark.
+   *
+   * A normal run only walks forward from the last-seen UID, so mail that was
+   * already sitting in the inbox when the mailbox was connected would never be
+   * read. This looks at everything in the folder from the last `days`, subtracts
+   * what has already been ingested, and works through the remainder a batch at a
+   * time. It returns `remaining` so the caller can keep going until it hits zero.
+   *
+   * Safe to run repeatedly: dedupe is on Message-ID, so a message that has
+   * already been processed can never be billed twice.
+   */
+  async backfill(principal: AuthPrincipal, days: number): Promise<BackfillSummary> {
+    const conn = await this.requireConnection(principal);
+    const empty: BackfillSummary = { checked: 0, ignored: 0, processed: 0, needsReview: 0, failed: 0, remaining: 0, total: 0 };
+    if (this.running.has(conn.id)) return { ...empty, error: 'A check is already running.' };
+    this.running.add(conn.id);
+    try {
+      const password = this.secretFor(conn);
+      if (!password && this.mailbox.requiresCredential) {
+        return { ...empty, error: `No password configured. Set ${conn.secretEnvVar} on the API service.` };
+      }
+      const creds = this.credsFor(conn, password ?? '');
+
+      // Everything in the window, then subtract what we've already ingested.
+      let all: number[];
+      try {
+        all = await this.mailbox.listUidsSince(creds, days);
+      } catch (e) {
+        const error = (e as Error).message;
+        await this.prisma.mailboxConnection.update({ where: { id: conn.id }, data: { lastError: error } });
+        return { ...empty, error };
+      }
+      if (all.length === 0) return { ...empty, total: 0 };
+
+      const seen = await this.prisma.mailIntakeMessage.findMany({
+        where: { connectionId: conn.id, uid: { in: all } },
+        select: { uid: true, status: true },
+      });
+      // Previously-failed messages are worth retrying; anything else is done.
+      const done = new Set(seen.filter((m) => m.status !== 'FAILED').map((m) => m.uid).filter((u): u is number => u !== null));
+      const todo = all.filter((u) => !done.has(u)).sort((a, b) => b - a); // newest first
+
+      const batch = todo.slice(0, BACKFILL_BATCH);
+      const summary: BackfillSummary = { ...empty, total: all.length, remaining: Math.max(0, todo.length - batch.length) };
+      if (batch.length === 0) {
+        await this.prisma.mailboxConnection.update({ where: { id: conn.id }, data: { lastCheckedAt: new Date(), lastError: null } });
+        return summary;
+      }
+
+      let messages: MailMessage[];
+      try {
+        messages = await this.mailbox.fetchSince(creds, { uids: batch, limit: batch.length });
+      } catch (e) {
+        const error = (e as Error).message;
+        await this.prisma.mailboxConnection.update({ where: { id: conn.id }, data: { lastError: error } });
+        return { ...summary, error };
+      }
+
+      for (const msg of messages) {
+        summary.checked++;
+        try {
+          const outcome = await this.handleMessage(conn, msg);
+          if (outcome === 'IGNORED') summary.ignored++;
+          else if (outcome === 'NEEDS_REVIEW') summary.needsReview++;
+          else if (outcome === 'PROCESSED') summary.processed++;
+        } catch (e) {
+          summary.failed++;
+          this.logger.warn(`Backfill message ${msg.messageId} failed: ${(e as Error).message}`);
+          await this.recordFailure(conn, msg, (e as Error).message);
+        }
+      }
+
+      // Establish the live watermark on a first-ever sync so the ordinary
+      // 10-minute run has a starting point. Never move it backwards, and never
+      // move it forward past history we may still be working through.
+      const highest = Math.max(...all);
+      await this.prisma.mailboxConnection.update({
+        where: { id: conn.id },
+        data: {
+          lastUid: conn.lastUid == null ? highest : Math.max(conn.lastUid, highest),
+          lastCheckedAt: new Date(),
+          lastError: null,
+        },
+      });
+
+      await this.audit.record({
+        actorUserId: principal.userId,
+        actorOrgId: principal.orgId,
+        action: 'mail_intake.backfill',
+        entity: 'MailboxConnection',
+        entityId: conn.id,
+        after: { days, in_window: all.length, read: summary.checked, remaining: summary.remaining },
+      });
+      return summary;
+    } finally {
+      this.running.delete(conn.id);
+    }
   }
 
   // -------------------------------------------------------------------------

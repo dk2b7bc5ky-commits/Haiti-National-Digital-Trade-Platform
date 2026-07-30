@@ -48,6 +48,12 @@ export interface FetchOptions {
   limit: number;
   /** Ignore anything older than this many days on a first-ever sync. */
   maxAgeDays?: number;
+  /**
+   * Fetch exactly these UIDs and nothing else, ignoring `sinceUid`/`maxAgeDays`.
+   * Used by the backfill, which decides for itself which of the mailbox's older
+   * messages it still needs (see MailIntakeService.backfill).
+   */
+  uids?: number[];
 }
 
 export interface MailboxProvider {
@@ -55,9 +61,18 @@ export interface MailboxProvider {
    * Whether this provider needs a password before it can be used. True for a
    * real mailbox; false for the mock, so the intake pipeline stays demoable
    * without any credential configured.
+   *
+   * Also drives the UI's "you are on the demo inbox" disclosure — never let a
+   * mock success be mistaken for a real connection.
    */
   readonly requiresCredential: boolean;
   /** Confirms the credentials work, without ingesting anything. */
   verify(creds: MailboxCredentials): Promise<{ ok: boolean; error?: string; mailboxCount?: number }>;
   fetchSince(creds: MailboxCredentials, opts: FetchOptions): Promise<MailMessage[]>;
+  /**
+   * Every UID in the folder newer than `days` ago, ascending. Cheap (a UID
+   * search, no bodies downloaded) so the backfill can work out what remains
+   * before pulling anything.
+   */
+  listUidsSince(creds: MailboxCredentials, days: number): Promise<number[]>;
 }

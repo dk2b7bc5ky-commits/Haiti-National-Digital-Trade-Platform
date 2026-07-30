@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import type {
   MailAutonomy,
+  MailIntakeBackfillSummary,
   MailIntakeExtracted,
   MailIntakeMessageSummary,
   MailboxConnectionInfo,
@@ -32,6 +33,8 @@ export default function AgentPage() {
   const [err, setErr] = useState<string | null>(null);
   const [run, setRun] = useState<MailIntakeRunSummary | null>(null);
   const [busy, setBusy] = useState(false);
+  const [days, setDays] = useState(14);
+  const [catchUp, setCatchUp] = useState<string | null>(null);
 
   const load = useCallback(() => {
     if (!token) return;
@@ -59,6 +62,44 @@ export default function AgentPage() {
     }
   }
 
+  /**
+   * Walk through the mailbox history in batches until nothing is left. Each call
+   * reads a small number of messages so no single request runs long; the loop is
+   * capped so a big mailbox can't spin forever without the user deciding to
+   * continue.
+   */
+  async function runCatchUp() {
+    setBusy(true);
+    setErr(null);
+    setRun(null);
+    let readTotal = 0;
+    let reviewTotal = 0;
+    try {
+      for (let pass = 0; pass < 25; pass++) {
+        const s = await apiFetch<MailIntakeBackfillSummary>('/mail-intake/backfill', {
+          method: 'POST', token, body: { days },
+        });
+        if (s.error) { setErr(s.error); break; }
+        readTotal += s.checked;
+        reviewTotal += s.needsReview;
+        setCatchUp(t('agent.catchUpProgress', {
+          read: String(readTotal), review: String(reviewTotal), remaining: String(s.remaining),
+        }));
+        load();
+        if (s.remaining === 0) {
+          setCatchUp(t('agent.catchUpDone', { read: String(readTotal), review: String(reviewTotal) }));
+          break;
+        }
+        if (s.checked === 0) break; // nothing progressing — stop rather than loop
+      }
+    } catch {
+      setErr(t('agent.checkFailed'));
+    } finally {
+      setBusy(false);
+      load();
+    }
+  }
+
   if (!ready || !auth) return <Loading />;
   const canManage = auth.permissions.includes('mail_intake:manage');
   const pending = (msgs ?? []).filter((m) => m.status === 'NEEDS_REVIEW');
@@ -82,7 +123,18 @@ export default function AgentPage() {
         )}
       </div>
 
+      {/* The demo inbox always "connects", so say so loudly — otherwise a
+          successful test looks like proof the real mailbox is wired. */}
+      {conn?.using_demo_inbox && (
+        <p className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <strong>{t('agent.demoTitle')}</strong> {t('agent.demoBody', { env: conn.secret_env_var })}
+        </p>
+      )}
+
       {err && <p className="mt-4 text-sm text-red-600">{err}</p>}
+      {catchUp && (
+        <p className="mt-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">{catchUp}</p>
+      )}
       {run && (
         <p className="mt-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
           {t('agent.runResult', {
@@ -96,6 +148,37 @@ export default function AgentPage() {
       )}
 
       <ConnectionCard conn={conn} token={token} canManage={canManage} onSaved={load} />
+
+      {/* Backfill: read mail that was already sitting in the inbox when the
+          mailbox was connected. A normal check only looks forward. */}
+      {canManage && conn && (
+        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-800">{t('agent.catchUpTitle')}</h2>
+          <p className="mt-1 text-sm text-slate-500">{t('agent.catchUpHint')}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <label className="text-sm">
+              <span className="text-slate-700">{t('agent.howFarBack')}</span>
+              <select
+                value={days}
+                onChange={(e) => setDays(Number(e.target.value))}
+                className="ml-2 rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+              >
+                <option value={7}>{t('agent.days7')}</option>
+                <option value={14}>{t('agent.days14')}</option>
+                <option value={30}>{t('agent.days30')}</option>
+                <option value={90}>{t('agent.days90')}</option>
+              </select>
+            </label>
+            <button
+              onClick={runCatchUp}
+              disabled={busy}
+              className="rounded-lg border border-sky-600 px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-50 disabled:opacity-60"
+            >
+              {busy ? t('agent.catchingUp') : t('agent.catchUp')}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Needs review — the queue that matters. */}
       <h2 className="mt-8 text-lg font-semibold">{t('agent.needsReview')}</h2>
@@ -139,7 +222,7 @@ function ConnectionCard({
   const [autonomy, setAutonomy] = useState<MailAutonomy>('AUTO_CONTAINER');
   const [active, setActive] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [test, setTest] = useState<{ ok: boolean; error?: string } | null>(null);
+  const [test, setTest] = useState<{ ok: boolean; demo?: boolean; error?: string } | null>(null);
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
@@ -170,7 +253,7 @@ function ConnectionCard({
     setBusy(true);
     setTest(null);
     try {
-      setTest(await apiFetch<{ ok: boolean; error?: string }>('/mail-intake/connection/test', { method: 'POST', token, body: {} }));
+      setTest(await apiFetch<{ ok: boolean; demo?: boolean; error?: string }>('/mail-intake/connection/test', { method: 'POST', token, body: {} }));
     } catch {
       setTest({ ok: false, error: t('agent.testFailed') });
     } finally {
@@ -223,8 +306,16 @@ function ConnectionCard({
         <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{conn.last_error}</p>
       )}
       {test && (
-        <p className={`mt-3 rounded-lg px-3 py-2 text-sm ${test.ok ? 'border border-emerald-200 bg-emerald-50 text-emerald-800' : 'border border-red-200 bg-red-50 text-red-800'}`}>
-          {test.ok ? t('agent.testOk') : test.error}
+        <p
+          className={`mt-3 rounded-lg px-3 py-2 text-sm ${
+            !test.ok
+              ? 'border border-red-200 bg-red-50 text-red-800'
+              : test.demo
+                ? 'border border-amber-200 bg-amber-50 text-amber-900'
+                : 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+          }`}
+        >
+          {!test.ok ? test.error : test.demo ? t('agent.testDemo') : t('agent.testOk')}
         </p>
       )}
       {conn?.last_checked_at && !showForm && (

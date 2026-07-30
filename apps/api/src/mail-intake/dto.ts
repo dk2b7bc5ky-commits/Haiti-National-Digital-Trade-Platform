@@ -51,3 +51,12 @@ export class UpsertConnectionDto {
   @IsBoolean()
   active?: boolean;
 }
+
+/** How far back "catch up on older mail" should look. */
+export class BackfillDto {
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(365)
+  days?: number;
+}

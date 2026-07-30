@@ -75,15 +75,31 @@ minutes. Leave it off and the agent only runs when you press **Check now**.
 
 ## Step 5 — Connect it in Rezo
 
-1. Log in to Rezo and open **Email agent** in the left menu.
+1. Log in to Rezo and open **Agent** in the left menu.
 2. Enter the address to watch, e.g. `traffic@yourcompany.com`.
 3. Choose how much it does on its own — start with the middle option,
    **"File the container, hold the amounts for me to confirm."**
 4. Tick **Check this mailbox automatically** and press **Save**.
-5. Press **Test connection**. You should see "Connected successfully."
-6. Press **Check now** to read the recent mail immediately.
+5. Press **Test connection**. You want **"Connected successfully."** If it says
+   *"Reached the practice inbox — not your real mailbox yet"*, the password in
+   Step 4 hasn't taken effect; see the troubleshooting section below.
+6. Press **Check now** to read new mail, then **Catch up on older mail** to pull
+   in what you already received.
 
 ---
+
+## Reading mail you already received
+
+A normal check only looks at **new** mail, so notices that were already sitting
+in the inbox when you connected it won't appear on their own.
+
+On the Agent screen use **Catch up on older mail**: pick how far back (7 days,
+14 days, 30 days, 3 months) and press **Catch up now**. It works through the
+history in small batches and shows progress as it goes — "Read 12 so far · 4 to
+review · 8 left…". Leave the page open until it says it finished.
+
+It is safe to press more than once. Every message is remembered by its unique
+Message-ID, so anything already read is skipped rather than billed twice.
 
 ## What happens from here
 
@@ -113,9 +129,19 @@ decision on the container or billing screen.
 You used the regular account password instead of the 16-character App Password,
 or IMAP is off. Redo Steps 2–4.
 
-**"Almost there — add your mailbox App Password…"**
-`MAIL_INTAKE_PASSWORD` isn't set on the **rezo-api** service (check for typos in
-the key name), or the service hasn't finished redeploying since you added it.
+**"You are on the practice inbox."**
+This is the important one. Until `MAIL_INTAKE_PASSWORD` is set on the
+**rezo-api** service, the agent reads a small built-in practice inbox instead of
+your mail — and **"Test connection" will still say it succeeded**, because it
+really did reach the practice inbox. If you see this banner, the fix is Step 4:
+check the key name for typos and confirm the service finished redeploying. Once
+the real mailbox is wired the banner disappears, and a successful test then means
+your actual mail.
+
+**"Read 0 messages" right after connecting.**
+Two likely reasons. Either the agent already read those messages on an earlier
+check (each one is only read once), or you have no new mail since it last looked.
+To pull in history you already received, use **Catch up on older mail**.
 
 **"Automatic checking is off."**
 Add `MAIL_INTAKE_ENABLED=true` on the rezo-api service. Until then, use
@@ -148,4 +174,5 @@ Set these on the rezo-api service only if you need to change the defaults.
 | `MAIL_INTAKE_PASSWORD` | — | the mailbox App Password |
 | `MAIL_INTAKE_BATCH` | `25` | max emails read per check |
 | `MAIL_INTAKE_FIRST_SYNC_DAYS` | `14` | on first connect, how far back to look |
+| `MAIL_INTAKE_BACKFILL_BATCH` | `8` | emails per "catch up" batch (it repeats automatically) |
 | `ANTHROPIC_MODEL` | `claude-opus-5` | the reader's model |

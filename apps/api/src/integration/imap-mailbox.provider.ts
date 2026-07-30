@@ -52,20 +52,32 @@ export class ImapMailboxProvider implements MailboxProvider {
     }
   }
 
+  /** Cheap UID-only search — no bodies downloaded. */
+  async listUidsSince(creds: MailboxCredentials, days: number): Promise<number[]> {
+    return this.withMailbox(creds, async (client) => {
+      const since = new Date(Date.now() - days * 86_400_000);
+      // search() resolves to `false` (not an empty array) when the server
+      // refuses the search, so check truthiness before treating it as a list.
+      const uids = await client.search({ since }, { uid: true });
+      if (!uids) return [];
+      return [...uids].sort((a, b) => a - b);
+    });
+  }
+
   async fetchSince(creds: MailboxCredentials, opts: FetchOptions): Promise<MailMessage[]> {
-    const out: MailMessage[] = [];
-    let client: ImapFlow | null = null;
-    try {
-      client = this.client(creds);
-      await client.connect();
-      const lock = await client.getMailboxLock(creds.folder, { readOnly: true });
-      try {
-        // On a first-ever sync, bound the backlog by date so connecting an inbox
-        // with years of history doesn't ingest all of it.
+    return this.withMailbox(creds, async (client) => {
+      // Work out which UIDs to pull.
+      let selected: number[];
+      if (opts.uids && opts.uids.length > 0) {
+        // Backfill: the caller already decided exactly what it needs.
+        selected = opts.uids.slice(0, opts.limit);
+      } else {
         let range: string;
         if (opts.sinceUid && opts.sinceUid > 0) {
           range = `${opts.sinceUid + 1}:*`;
         } else {
+          // First-ever sync: bound the backlog by date so connecting an inbox
+          // with years of history doesn't ingest all of it.
           const days = opts.maxAgeDays ?? 30;
           const since = new Date(Date.now() - days * 86_400_000);
           const uids = await client.search({ since }, { uid: true });
@@ -73,8 +85,6 @@ export class ImapMailboxProvider implements MailboxProvider {
           range = uids.slice(-opts.limit).join(',');
         }
 
-        // Collect UIDs first, then fetch newest-first up to the cap, so a large
-        // backlog makes progress every run instead of timing out.
         const candidates: number[] = [];
         for await (const msg of client.fetch(range, { uid: true }, { uid: true })) {
           if (opts.sinceUid && msg.uid <= opts.sinceUid) continue;
@@ -82,39 +92,54 @@ export class ImapMailboxProvider implements MailboxProvider {
         }
         if (candidates.length === 0) return [];
         candidates.sort((a, b) => a - b);
-        const selected = candidates.slice(0, opts.limit);
+        selected = candidates.slice(0, opts.limit);
+      }
 
-        for (const uid of selected) {
-          const raw = await client.download(String(uid), undefined, { uid: true });
-          if (!raw?.content) continue;
-          const buf = await streamToBuffer(raw.content);
-          const parsed = await simpleParser(buf);
+      const out: MailMessage[] = [];
+      for (const uid of selected) {
+        const raw = await client.download(String(uid), undefined, { uid: true });
+        if (!raw?.content) continue;
+        const buf = await streamToBuffer(raw.content);
+        const parsed = await simpleParser(buf);
 
-          const attachments: MailAttachment[] = [];
-          for (const a of parsed.attachments ?? []) {
-            const name = a.filename ?? '';
-            const size = a.content?.length ?? 0;
-            if (!name || !USEFUL_ATTACHMENT.test(name)) continue;
-            if (size < MIN_ATTACHMENT_BYTES || size > MAX_ATTACHMENT_BYTES) continue;
-            attachments.push({
-              fileName: name,
-              contentType: a.contentType || 'application/octet-stream',
-              bytes: a.content as Buffer,
-            });
-          }
-
-          const from = parsed.from?.value?.[0];
-          out.push({
-            messageId: parsed.messageId ?? `uid-${uid}@${creds.username}`,
-            uid,
-            fromAddress: (from?.address ?? '').toLowerCase(),
-            fromName: from?.name ?? '',
-            subject: parsed.subject ?? '(no subject)',
-            receivedAt: parsed.date ?? new Date(),
-            bodyText: bodyTextOf(parsed.text, parsed.html),
-            attachments,
+        const attachments: MailAttachment[] = [];
+        for (const a of parsed.attachments ?? []) {
+          const name = a.filename ?? '';
+          const size = a.content?.length ?? 0;
+          if (!name || !USEFUL_ATTACHMENT.test(name)) continue;
+          if (size < MIN_ATTACHMENT_BYTES || size > MAX_ATTACHMENT_BYTES) continue;
+          attachments.push({
+            fileName: name,
+            contentType: a.contentType || 'application/octet-stream',
+            bytes: a.content as Buffer,
           });
         }
+
+        const from = parsed.from?.value?.[0];
+        out.push({
+          messageId: parsed.messageId ?? `uid-${uid}@${creds.username}`,
+          uid,
+          fromAddress: (from?.address ?? '').toLowerCase(),
+          fromName: from?.name ?? '',
+          subject: parsed.subject ?? '(no subject)',
+          receivedAt: parsed.date ?? new Date(),
+          bodyText: bodyTextOf(parsed.text, parsed.html),
+          attachments,
+        });
+      }
+      return out;
+    });
+  }
+
+  /** Connect, take a READ-ONLY lock on the folder, run `fn`, always clean up. */
+  private async withMailbox<T>(creds: MailboxCredentials, fn: (client: ImapFlow) => Promise<T>): Promise<T> {
+    let client: ImapFlow | null = null;
+    try {
+      client = this.client(creds);
+      await client.connect();
+      const lock = await client.getMailboxLock(creds.folder, { readOnly: true });
+      try {
+        return await fn(client);
       } finally {
         lock.release();
       }
@@ -124,7 +149,6 @@ export class ImapMailboxProvider implements MailboxProvider {
     } finally {
       await this.close(client);
     }
-    return out;
   }
 
   private client(creds: MailboxCredentials): ImapFlow {

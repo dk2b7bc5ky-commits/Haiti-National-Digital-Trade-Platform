@@ -3,7 +3,7 @@ import { MailIntakeService } from './mail-intake.service';
 import { CurrentUser, RequirePermissions } from '../auth/decorators';
 import { AuthPrincipal } from '../auth/auth-principal';
 import { Permission } from '../rbac/permissions';
-import { UpsertConnectionDto } from './dto';
+import { BackfillDto, UpsertConnectionDto } from './dto';
 
 /**
  * The email agent's control surface (ALIZE_AGENT_SCOPE A2/A3).
@@ -33,6 +33,11 @@ export class MailIntakeController {
       secret_env_var: conn.secretEnvVar,
       /** Whether the host actually has that env var set — never its value. */
       secret_present: Boolean(process.env[conn.secretEnvVar]),
+      /**
+       * True when the agent is reading the built-in demo inbox instead of a real
+       * mailbox. Surfaced so a demo "success" can never look like a live one.
+       */
+      using_demo_inbox: this.intake.usingDemoInbox,
       autonomy: conn.autonomy,
       active: conn.active,
       last_checked_at: conn.lastCheckedAt?.toISOString() ?? null,
@@ -62,6 +67,18 @@ export class MailIntakeController {
   @RequirePermissions(Permission.MAIL_INTAKE_MANAGE)
   run(@CurrentUser() principal: AuthPrincipal) {
     return this.intake.runNow(principal);
+  }
+
+  /**
+   * "Catch up on older mail" — read history from before the mailbox was
+   * connected. Repeat while `remaining > 0`. Safe to re-run: dedupe is on
+   * Message-ID, so nothing is billed twice.
+   */
+  @Post('backfill')
+  @HttpCode(200)
+  @RequirePermissions(Permission.MAIL_INTAKE_MANAGE)
+  backfill(@CurrentUser() principal: AuthPrincipal, @Body() dto: BackfillDto) {
+    return this.intake.backfill(principal, dto.days ?? 14);
   }
 
   @Get('messages')

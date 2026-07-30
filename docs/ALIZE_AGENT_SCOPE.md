@@ -319,6 +319,20 @@ nothing and cannot double-bill; Confirm makes charges payable but never paid;
 Reject removes exactly what was created; a trucker gets 403; and no endpoint ever
 returns a credential.
 
+**Backfill.** A normal run walks forward from the last-seen UID, so mail already
+in the inbox at connection time would never be read. `POST /mail-intake/backfill`
+takes a day window, lists the folder's UIDs in it, subtracts what has already
+been ingested, and reads the remainder a small batch at a time — returning
+`remaining` so the caller repeats until it hits zero. Because dedupe is on
+Message-ID it is safe to re-run, and because each call is small no single request
+risks the host's timeout. `MAIL_INTAKE_BACKFILL_BATCH` (default 8) tunes it.
+
+**Demo-inbox disclosure.** The mock provider always reports a successful
+`verify()`, which made a demo "Connected successfully" indistinguishable from a
+live one — the single most confusing thing about the first cut. The connection
+payload now carries `using_demo_inbox` and the test result carries `demo`, and the
+UI shows an unmistakable banner instead of a green tick.
+
 **Still to build:** Phase A4 (tuning thresholds and sender rules against real
 volume, then graduating autonomy), OAuth2 as an alternative to the App Password,
 OCR for scanned-image notices, and the `mateo@` purchase-confirmation inbox
