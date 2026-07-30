@@ -79,6 +79,7 @@ export default function ContainerDetailPage() {
                   <StatusPill status={detail.container.payment_status} />
                 </div>
                 <div className="mt-3 grid gap-x-8 gap-y-1 sm:grid-cols-2">
+                  <Field label={t('detail.goods')} value={detail.container.goods ?? t('containers.goodsUnknown')} />
                   <Field label={t('detail.bl')} value={detail.container.bl_number} mono />
                   <Field label={t('detail.vesselVoyage')} value={`${detail.container.voyage.vessel.name} · ${detail.container.voyage.voyage_number}`} />
                   <Field label={t('detail.arrival')} value={detail.container.arrival_date ? new Date(detail.container.arrival_date).toLocaleDateString() : '—'} />

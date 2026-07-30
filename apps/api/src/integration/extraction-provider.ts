@@ -58,6 +58,8 @@ export interface ExtractionResult {
   /** Keys used to match the document to a container when none is supplied. */
   containerNumber?: string | null;
   blNumber?: string | null;
+  /** What the cargo actually is, in the document's words ("rice", "auto parts"). */
+  goodsDescription?: string | null;
   charges: ExtractedCharge[];
   overallConfidence: number;
 }

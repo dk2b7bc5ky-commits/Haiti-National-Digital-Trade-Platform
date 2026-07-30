@@ -69,6 +69,7 @@ export class ContainersService {
     const blNumber = dto.bl_number?.trim() || `BL-${containerNumber}`;
     const etaIso = (dto.arrival_date ? new Date(dto.arrival_date) : new Date()).toISOString();
 
+    const goods = dto.goods?.trim() || undefined;
     const result = await this.manifests.submit(principal, {
       voyage: {
         // Per-importer synthetic vessel/voyage for manually-entered containers.
@@ -83,10 +84,20 @@ export class ContainersService {
           bl_number: blNumber,
           shipper: dto.shipper?.trim() || 'Direct entry',
           consignee_org_id: importerOrgId,
+          description: goods,
           containers: [{ container_number: containerNumber, size_type: dto.size_type }],
         },
       ],
     });
+
+    // Record the cargo on the container itself too, so it survives independently
+    // of the bill of lading (which siblings may share).
+    if (goods) {
+      await this.prisma.container.update({
+        where: { id: result.container_ids[0] },
+        data: { goodsDescription: goods },
+      });
+    }
 
     await this.audit.record({
       actorUserId: principal.userId,

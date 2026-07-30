@@ -144,6 +144,8 @@ export interface MailIntakeExtractedCharge {
 export interface MailIntakeExtracted {
   container_number: string | null;
   bl_number: string | null;
+  /** What the reader says is inside the container, or null if not stated. */
+  goods: string | null;
   doc_type: string | null;
   language: string | null;
   container_created: boolean;
@@ -276,6 +278,12 @@ export interface ContainerSummary {
   id: string;
   container_number: string;
   size_type: ContainerSize;
+  /**
+   * What is inside the container ("rice", "auto parts", …). Set by hand, from the
+   * manifest commodity, or by the email agent; falls back to the bill of lading's
+   * cargo description. Null when genuinely unknown.
+   */
+  goods: string | null;
   status: ContainerStatus;
   importer_org_id: string;
   terminal_org_id: string | null;

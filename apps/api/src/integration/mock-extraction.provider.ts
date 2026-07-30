@@ -36,6 +36,7 @@ export class MockExtractionProvider implements ExtractionProvider {
         rawText: `BOOKING CONFIRMATION (mock)\nDocument: ${input.fileName}\nRates quoted for reference only.`,
         containerNumber: input.containerNumberHint ?? null,
         blNumber: null,
+        goodsDescription: 'General merchandise (mock)',
         charges: [], // deliberately none — a booking is not a demand for payment
         overallConfidence: 0.93,
       };
@@ -76,6 +77,7 @@ export class MockExtractionProvider implements ExtractionProvider {
       rawText,
       containerNumber: input.containerNumberHint ?? null,
       blNumber: null,
+      goodsDescription: 'Assorted dry goods (mock)',
       charges,
       overallConfidence: Math.min(...charges.map((c) => c.confidence)),
     };

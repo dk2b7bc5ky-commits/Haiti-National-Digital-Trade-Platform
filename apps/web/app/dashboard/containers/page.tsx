@@ -35,6 +35,7 @@ function AddContainerModal({
   const t = useT();
   const [containerNumber, setContainerNumber] = useState('');
   const [blNumber, setBlNumber] = useState('');
+  const [goods, setGoods] = useState('');
   const [size, setSize] = useState<ContainerSize>('40');
   const [arrival, setArrival] = useState('');
   const [importerId, setImporterId] = useState('');
@@ -60,6 +61,7 @@ function AddContainerModal({
           container_number: containerNumber.trim(),
           size_type: size,
           bl_number: blNumber.trim() || undefined,
+          goods: goods.trim() || undefined,
           arrival_date: arrival ? new Date(arrival).toISOString() : undefined,
           importer_org_id: canPickImporter && importerId ? importerId : undefined,
         },
@@ -88,6 +90,15 @@ function AddContainerModal({
           <div>
             <label className="block text-sm font-medium text-slate-700">{t('manifest.blNumber')}</label>
             <input value={blNumber} onChange={(e) => setBlNumber(e.target.value)} className={inputCls} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">{t('containers.colGoods')}</label>
+            <input
+              value={goods}
+              onChange={(e) => setGoods(e.target.value)}
+              placeholder={t('containers.goodsPlaceholder')}
+              className={inputCls}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -164,7 +175,9 @@ export default function ContainersPage() {
     if (!rows) return [];
     const needle = q.trim().toLowerCase();
     return rows.filter((c) => {
-      if (needle && !`${c.container_number} ${c.bl_number} ${c.voyage.vessel.name}`.toLowerCase().includes(needle)) return false;
+      // Search covers the cargo as well, so "rice" or "auto parts" finds the box.
+      const haystack = `${c.container_number} ${c.bl_number} ${c.voyage.vessel.name} ${c.goods ?? ''}`;
+      if (needle && !haystack.toLowerCase().includes(needle)) return false;
       if (status && c.status !== status) return false;
       if (pay && c.payment_status !== pay) return false;
       if (atRiskOnly) {
@@ -260,6 +273,7 @@ export default function ContainersPage() {
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <th className="px-5 py-3 font-medium">{t('containers.colContainer')}</th>
+                <th className="px-5 py-3 font-medium">{t('containers.colGoods')}</th>
                 <th className="px-5 py-3 font-medium">{t('containers.colArrival')}</th>
                 <th className="px-5 py-3 text-center font-medium">{t('containers.colFreeElectric')}</th>
                 <th className="px-5 py-3 text-center font-medium">{t('containers.colFreeDemurrage')}</th>
@@ -277,6 +291,13 @@ export default function ContainersPage() {
                     <td className="px-5 py-3">
                       <Link href={`/dashboard/containers/${c.id}`} className="font-mono font-medium text-sky-700 hover:underline">{c.container_number}</Link>
                       <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${SIZE_STYLE[c.size_type] ?? SIZE_STYLE['20']}`}>{SIZE_LABEL[c.size_type] ?? c.size_type}</span>
+                    </td>
+                    <td className="max-w-[14rem] px-5 py-3 text-slate-600">
+                      {c.goods ? (
+                        <span className="line-clamp-2" title={c.goods}>{c.goods}</span>
+                      ) : (
+                        <span className="text-slate-400">{t('containers.goodsUnknown')}</span>
+                      )}
                     </td>
                     <td className="px-5 py-3 text-slate-600">
                       {c.arrival_date ? new Date(c.arrival_date).toLocaleDateString() : <span className="text-slate-400">—</span>}

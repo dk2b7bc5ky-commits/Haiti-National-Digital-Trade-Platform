@@ -541,19 +541,21 @@ async function seedDemoDataset(): Promise<void> {
     arrival: Date;
     stage: Stage;
     customs: boolean;
+    /** What's inside — shown in the Goods column. */
+    goods: string;
     pendingReview?: boolean;
   }
   const plans: Plan[] = [
-    { number: 'CMAU1234567', bl: blElectronics, importerOrgId: importer1.id, size: 'FORTY', arrival: daysAgo(10), stage: 'GATED_OUT', customs: true },
-    { number: 'CMAU7654321', bl: blElectronics, importerOrgId: importer1.id, size: 'TWENTY', arrival: daysAgo(8), stage: 'CLEARED', customs: false },
-    { number: 'CMAU9998887', bl: blElectronics, importerOrgId: importer1.id, size: 'REEFER', arrival: daysAgo(3), stage: 'ARRIVED', customs: false },
-    { number: 'CMAU2223334', bl: blElectronics, importerOrgId: importer1.id, size: 'FORTY', arrival: daysAgo(3), stage: 'ARRIVED', customs: true },
-    { number: 'MSCU4455661', bl: blConstruction, importerOrgId: importer1.id, size: 'FORTY', arrival: daysAgo(9), stage: 'GATED_OUT', customs: true },
-    { number: 'MSCU4455662', bl: blConstruction, importerOrgId: importer1.id, size: 'TWENTY', arrival: daysAgo(2), stage: 'ARRIVED', customs: false },
-    { number: 'MSCU4455663', bl: blConstruction, importerOrgId: importer1.id, size: 'FORTY', arrival: daysAgo(2), stage: 'ARRIVED', customs: false, pendingReview: true },
-    { number: 'MAEU5566771', bl: blFood, importerOrgId: importer2.id, size: 'REEFER', arrival: daysAgo(7), stage: 'RELEASED', customs: true },
-    { number: 'MAEU5566772', bl: blFood, importerOrgId: importer2.id, size: 'FORTY', arrival: daysAgo(3), stage: 'ARRIVED', customs: false },
-    { number: 'MAEU5566773', bl: blFood, importerOrgId: importer2.id, size: 'TWENTY', arrival: daysAgo(4), stage: 'ARRIVED', customs: true },
+    { number: 'CMAU1234567', bl: blElectronics, importerOrgId: importer1.id, size: 'FORTY', arrival: daysAgo(10), stage: 'GATED_OUT', customs: true, goods: 'Mobile phones & accessories' },
+    { number: 'CMAU7654321', bl: blElectronics, importerOrgId: importer1.id, size: 'TWENTY', arrival: daysAgo(8), stage: 'CLEARED', customs: false, goods: 'LED televisions' },
+    { number: 'CMAU9998887', bl: blElectronics, importerOrgId: importer1.id, size: 'REEFER', arrival: daysAgo(3), stage: 'ARRIVED', customs: false, goods: 'Frozen chicken' },
+    { number: 'CMAU2223334', bl: blElectronics, importerOrgId: importer1.id, size: 'FORTY', arrival: daysAgo(3), stage: 'ARRIVED', customs: true, goods: 'Small kitchen appliances' },
+    { number: 'MSCU4455661', bl: blConstruction, importerOrgId: importer1.id, size: 'FORTY', arrival: daysAgo(9), stage: 'GATED_OUT', customs: true, goods: 'Ceramic floor tiles' },
+    { number: 'MSCU4455662', bl: blConstruction, importerOrgId: importer1.id, size: 'TWENTY', arrival: daysAgo(2), stage: 'ARRIVED', customs: false, goods: 'Cement & mortar mix' },
+    { number: 'MSCU4455663', bl: blConstruction, importerOrgId: importer1.id, size: 'FORTY', arrival: daysAgo(2), stage: 'ARRIVED', customs: false, goods: 'Plumbing fixtures', pendingReview: true },
+    { number: 'MAEU5566771', bl: blFood, importerOrgId: importer2.id, size: 'REEFER', arrival: daysAgo(7), stage: 'RELEASED', customs: true, goods: 'Dairy products (chilled)' },
+    { number: 'MAEU5566772', bl: blFood, importerOrgId: importer2.id, size: 'FORTY', arrival: daysAgo(3), stage: 'ARRIVED', customs: false, goods: 'Rice (50kg bags)' },
+    { number: 'MAEU5566773', bl: blFood, importerOrgId: importer2.id, size: 'TWENTY', arrival: daysAgo(4), stage: 'ARRIVED', customs: true, goods: 'Cooking oil' },
   ];
 
   // Demo shipping lines assigned (in order) to the ARRIVED containers, so their
@@ -578,6 +580,7 @@ async function seedDemoDataset(): Promise<void> {
         blId: p.bl.id,
         containerNumber: p.number,
         sizeType: p.size,
+        goodsDescription: p.goods,
         importerOrgId: p.importerOrgId,
         terminalOrgId: terminalOrg.id,
         arrivalDate: p.arrival,

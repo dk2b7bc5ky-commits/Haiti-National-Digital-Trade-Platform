@@ -313,7 +313,7 @@ export async function seedCargofax(prisma: PrismaClient, routing: CarrierRouting
   const voyages = new Map<string, { id: string; vesselId: string; voyageNumber: string; eta: Date; port: string }>(); // key faxId
   const manifests = new Map<string, { id: string; voyageId: string; faxId: string }>(); // key faxId
   const bols = new Map<string, { id: string; manifestId: string; blNumber: string; shipper: string; importerOrgId: string; description: string }>();
-  const containers: { id: string; blId: string; containerNumber: string; sizeType: ContainerSize; importerOrgId: string; terminalOrgId: string; arrivalDate: Date; carrierKey: string | null }[] = [];
+  const containers: { id: string; blId: string; containerNumber: string; sizeType: ContainerSize; importerOrgId: string; terminalOrgId: string; arrivalDate: Date; carrierKey: string | null; goods: string | null }[] = [];
   const containerSeen = new Set<string>();
 
   const parseDate = (s: string): Date => {
@@ -363,6 +363,8 @@ export async function seedCargofax(prisma: PrismaClient, routing: CarrierRouting
       sizeType: sizeOf(r[HEADER.ctrType] ?? '', r[HEADER.ctrSize] ?? ''),
       importerOrgId, terminalOrgId: terminalPayee.orgId,
       arrivalDate: parseDate(r[HEADER.date]), carrierKey,
+      // The manifest's commodity is exactly "what's in the container".
+      goods: (r[HEADER.commodity] || '').trim().slice(0, 200) || null,
     });
   }
 
@@ -380,7 +382,7 @@ export async function seedCargofax(prisma: PrismaClient, routing: CarrierRouting
   for (const c of chunk(Array.from(bols.values())))
     await prisma.billOfLading.createMany({ data: c.map((b) => ({ id: b.id, manifestId: b.manifestId, blNumber: b.blNumber, shipper: b.shipper, importerOrgId: b.importerOrgId, description: b.description })), skipDuplicates: true });
   for (const c of chunk(containers))
-    await prisma.container.createMany({ data: c.map((ct) => ({ id: ct.id, blId: ct.blId, containerNumber: ct.containerNumber, sizeType: ct.sizeType, importerOrgId: ct.importerOrgId, terminalOrgId: ct.terminalOrgId, arrivalDate: ct.arrivalDate, status: 'ARRIVED' as const })), skipDuplicates: true });
+    await prisma.container.createMany({ data: c.map((ct) => ({ id: ct.id, blId: ct.blId, containerNumber: ct.containerNumber, sizeType: ct.sizeType, importerOrgId: ct.importerOrgId, terminalOrgId: ct.terminalOrgId, arrivalDate: ct.arrivalDate, goodsDescription: ct.goods, status: 'ARRIVED' as const })), skipDuplicates: true });
 
   // ---- Charges: terminal handling + port dues for every container, plus a
   // line charge routed to the carrier's agency (the real "who you pay"). No

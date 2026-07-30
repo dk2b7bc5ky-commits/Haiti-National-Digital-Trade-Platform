@@ -99,6 +99,9 @@ export function toContainerSummary(c: ContainerWithRels): ContainerSummary {
     id: c.id,
     container_number: c.containerNumber,
     size_type: sizeToApi(c.sizeType),
+    // What's inside. Per-container when known, else the bill of lading's cargo
+    // description (which is where manifest-sourced commodity lands).
+    goods: c.goodsDescription ?? c.bl.description ?? null,
     status: containerStatusToApi(c.status),
     importer_org_id: c.importerOrgId,
     terminal_org_id: c.terminalOrgId,

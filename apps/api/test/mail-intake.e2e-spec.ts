@@ -321,6 +321,17 @@ describe('Email intake agent (Phase A2/A3)', () => {
       expect(fromAgent.some((n: { body: string }) => n.body.length > 30)).toBe(true);
     });
 
+    it('records what is inside the container from the email', async () => {
+      const list = await http().get('/api/v1/mail-intake/messages').set(auth(tokens.importer));
+      const notice = list.body.data.find((m: { doc_kind: string }) => m.doc_kind === 'arrival_notice');
+      expect(notice.extracted.goods).toBeTruthy();
+
+      // …and it lands on the container itself, so the Goods column is populated.
+      const detail = await http().get(`/api/v1/containers/${notice.container_id}`).set(auth(tokens.importer));
+      expect(detail.body.data.container.goods).toBeTruthy();
+      expect(detail.body.data.container.goods).toBe(notice.extracted.goods);
+    });
+
     it('only queues money for review — informational mail is filed', async () => {
       const list = await http().get('/api/v1/mail-intake/messages').set(auth(tokens.importer));
       const waiting = list.body.data.filter((m: { status: string }) => m.status === 'NEEDS_REVIEW');

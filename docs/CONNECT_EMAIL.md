@@ -116,7 +116,8 @@ Confirm**. Press **Reject** instead and it removes exactly those charges. Nothin
 else lands in this list, so it stays short.
 
 **Read and filed** — everything else, each with a summary and a "To do" line if
-there is one. A booking confirmation, an ETA change, a release order: read,
+there is one. It also records **what's in the container** when the document says
+so, which shows up in the Goods column on your container list. A booking confirmation, an ETA change, a release order: read,
 summarized, filed, **nothing owed**. Documents that quote rates say *"No charges
 — information only"* right on the card.
 

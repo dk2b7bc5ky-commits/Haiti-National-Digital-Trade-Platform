@@ -6,6 +6,7 @@ import {
   IsIn,
   IsOptional,
   IsString,
+  MaxLength,
   MinLength,
   ValidateNested,
 } from 'class-validator';
@@ -113,4 +114,10 @@ export class QuickAddContainerDto {
   @IsOptional()
   @IsString()
   shipper?: string;
+
+  /** What's inside: "rice", "auto parts", "assorted electronics". */
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  goods?: string;
 }

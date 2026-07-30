@@ -104,7 +104,11 @@ Map each payable line to the single closest type:
 
 Confidence (0.0–1.0): above 0.85 only when both the amount and its meaning are unambiguous. If a line doesn't clearly fit a type, pick the closest and score it below 0.6 so a human reviews it. Never invent a charge.
 
-Also extract the container number and B/L number when present (if a document lists several containers use the first; null if no single number is clear). Amounts are decimal in the document's currency (e.g. 260.00 USD).`;
+Also extract:
+- the container number and B/L number when present (if a document lists several containers use the first; null if no single number is clear);
+- \`goods_description\` — WHAT THE CARGO IS, in the document's own words, short and concrete: "rice", "auto parts", "assorted consumer electronics", "frozen chicken", "construction materials". Use the commodity/description/"marchandise"/"nature de la marchandise" field, the HS-code description, or the packing description. Do NOT put package counts, weights, or container sizes here, and do not guess — return null if the document never says what the goods are.
+
+Amounts are decimal in the document's currency (e.g. 260.00 USD).`;
 
 const TOOL = {
   name: 'record_document',
@@ -125,6 +129,10 @@ const TOOL = {
       language: { type: 'string', description: 'ISO code: fr, en, or ht' },
       container_number: { type: ['string', 'null'] },
       bl_number: { type: ['string', 'null'] },
+      goods_description: {
+        type: ['string', 'null'],
+        description: 'What the cargo is, in the document\'s words. Short and concrete, or null if not stated.',
+      },
       arrival_date: { type: ['string', 'null'], description: 'ISO 8601 date or null' },
       last_free_day: { type: ['string', 'null'], description: 'ISO 8601 date or null' },
       charges: {
@@ -166,6 +174,7 @@ interface ClaudeExtraction {
   language?: string;
   container_number?: string | null;
   bl_number?: string | null;
+  goods_description?: string | null;
   arrival_date?: string | null;
   last_free_day?: string | null;
   charges: ClaudeCharge[];
@@ -248,6 +257,7 @@ export class ClaudeExtractionProvider implements ExtractionProvider {
       rawText: JSON.stringify(parsed, null, 2),
       containerNumber: parsed.container_number ?? input.containerNumberHint ?? null,
       blNumber: parsed.bl_number ?? null,
+      goodsDescription: parsed.goods_description?.trim() || null,
       charges,
       overallConfidence:
         parsed.overall_confidence != null

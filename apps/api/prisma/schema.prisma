@@ -418,6 +418,10 @@ model Container {
   blId            String          @map("bl_id")
   containerNumber String          @unique @map("container_number")
   sizeType        ContainerSize   @map("size_type")
+  /// What is actually inside: "rice", "auto parts", "assorted electronics".
+  /// Set by hand, from the manifest commodity, or by the email agent reading a
+  /// notice. Falls back to the bill of lading's description when unset.
+  goodsDescription String?        @map("goods_description")
   importerOrgId   String          @map("importer_org_id")
   terminalOrgId   String?         @map("terminal_org_id")
   arrivalDate     DateTime?       @map("arrival_date")

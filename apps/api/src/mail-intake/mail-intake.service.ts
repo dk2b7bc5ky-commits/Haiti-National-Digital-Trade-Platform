@@ -458,6 +458,17 @@ export class MailIntakeService {
         containerNumber = resolved.container.containerNumber;
         createdContainer = createdContainer || resolved.created;
 
+        // Learn what's in the box. Only fills a blank — a human's own wording is
+        // never overwritten by a later notice.
+        const goods = extraction.goodsDescription?.trim();
+        if (goods && !resolved.container.goodsDescription) {
+          await this.prisma.container.update({
+            where: { id: resolved.container.id },
+            data: { goodsDescription: goods.slice(0, 500) },
+          });
+          resolved.container.goodsDescription = goods;
+        }
+
         // THE RULE THAT KEEPS BILLING HONEST: only a document that actually
         // demands payment becomes charges. A booking confirmation or rate sheet
         // quotes amounts but owes nothing, so it is filed and summarized and
@@ -556,14 +567,17 @@ export class MailIntakeService {
     extraction: ExtractionResult,
     msg: MailMessage,
     autonomy: MailAutonomy,
-  ): Promise<{ container: { id: string; containerNumber: string; terminalOrgId: string | null } | null; created: boolean }> {
+  ): Promise<{
+    container: { id: string; containerNumber: string; terminalOrgId: string | null; goodsDescription: string | null } | null;
+    created: boolean;
+  }> {
     const fromText = `${msg.subject}\n${msg.bodyText}`.toUpperCase().match(CONTAINER_RE)?.[1] ?? null;
     const number = (extraction.containerNumber ?? fromText)?.trim().toUpperCase() ?? null;
 
     if (number) {
       const hit = await this.prisma.container.findFirst({
         where: { containerNumber: number, importerOrgId: conn.orgId },
-        select: { id: true, containerNumber: true, terminalOrgId: true },
+        select: { id: true, containerNumber: true, terminalOrgId: true, goodsDescription: true },
       });
       if (hit) return { container: hit, created: false };
     }
@@ -573,7 +587,7 @@ export class MailIntakeService {
     if (extraction.blNumber) {
       const bl = await this.prisma.billOfLading.findFirst({
         where: { blNumber: extraction.blNumber.trim(), importerOrgId: conn.orgId },
-        select: { containers: { select: { id: true, containerNumber: true, terminalOrgId: true }, take: 1 } },
+        select: { containers: { select: { id: true, containerNumber: true, terminalOrgId: true, goodsDescription: true }, take: 1 } },
       });
       if (bl?.containers?.[0]) return { container: bl.containers[0], created: false };
     }
@@ -608,12 +622,13 @@ export class MailIntakeService {
       bl_number: extraction.blNumber?.trim() || undefined,
       arrival_date: firstDateIso(extraction) ?? undefined,
       vessel_name: guessVessel(extraction.rawText, msg.bodyText) ?? undefined,
+      goods: extraction.goodsDescription?.trim() || undefined,
     };
     const detail = await this.containers.quickAdd(principal, dto);
 
     const created = await this.prisma.container.findUnique({
       where: { id: detail.container.id },
-      select: { id: true, containerNumber: true, terminalOrgId: true },
+      select: { id: true, containerNumber: true, terminalOrgId: true, goodsDescription: true },
     });
     return created ? { container: created, created: true } : { container: null, created: false };
   }
@@ -837,6 +852,7 @@ export class MailIntakeService {
     return {
       container_number: containerNumber ?? extraction?.containerNumber ?? null,
       bl_number: extraction?.blNumber ?? null,
+      goods: extraction?.goodsDescription ?? null,
       doc_type: extraction?.docType ?? null,
       language: extraction?.language ?? null,
       container_created: containerCreated,
