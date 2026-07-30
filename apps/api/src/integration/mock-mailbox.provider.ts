@@ -25,6 +25,23 @@ CHARGES / FRAIS
 Reglement a: AGENCE MARITIME DEMO S.A.
 `;
 
+const BOOKING_BODY = `E-BOOKING CONFIRMATION
+
+Booking No: BKG-2026-55120
+Shipper: ALIZE IMPORTS SA
+Vessel / Voyage: MV DEMO CARRIER / 027W
+Port of Loading: MIAMI      Port of Discharge: PORT-AU-PRINCE
+Equipment: 1 x 40HC
+Cargo cut-off: 2026-08-04    ETD: 2026-08-06
+
+AGREED RATES (for reference — this is a booking confirmation, not an invoice)
+  Ocean freight ................................ USD 2,450.00
+  Bunker adjustment factor ..................... USD   310.00
+  Documentation fee ............................ USD    65.00
+
+Please submit shipping instructions before the cargo cut-off.
+`;
+
 export class MockMailboxProvider implements MailboxProvider {
   /** No credential needed — this is the demo inbox. */
   readonly requiresCredential = false;
@@ -82,6 +99,18 @@ export class MockMailboxProvider implements MailboxProvider {
         bodyText: NOTICE_BODY.replace('DEMU1234567', 'MEDU7654321')
           .replace('DEMOBL0001234', 'DEMOBL0009999')
           .replace('40HC', '20GP'),
+        attachments: [],
+      },
+      // A booking confirmation: full of amounts, but NOT a bill. Proves the
+      // agent files and summarizes it without inventing anything owed.
+      {
+        messageId: '<demo-booking-4@example.invalid>',
+        uid: 4,
+        fromAddress: 'bookings@demsa.example',
+        fromName: 'DEMSA Bookings',
+        subject: 'E-Booking Confirmation — BKG-2026-55120',
+        receivedAt: new Date('2026-07-21T11:40:00.000Z'),
+        bodyText: BOOKING_BODY,
         attachments: [],
       },
     ];

@@ -19,6 +19,28 @@ export class MockExtractionProvider implements ExtractionProvider {
   constructor(private readonly config: MarketConfigService) {}
 
   async extract(input: ExtractionInput): Promise<ExtractionResult> {
+    // Booking confirmations quote rates but bill nothing. The mock recognizes
+    // them too, so the "information only, no charges" path is demonstrable
+    // without an API key.
+    const text = `${input.fileName}\n${input.bytes.toString('utf-8').slice(0, 4000)}`.toLowerCase();
+    if (/booking|e-?book|reservation|réservation|quote|devis|tarif/.test(text)) {
+      return {
+        docType: 'booking_confirmation',
+        kind: 'booking_confirmation',
+        demandsPayment: false,
+        summary:
+          'Booking confirmation for an upcoming shipment. It lists the agreed freight rate and surcharges for reference — it is not a bill.',
+        actionRequired: null,
+        dueDateIso: null,
+        language: 'en',
+        rawText: `BOOKING CONFIRMATION (mock)\nDocument: ${input.fileName}\nRates quoted for reference only.`,
+        containerNumber: input.containerNumberHint ?? null,
+        blNumber: null,
+        charges: [], // deliberately none — a booking is not a demand for payment
+        overallConfidence: 0.93,
+      };
+    }
+
     const handling = await this.config.terminalHandling('FORTY');
     const storage = await this.config.storagePerDay('FORTY');
     const currency = handling.currency;
@@ -44,6 +66,12 @@ export class MockExtractionProvider implements ExtractionProvider {
 
     return {
       docType: 'terminal_invoice',
+      kind: 'arrival_notice',
+      demandsPayment: true,
+      summary:
+        'Arrival notice with terminal handling, demurrage and storage charges collectable before the container can be released.',
+      actionRequired: 'Confirm the amounts, then settle them before the last free day.',
+      dueDateIso: lfdIso,
       language: 'fr',
       rawText,
       containerNumber: input.containerNumberHint ?? null,

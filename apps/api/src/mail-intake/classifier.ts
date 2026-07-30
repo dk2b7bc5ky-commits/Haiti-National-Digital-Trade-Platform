@@ -1,15 +1,21 @@
 /**
- * Arrival-notice classifier — the guardrail from ALIZE_AGENT_SCOPE §5.
+ * Relevance filter — the cheap first pass from ALIZE_AGENT_SCOPE §5.
  *
- * `traffic@` is a live human inbox: supplier threads, tax mail to the
- * accountant, newsletters. The agent must act ONLY on shipping arrival notices
- * and port/agency bills and leave everything else untouched. This is
- * intentionally rule-based (free, instant, auditable) rather than an LLM call —
- * we don't want to spend a model call, or take extraction risk, on every piece
- * of mail that lands.
+ * `traffic@` is a live human inbox: agency mail, supplier threads, tax mail to
+ * the accountant, newsletters. This decides only ONE thing: is this piece of
+ * mail plausibly about moving goods, and therefore worth spending a model call
+ * on? It is rule-based (free, instant, auditable) precisely because it runs on
+ * every message that lands.
  *
- * It is a *gate*, not the reader. Passing here only earns a message the right to
- * be read by the extractor, which applies its own per-field confidence.
+ * It is deliberately BROAD. Arrival notices, invoices, booking confirmations,
+ * release orders, customs paperwork, delay notices, and ordinary shipment
+ * correspondence should all get through — the reader then classifies what each
+ * one actually is and, crucially, whether it demands payment. Being too strict
+ * here is how a real notice gets silently skipped.
+ *
+ * What it does keep out is mail with no bearing on trade at all: newsletters,
+ * recruitment, password resets, calendar spam. The reader has the final say and
+ * can still mark something `not_relevant` after looking.
  */
 
 /** Haitian line agents / terminals / carriers that send notices and bills. */
@@ -22,11 +28,30 @@ const KNOWN_SENDER_FRAGMENTS = [
   'terminalvarreux', 'apn', 'douane', 'agd',
 ];
 
-/** Subject / body cues, FR + EN + HT. Weighted: strong cues alone can pass. */
+/**
+ * Phrases that on their own identify operational shipping mail. Widened well
+ * beyond arrival notices: a booking confirmation or an invoice is just as much
+ * something the agent should read and file.
+ */
 const STRONG_SUBJECT_CUES = [
+  // Arrival
   'arrival notice', "avis d'arrivee", "avis d'arrivée", 'avis darrivee',
   'notice of arrival', 'preavis', 'préavis', 'avi darive',
   'notice d arrivee', 'cargo arrival', 'nota de llegada',
+  // Booking / documentation
+  'booking confirmation', 'booking confirmed', 'e-booking', 'ebooking',
+  'confirmation de réservation', 'confirmation de reservation', 'booking request',
+  'shipping instruction', 'instructions de chargement', 'draft b/l', 'draft bl',
+  'bill of lading', 'connaissement', 'telex release', 'original b/l',
+  // Money
+  'invoice', 'facture', 'statement of account', 'relevé de compte',
+  'releve de compte', 'proforma', 'debit note', 'note de débit',
+  // Release / customs
+  'release order', 'bon de sortie', 'delivery order', 'gate release',
+  'customs clearance', 'dédouanement', 'dedouanement', 'declaration en douane',
+  // Schedule
+  'vessel delay', 'eta update', 'schedule change', 'blank sailing',
+  'retard du navire', 'changement eta', 'roll over', 'rollover',
 ];
 
 const SUPPORTING_CUES = [
@@ -36,7 +61,14 @@ const SUPPORTING_CUES = [
   'demurrage', 'surestarie', 'detention', 'storage', 'entreposage',
   'terminal handling', 'thc', 'manutention', 'port dues', 'droits de port',
   'facture', 'invoice', 'frais', 'charges', 'agency fee', "frais d'agence",
-  'apn', 'agd', 'douane', 'customs', 'eta', 'discharge', 'déchargement',
+  'apn', 'agd', 'douane', 'customs', 'eta', 'etd', 'discharge', 'déchargement',
+  // Wider shipment vocabulary — these are what ordinary agency threads use.
+  'shipment', 'cargaison', 'expédition', 'expedition', 'booking', 'réservation',
+  'freight', 'fret', 'consignee', 'destinataire', 'shipper', 'expéditeur',
+  'port-au-prince', 'cap-haitien', 'cap-haïtien', 'terminal', 'quai', 'berth',
+  'seal number', 'plomb', 'manifest', 'manifeste', 'cut-off', 'cutoff',
+  'pickup', 'ramassage', 'delivery', 'livraison', 'clearance', 'mainlevée',
+  'tracking', 'suivi', 'transit', 'transbordement', 'transshipment',
 ];
 
 /** If any of these dominate, it is not operational mail — never act on it. */
@@ -70,9 +102,11 @@ const countHits = (haystack: string, needles: string[]): string[] =>
   needles.filter((n) => haystack.includes(n));
 
 /**
- * Decides whether a message looks like an arrival notice or a port/agency bill.
- * Deliberately conservative: when in doubt, skip. A missed notice costs one
- * manual entry; a false accept writes a wrong bill onto a real container.
+ * Decides whether a message is plausibly about moving goods, and so worth
+ * reading. Leans towards reading: a false accept costs one model call and gets
+ * filed as `not_relevant`, whereas a false skip means a real notice is silently
+ * missed. The decision about whether anything becomes MONEY is made later, by
+ * the reader's `demandsPayment` — not here.
  */
 export function classifyMessage(input: ClassifierInput): Classification {
   const subject = (input.subject ?? '').toLowerCase();
@@ -114,19 +148,19 @@ export function classifyMessage(input: ClassifierInput): Classification {
   if (hasDoc) why.push('has a document attached');
   if (supporting.length > 0) why.push(`${supporting.length} shipping term(s)`);
 
-  // Accept on an explicit arrival-notice phrase, or on a combination that is
-  // unambiguous: a container number plus real shipping vocabulary.
+  // Accept generously — the reader decides what each one actually is.
   const accept =
-    strong.length > 0 ||
-    strongBody.length > 0 ||
-    (hasContainerNumber && supporting.length >= 2) ||
-    (senderKnown && hasDoc && supporting.length >= 3);
+    strong.length > 0 ||              // an unambiguous operational subject
+    strongBody.length > 0 ||          // …or the same phrase in the body
+    hasContainerNumber ||             // a real container number is decisive
+    (senderKnown && supporting.length >= 1) || // known agent talking shop
+    supporting.length >= 3;           // or clearly shipment vocabulary
 
   return {
     accept,
     reason: accept
       ? `Read because ${why.join(', ')}.`
-      : `Skipped — not enough signal that this is an arrival notice${why.length ? ` (only: ${why.join(', ')})` : ''}.`,
+      : `Skipped — nothing to suggest this is about a shipment${why.length ? ` (only: ${why.join(', ')})` : ''}.`,
     score,
   };
 }

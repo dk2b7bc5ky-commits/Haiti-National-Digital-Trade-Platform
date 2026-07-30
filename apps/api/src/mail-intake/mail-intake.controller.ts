@@ -96,6 +96,14 @@ export class MailIntakeController {
       received_at: m.receivedAt.toISOString(),
       status: m.status,
       classification: m.classification,
+      /** What the reader decided this is (arrival_notice, invoice, booking_confirmation…). */
+      doc_kind: m.docKind,
+      /** True only when the mail actually demanded payment. */
+      demands_payment: m.demandsPayment,
+      /** Plain-language summary of what it says. */
+      summary: m.summary,
+      /** The one thing to do about it, or null. */
+      action_required: m.actionRequired,
       attachment_count: m.attachmentCount,
       confidence: m.confidence,
       container_id: m.containerId,

@@ -175,6 +175,8 @@ enum NotificationType {
   TRUCKING_JOB_OFFERED
   TRUCKING_JOB_ACCEPTED
   TRUCKING_JOB_DELIVERED
+  /// The email agent read something: a plain-language summary + what to do.
+  EMAIL_SUMMARY
 }
 
 /// Notification urgency, drives the Alerts grouping + colors (spec §6c).
@@ -912,6 +914,16 @@ model MailIntakeMessage {
   status               MailIntakeStatus @default(PENDING)
   /// Why the classifier accepted or skipped it (shown in the review UI).
   classification       String?
+  /// What the reader decided this is: arrival_notice, invoice,
+  /// booking_confirmation, release_order, … (see integration/DocumentKind).
+  docKind              String?          @map("doc_kind")
+  /// TRUE only when the mail actually demanded payment. Charges are written
+  /// only in that case — a booking confirmation quotes rates but bills nothing.
+  demandsPayment       Boolean          @default(false) @map("demands_payment")
+  /// Plain-language summary of the mail, in its own language.
+  summary              String?
+  /// The one thing the human has to do about it, if anything.
+  actionRequired       String?          @map("action_required")
   attachmentCount      Int              @default(0) @map("attachment_count")
   /// What the reader pulled out, for display + correction. Data only.
   extracted            Json?

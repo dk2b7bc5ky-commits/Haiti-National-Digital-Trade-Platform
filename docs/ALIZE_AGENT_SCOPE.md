@@ -333,6 +333,41 @@ live one — the single most confusing thing about the first cut. The connection
 payload now carries `using_demo_inbox` and the test result carries `demo`, and the
 UI shows an unmistakable banner instead of a green tick.
 
+**Document kinds, and the payable/informational split (the organizing idea).**
+The first cut asked the reader to "extract payable charges from this arrival
+notice", so given a booking confirmation it dutifully found charges — the
+importer saw phantom "you owe" lines for shipments nobody had billed them for.
+The reader now does three things instead of one:
+
+1. **Classifies** the document — `arrival_notice`, `invoice`,
+   `booking_confirmation`, `release_order`, `customs_document`,
+   `schedule_change`, `statement`, `correspondence`, `not_relevant`.
+2. **Decides whether it demands payment now.** Bookings, quotes, rate sheets and
+   demurrage tariff tables are explicitly FALSE even though they carry amounts;
+   so is anything prepaid, estimated, or that the reader isn't sure about. The
+   rule is stated in the prompt *and* enforced in code (`CAN_DEMAND_PAYMENT`), so
+   a kind that is never a bill cannot produce charges whatever the model returns.
+3. **Summarizes** it in its own language and states the single action required.
+
+`MailIntakeService` then routes on that: charges are written **only** when
+`demandsPayment` is true, and every message — payable or not — raises an
+`EMAIL_SUMMARY` notification carrying the summary and the to-do, so the Alerts
+page tells the operator where a shipment stands without opening the mailbox.
+
+Because only money needs a decision, **only money goes to NEEDS_REVIEW**.
+Informational mail is `PROCESSED` (read, summarized, filed), which keeps
+"Waiting for you" a short list of real choices. The web screen mirrors this
+exactly: *Waiting for you* / *Read and filed* / *Skipped*, with a kind badge, the
+summary, the to-do, and an explicit "No charges — information only" note on
+anything that quoted amounts without billing them.
+
+**Relevance filter widened.** With the reader now judging intent, the cheap
+pre-filter no longer needs to be a narrow arrival-notice gate — it accepts any
+plausibly shipment-related mail (bookings, releases, customs, schedules, ordinary
+agency threads) and only screens out mail with no bearing on trade. A false
+accept costs one model call and is filed `not_relevant`; a false skip loses a
+real notice, which is the worse error.
+
 **Still to build:** Phase A4 (tuning thresholds and sender rules against real
 volume, then graduating autonomy), OAuth2 as an alternative to the App Password,
 OCR for scanned-image notices, and the `mateo@` purchase-confirmation inbox

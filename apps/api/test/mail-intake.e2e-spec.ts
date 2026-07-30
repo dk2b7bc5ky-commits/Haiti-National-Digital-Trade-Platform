@@ -10,10 +10,11 @@ import { PrismaService } from '../src/prisma/prisma.service';
  * Phase A2/A3 — the email-intake agent.
  *
  * Runs against the MockMailboxProvider (wired whenever no mailbox password is
- * present), whose demo inbox holds two arrival notices and one newsletter. That
- * gives a deterministic assertion that the agent reads the notices, ignores the
- * noise, creates the containers, holds the money for review, that Confirm/Reject
- * do exactly what they claim, and that the backfill can reach history a normal
+ * present). Its demo inbox holds two arrival notices, a booking confirmation and
+ * a newsletter — enough to pin down the behaviour that matters: the notices
+ * become charges held for review, the booking confirmation is summarized but
+ * bills NOTHING despite quoting rates, the newsletter is skipped, Confirm/Reject
+ * do exactly what they claim, and the backfill reaches history a normal
  * forward-only check would skip.
  */
 describe('Email intake agent (Phase A2/A3)', () => {
@@ -112,12 +113,13 @@ describe('Email intake agent (Phase A2/A3)', () => {
   });
 
   it('reads the arrival notice, ignores the newsletter, and creates the container', async () => {
-    // The demo inbox holds two arrival notices and one newsletter.
+    // Demo inbox: two arrival notices, one booking confirmation, one newsletter.
     const run = await http().post('/api/v1/mail-intake/run').set(auth(tokens.importer)).send({});
     expect(run.status).toBe(200);
-    expect(run.body.data.checked).toBe(3);
+    expect(run.body.data.checked).toBe(4);
     expect(run.body.data.ignored).toBe(1);      // the newsletter
-    expect(run.body.data.needsReview).toBe(2);  // both notices, held for review
+    expect(run.body.data.needsReview).toBe(2);  // the two notices — money to confirm
+    expect(run.body.data.processed).toBe(1);    // the booking — filed, nothing owed
     expect(run.body.data.failed).toBe(0);
 
     const list = await http().get('/api/v1/mail-intake/messages').set(auth(tokens.importer));
@@ -258,6 +260,72 @@ describe('Email intake agent (Phase A2/A3)', () => {
     it('rejects an out-of-range window', async () => {
       const bad = await http().post('/api/v1/mail-intake/backfill').set(auth(tokens.importer)).send({ days: 5000 });
       expect(bad.status).toBe(400);
+    });
+  });
+
+  // -- The distinction that keeps billing honest. ---------------------------
+  describe('what becomes money vs what is just filed', () => {
+    // The backfill block above clears the ledger before each of its cases, so
+    // establish a full read of the demo inbox for this block to assert against.
+    beforeAll(async () => {
+      const org = (await http().get('/api/v1/auth/me').set(auth(tokens.importer))).body.data.org.id;
+      await prisma.mailIntakeMessage.deleteMany({ where: { orgId: org } });
+      await prisma.mailboxConnection.updateMany({ where: { orgId: org }, data: { lastUid: null } });
+      const run = await http().post('/api/v1/mail-intake/run').set(auth(tokens.importer)).send({});
+      expect(run.body.data.checked).toBe(4);
+    });
+
+    it('does NOT create charges from a booking confirmation, even though it quotes amounts', async () => {
+      const list = await http().get('/api/v1/mail-intake/messages').set(auth(tokens.importer));
+      const booking = list.body.data.find((m: { subject: string }) => /booking/i.test(m.subject));
+      expect(booking).toBeTruthy();
+
+      expect(booking.doc_kind).toBe('booking_confirmation');
+      // The whole point: rates were quoted, nothing is owed.
+      expect(booking.demands_payment).toBe(false);
+      expect(booking.extracted.charges).toHaveLength(0);
+      expect(booking.extracted.charges_created).toBe(0);
+      // It is filed, not queued for a decision.
+      expect(booking.status).toBe('PROCESSED');
+
+      // And no charge anywhere traces back to it.
+      if (booking.container_id) {
+        const detail = await http().get(`/api/v1/containers/${booking.container_id}`).set(auth(tokens.importer));
+        const fromBooking = detail.body.data.charges.filter((c: { amount: number }) =>
+          [245000, 31000, 6500].includes(c.amount), // the quoted freight/BAF/doc figures
+        );
+        expect(fromBooking).toHaveLength(0);
+      }
+    });
+
+    it('summarizes every email it reads and says what to do', async () => {
+      const list = await http().get('/api/v1/mail-intake/messages').set(auth(tokens.importer));
+      const read = list.body.data.filter((m: { status: string }) => m.status !== 'IGNORED');
+      expect(read.length).toBeGreaterThan(0);
+      for (const m of read) {
+        expect(typeof m.summary).toBe('string');
+        expect(m.summary.length).toBeGreaterThan(10);
+        expect(m.doc_kind).toBeTruthy();
+      }
+      // A bill tells you to do something; a booking confirmation needn't.
+      const notice = read.find((m: { doc_kind: string }) => m.doc_kind === 'arrival_notice');
+      expect(notice.action_required).toBeTruthy();
+    });
+
+    it('puts a plain-language summary on the alerts page', async () => {
+      const alerts = await http().get('/api/v1/notifications?limit=50').set(auth(tokens.importer));
+      expect(alerts.status).toBe(200);
+      const fromAgent = alerts.body.data.filter((n: { type: string }) => n.type === 'email_summary');
+      expect(fromAgent.length).toBeGreaterThan(0);
+      // The alert body carries the summary, not a generic template line.
+      expect(fromAgent.some((n: { body: string }) => n.body.length > 30)).toBe(true);
+    });
+
+    it('only queues money for review — informational mail is filed', async () => {
+      const list = await http().get('/api/v1/mail-intake/messages').set(auth(tokens.importer));
+      const waiting = list.body.data.filter((m: { status: string }) => m.status === 'NEEDS_REVIEW');
+      // Everything waiting on a human is waiting because of money.
+      for (const m of waiting) expect(m.demands_payment).toBe(true);
     });
   });
 

@@ -102,8 +102,11 @@ export default function AgentPage() {
 
   if (!ready || !auth) return <Loading />;
   const canManage = auth.permissions.includes('mail_intake:manage');
+  // Only money waits for a human. Everything else is filed with a summary, so
+  // "waiting for you" stays a short list of real decisions.
   const pending = (msgs ?? []).filter((m) => m.status === 'NEEDS_REVIEW');
-  const rest = (msgs ?? []).filter((m) => m.status !== 'NEEDS_REVIEW');
+  const filed = (msgs ?? []).filter((m) => ['PROCESSED', 'CONFIRMED'].includes(m.status));
+  const skipped = (msgs ?? []).filter((m) => ['IGNORED', 'REJECTED', 'FAILED', 'PENDING'].includes(m.status));
 
   return (
     <Chrome auth={auth}>
@@ -180,8 +183,9 @@ export default function AgentPage() {
         </div>
       )}
 
-      {/* Needs review — the queue that matters. */}
+      {/* 1. Money to confirm — the only thing that needs a decision. */}
       <h2 className="mt-8 text-lg font-semibold">{t('agent.needsReview')}</h2>
+      <p className="text-sm text-slate-500">{t('agent.needsReviewHint')}</p>
       <div className="mt-3 space-y-3">
         {pending.length === 0 && (
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -193,16 +197,32 @@ export default function AgentPage() {
         ))}
       </div>
 
-      {/* Everything else the agent has seen — the audit view. */}
-      {rest.length > 0 && (
+      {/* 2. Read and filed — summaries, nothing owed. */}
+      {filed.length > 0 && (
         <>
-          <h2 className="mt-8 text-lg font-semibold">{t('agent.history')}</h2>
-          <div className="mt-3 space-y-2">
-            {rest.map((m) => (
-              <MessageCard key={m.id} msg={m} token={token} canManage={canManage} onDone={load} compact />
+          <h2 className="mt-8 text-lg font-semibold">{t('agent.filed')}</h2>
+          <p className="text-sm text-slate-500">{t('agent.filedHint')}</p>
+          <div className="mt-3 space-y-3">
+            {filed.map((m) => (
+              <MessageCard key={m.id} msg={m} token={token} canManage={canManage} onDone={load} />
             ))}
           </div>
         </>
+      )}
+
+      {/* 3. Skipped — the audit trail, collapsed by default. */}
+      {skipped.length > 0 && (
+        <details className="mt-8">
+          <summary className="cursor-pointer text-lg font-semibold">
+            {t('agent.skipped', { n: String(skipped.length) })}
+          </summary>
+          <p className="mt-1 text-sm text-slate-500">{t('agent.skippedHint')}</p>
+          <div className="mt-3 space-y-2">
+            {skipped.map((m) => (
+              <MessageCard key={m.id} msg={m} token={token} canManage={canManage} onDone={load} compact />
+            ))}
+          </div>
+        </details>
       )}
     </Chrome>
   );
@@ -371,6 +391,19 @@ function ConnectionCard({
   );
 }
 
+/** Tint per document kind, so the list is scannable at a glance. */
+const KIND_STYLE: Record<string, string> = {
+  arrival_notice: 'bg-sky-100 text-sky-900',
+  invoice: 'bg-rose-100 text-rose-900',
+  statement: 'bg-rose-100 text-rose-900',
+  booking_confirmation: 'bg-violet-100 text-violet-900',
+  release_order: 'bg-emerald-100 text-emerald-900',
+  customs_document: 'bg-amber-100 text-amber-900',
+  schedule_change: 'bg-slate-100 text-slate-700',
+  correspondence: 'bg-slate-100 text-slate-700',
+  not_relevant: 'bg-slate-100 text-slate-500',
+};
+
 const STATUS_STYLE: Record<string, string> = {
   NEEDS_REVIEW: 'bg-amber-100 text-amber-900',
   CONFIRMED: 'bg-emerald-100 text-emerald-800',
@@ -410,7 +443,14 @@ function MessageCard({
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-slate-800">{msg.subject}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            {msg.doc_kind && (
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${KIND_STYLE[msg.doc_kind] ?? 'bg-slate-100 text-slate-700'}`}>
+                {t(`agent.kind.${msg.doc_kind}`)}
+              </span>
+            )}
+            <p className="truncate text-sm font-semibold text-slate-800">{msg.subject}</p>
+          </div>
           <p className="mt-0.5 text-xs text-slate-500">
             {msg.from_address} · {new Date(msg.received_at).toLocaleString()}
             {msg.attachment_count > 0 && ` · ${t('agent.attachments', { n: String(msg.attachment_count) })}`}
@@ -421,13 +461,31 @@ function MessageCard({
         </span>
       </div>
 
-      {/* Why the agent acted or skipped — keeps it honest and debuggable. */}
+      {/* The summary is the point of the whole screen: what this email says,
+          in plain language, without opening the mailbox. */}
+      {msg.summary && <p className="mt-2 text-sm text-slate-700">{msg.summary}</p>}
+
+      {/* What to do about it. */}
+      {msg.action_required && (
+        <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <strong>{t('agent.toDo')}</strong> {msg.action_required}
+        </p>
+      )}
+
+      {/* Say plainly when a document with amounts on it owes nothing — this is
+          what stops a booking confirmation reading like a bill. */}
+      {!compact && msg.doc_kind && msg.doc_kind !== 'not_relevant' && !msg.demands_payment && (
+        <p className="mt-2 text-xs font-medium text-slate-500">{t('agent.noChargesNote')}</p>
+      )}
+
+      {/* Why the agent read or skipped it — keeps it honest and debuggable. */}
       {msg.classification && !compact && (
-        <p className="mt-2 text-xs italic text-slate-500">{msg.classification}</p>
+        <p className="mt-2 text-xs italic text-slate-400">{msg.classification}</p>
       )}
       {msg.error && <p className="mt-2 text-xs text-red-600">{msg.error}</p>}
 
-      {/* What it read. */}
+      {/* The extracted detail. Charges only ever appear when the document was a
+          genuine demand for payment. */}
       {ex && !compact && (
         <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
           <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-600">
@@ -448,7 +506,7 @@ function MessageCard({
             {msg.confidence != null && <span>{t('agent.confidence')}: {Math.round(msg.confidence * 100)}%</span>}
           </div>
 
-          {ex.charges.length > 0 && (
+          {msg.demands_payment && ex.charges.length > 0 && (
             <table className="mt-3 w-full text-xs">
               <thead>
                 <tr className="text-left text-slate-500">

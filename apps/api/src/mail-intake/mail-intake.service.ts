@@ -46,6 +46,18 @@ const FIRST_SYNC_DAYS = Number(process.env.MAIL_INTAKE_FIRST_SYNC_DAYS ?? '14');
  * timeout. The caller repeats until `remaining` hits zero.
  */
 const BACKFILL_BATCH = Number(process.env.MAIL_INTAKE_BACKFILL_BATCH ?? '8');
+/** Human-readable names for the reader's document kinds (alert titles). */
+const KIND_LABEL: Record<string, string> = {
+  arrival_notice: 'Arrival notice',
+  invoice: 'Invoice',
+  booking_confirmation: 'Booking confirmation',
+  release_order: 'Release order',
+  customs_document: 'Customs document',
+  schedule_change: 'Schedule change',
+  statement: 'Account statement',
+  correspondence: 'Message',
+};
+
 /** ISO 6346 container number. */
 const CONTAINER_RE = /\b([A-Z]{4}\d{7})\b/;
 
@@ -410,25 +422,33 @@ export class MailIntakeService {
     let createdContainer = false;
 
     for (const item of readables) {
+      const extraction = await this.extractor.extract({
+        fileName: item.fileName,
+        contentType: item.contentType,
+        bytes: item.bytes,
+      });
+
+      // The reader gets the final say on relevance: the cheap classifier only
+      // decides what is worth reading, not what is worth filing.
+      if (extraction.kind === 'not_relevant') continue;
+
+      // Keep whichever attachment told us the most. A bill outranks a covering
+      // note even when the note reads more confidently.
+      const score = extraction.overallConfidence + (extraction.demandsPayment ? 1 : 0);
+      if (score >= bestConfidence) {
+        bestConfidence = score;
+        bestExtraction = extraction;
+      }
+
       const doc = await this.documents.createEmailDocument({
         orgId: conn.orgId,
         containerId: null,
         fileName: item.fileName,
         contentType: item.contentType,
         bytes: item.bytes,
-        docTypeHint: 'other',
+        docTypeHint: extraction.docType,
       });
       documentIds.push(doc.id);
-
-      const extraction = await this.extractor.extract({
-        fileName: item.fileName,
-        contentType: item.contentType,
-        bytes: item.bytes,
-      });
-      if (extraction.overallConfidence >= bestConfidence) {
-        bestConfidence = extraction.overallConfidence;
-        bestExtraction = extraction;
-      }
 
       // ---- Match the container: extracted number, then the subject/body, then
       // by B/L. If nothing matches we may create it (see autonomy below). ----
@@ -438,31 +458,58 @@ export class MailIntakeService {
         containerNumber = resolved.container.containerNumber;
         createdContainer = createdContainer || resolved.created;
 
-        // Below AUTO_ALL, hold every amount for human confirmation.
-        const holdAllForReview = autonomy !== 'AUTO_ALL';
-        const ingest = await this.documents.ingestExtraction(doc.id, resolved.container, extraction, { holdAllForReview });
-        totalCharges += ingest.created;
-        totalTasks += ingest.tasks;
-        chargeIds.push(...ingest.chargeIds);
-        await this.documents.finalizeEmailDocument(doc.id, resolved.container.id, extraction, ingest.tasks);
+        // THE RULE THAT KEEPS BILLING HONEST: only a document that actually
+        // demands payment becomes charges. A booking confirmation or rate sheet
+        // quotes amounts but owes nothing, so it is filed and summarized and
+        // never appears as money due.
+        if (extraction.demandsPayment && extraction.charges.length > 0) {
+          const holdAllForReview = autonomy !== 'AUTO_ALL';
+          const ingest = await this.documents.ingestExtraction(doc.id, resolved.container, extraction, { holdAllForReview });
+          totalCharges += ingest.created;
+          totalTasks += ingest.tasks;
+          chargeIds.push(...ingest.chargeIds);
+          await this.documents.finalizeEmailDocument(doc.id, resolved.container.id, extraction, ingest.tasks);
+        } else {
+          await this.documents.finalizeEmailDocument(doc.id, resolved.container.id, extraction, 0);
+        }
       } else {
         await this.documents.finalizeEmailDocument(doc.id, null, extraction, 0);
       }
     }
 
-    // REVIEW_ALL keeps even the container itself pending, so status reflects
-    // "a human still has to look at this".
-    const needsReview =
-      autonomy === 'REVIEW_ALL' || autonomy === 'AUTO_CONTAINER' || totalTasks > 0 || !containerId;
-    const status: MailIntakeStatus = needsReview ? 'NEEDS_REVIEW' : 'PROCESSED';
+    // Nothing in the message turned out to be about importing after all.
+    if (!bestExtraction) {
+      await this.upsertIntake(already?.id, {
+        ...base,
+        status: 'IGNORED',
+        classification: `${verdict.reason} Read it, but it turned out not to be about a shipment.`,
+        processedAt: new Date(),
+      });
+      return 'IGNORED';
+    }
+
+    const summary = bestExtraction.summary || null;
+    const actionRequired = bestExtraction.actionRequired;
+    const demandsPayment = bestExtraction.demandsPayment && totalCharges > 0;
+
+    // ONLY money waits for a human. Informational mail is filed and summarized,
+    // so "waiting for you" stays a short list of real decisions instead of a
+    // pile of things to acknowledge.
+    const status: MailIntakeStatus = totalTasks > 0 || (demandsPayment && autonomy !== 'AUTO_ALL')
+      ? 'NEEDS_REVIEW'
+      : 'PROCESSED';
 
     await this.upsertIntake(already?.id, {
       ...base,
       status,
+      docKind: bestExtraction.kind,
+      demandsPayment,
+      summary,
+      actionRequired,
       containerId,
       documentIds,
       chargeIds,
-      confidence: bestConfidence,
+      confidence: Math.min(1, bestExtraction.overallConfidence),
       extracted: this.summarizeExtraction(bestExtraction, containerNumber, totalCharges, createdContainer) as Prisma.InputJsonValue,
       processedAt: new Date(),
       error: null,
@@ -474,25 +521,25 @@ export class MailIntakeService {
       entity: 'MailIntakeMessage',
       entityId: msg.messageId,
       after: {
-        from: msg.fromAddress, subject: msg.subject, container_id: containerId,
+        from: msg.fromAddress, subject: msg.subject, kind: bestExtraction.kind,
+        demands_payment: demandsPayment, container_id: containerId,
         container_created: createdContainer, charges_created: totalCharges,
         charges_held_for_review: totalTasks, autonomy, status,
       },
     });
 
-    if (containerId) {
-      await this.notifications.notify({
-        type: 'CHARGE_ADDED',
-        severity: needsReview ? 'SOON' : 'INFO',
-        orgId: conn.orgId,
-        containerId,
-        title: createdContainer ? `New container ${containerNumber} from email` : `Arrival notice read for ${containerNumber}`,
-        body: needsReview
-          ? `The agent read an arrival notice from ${msg.fromAddress} and prepared ${totalCharges} charge(s). Confirm them to make them payable.`
-          : `The agent read an arrival notice from ${msg.fromAddress} and added ${totalCharges} charge(s).`,
-        deepLink: '/dashboard/agent',
-      });
-    }
+    await this.raiseAlert(conn, msg, {
+      kind: bestExtraction.kind,
+      summary,
+      actionRequired,
+      containerId,
+      containerNumber,
+      createdContainer,
+      chargesCreated: totalCharges,
+      needsConfirm: status === 'NEEDS_REVIEW',
+      dueDateIso: bestExtraction.dueDateIso ?? null,
+    });
+
     return status;
   }
 
@@ -569,6 +616,67 @@ export class MailIntakeService {
       select: { id: true, containerNumber: true, terminalOrgId: true },
     });
     return created ? { container: created, created: true } : { container: null, created: false };
+  }
+
+
+  /**
+   * Put a plain-language summary of the email on the Alerts page: what arrived,
+   * what it says, and what the human has to do. This is the agent's main output
+   * for anything that isn't money — the point being that reading the alert is
+   * enough to know where a shipment stands without opening the mailbox.
+   */
+  private async raiseAlert(
+    conn: MailboxConnection,
+    msg: MailMessage,
+    info: {
+      kind: string;
+      summary: string | null;
+      actionRequired: string | null;
+      containerId: string | null;
+      containerNumber: string | null;
+      createdContainer: boolean;
+      chargesCreated: number;
+      needsConfirm: boolean;
+      dueDateIso: string | null;
+    },
+  ): Promise<void> {
+    const subject = KIND_LABEL[info.kind] ?? 'Document';
+    const about = info.containerNumber ? ` — ${info.containerNumber}` : '';
+    const title = `${subject}${about}`;
+
+    // Body: the summary, then the ask. Both come from the reader, so the alert
+    // says what THIS email said rather than a generic template.
+    const lines: string[] = [];
+    if (info.summary) lines.push(info.summary);
+    if (info.chargesCreated > 0) {
+      lines.push(
+        info.needsConfirm
+          ? `${info.chargesCreated} charge(s) are ready in Billing — confirm them to make them payable.`
+          : `${info.chargesCreated} charge(s) were added to Billing.`,
+      );
+    }
+    if (info.actionRequired) lines.push(`To do: ${info.actionRequired}`);
+    if (info.createdContainer && info.containerNumber) {
+      lines.push(`Container ${info.containerNumber} was added for you.`);
+    }
+    lines.push(`From ${msg.fromAddress}.`);
+
+    // Urgency: money to confirm or an explicit deadline outranks information.
+    const severity = info.needsConfirm
+      ? 'SOON'
+      : info.actionRequired
+        ? 'SOON'
+        : 'INFO';
+
+    await this.notifications.notify({
+      type: 'EMAIL_SUMMARY',
+      severity: severity as never,
+      orgId: conn.orgId,
+      containerId: info.containerId,
+      title,
+      body: lines.join(' '),
+      deepLink: info.containerId ? `/dashboard/containers/${info.containerId}` : '/dashboard/agent',
+    });
   }
 
   // -------------------------------------------------------------------------

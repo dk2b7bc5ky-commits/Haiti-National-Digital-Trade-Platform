@@ -151,6 +151,18 @@ export interface MailIntakeExtracted {
   charges: MailIntakeExtractedCharge[];
 }
 
+/** What the reader decided a piece of mail is. */
+export type MailDocumentKind =
+  | 'arrival_notice'
+  | 'invoice'
+  | 'booking_confirmation'
+  | 'release_order'
+  | 'customs_document'
+  | 'schedule_change'
+  | 'statement'
+  | 'correspondence'
+  | 'not_relevant';
+
 export interface MailIntakeMessageSummary {
   id: string;
   from_address: string;
@@ -158,6 +170,17 @@ export interface MailIntakeMessageSummary {
   received_at: string;
   status: MailIntakeStatus;
   classification: string | null;
+  doc_kind: MailDocumentKind | null;
+  /**
+   * True only when the mail actually demanded payment. Booking confirmations and
+   * rate sheets quote amounts but bill nothing, so they are false and never
+   * produce charges.
+   */
+  demands_payment: boolean;
+  /** Plain-language summary of what the mail says, in its own language. */
+  summary: string | null;
+  /** The one thing the human has to do about it, or null. */
+  action_required: string | null;
   attachment_count: number;
   confidence: number | null;
   container_id: string | null;

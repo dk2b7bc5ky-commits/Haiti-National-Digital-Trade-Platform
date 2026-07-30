@@ -18,8 +18,41 @@ export interface ExtractedCharge {
   lastFreeDayIso?: string | null;
 }
 
+/**
+ * What kind of document this is. Drives whether it becomes money or just
+ * information — the single most important distinction the reader makes.
+ */
+export type DocumentKind =
+  | 'arrival_notice'
+  | 'invoice'
+  | 'booking_confirmation'
+  | 'release_order'
+  | 'customs_document'
+  | 'schedule_change'
+  | 'statement'
+  | 'correspondence'
+  | 'not_relevant';
+
 export interface ExtractionResult {
   docType: string; // e.g. "terminal_invoice"
+  /** Classified kind; `not_relevant` means don't file this at all. */
+  kind: DocumentKind;
+  /**
+   * TRUE only when the document is actually asking for money NOW (an invoice, a
+   * notice itemizing collect charges, a statement with a balance due).
+   *
+   * A booking confirmation, quote, rate sheet, or demurrage tariff schedule
+   * contains amounts but demands nothing — those must be FALSE, otherwise the
+   * importer sees phantom "you owe" lines for shipments they haven't been billed
+   * for. Charges are only ever written when this is true.
+   */
+  demandsPayment: boolean;
+  /** Plain-language summary of what the document says, in its own language. */
+  summary: string;
+  /** What the human has to do about it, or null when nothing is needed. */
+  actionRequired: string | null;
+  /** A date the human is working to (deadline, cut-off, ETA), if stated. */
+  dueDateIso?: string | null;
   language: string; // ISO code
   rawText: string;
   /** Keys used to match the document to a container when none is supplied. */

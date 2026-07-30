@@ -103,21 +103,49 @@ Message-ID, so anything already read is skipped rather than billed twice.
 
 ## What happens from here
 
-Every 10 minutes the agent looks at new mail in that inbox. When something looks
-like an arrival notice or a port/agency bill, it reads it, files the container
-(creating it if it's new), and prepares the charges. Everything it did shows up
-under **Waiting for you** with the container, the B/L, and each amount plus how
-confident it was.
+Every 10 minutes the agent looks at new mail. It reads anything to do with your
+shipments — arrival notices, invoices, booking confirmations, release orders,
+customs paperwork, delay notices, ordinary agency threads — works out **what each
+one is**, writes a plain-language summary, and says what you need to do.
 
-You press **Confirm** to make those charges payable, or **Reject** to wipe them
-and start over. **The agent never pays anything** — that always stays your
-decision on the container or billing screen.
+The Agent screen is organized into three parts:
+
+**Waiting for you** — the only place money appears. When an email is genuinely a
+bill, the amounts are prepared here and are **not payable until you press
+Confirm**. Press **Reject** instead and it removes exactly those charges. Nothing
+else lands in this list, so it stays short.
+
+**Read and filed** — everything else, each with a summary and a "To do" line if
+there is one. A booking confirmation, an ETA change, a release order: read,
+summarized, filed, **nothing owed**. Documents that quote rates say *"No charges
+— information only"* right on the card.
+
+**Skipped** — mail it decided wasn't about a shipment, with the reason. Collapsed
+by default.
+
+Every email it reads also becomes an entry on your **Alerts** page with the same
+summary and to-do, so you can see where things stand without opening the agent
+screen at all.
+
+**The agent never pays anything.** Confirming only makes a charge payable — you
+still choose when and what to pay.
+
+## Why a booking confirmation doesn't show as money
+
+This is the distinction the agent is built around. An e-booking, a quote, a rate
+sheet, or a demurrage tariff table all have amounts printed on them, but none of
+them is asking you to pay right now. The agent files those as information and
+creates **no charges**.
+
+Only a real demand for payment — an invoice, an arrival notice itemizing charges
+collectable before release, a statement with a balance due — turns into money in
+the Billing section. When it isn't sure, it treats the document as information
+rather than a bill, because a phantom bill is worse than a missed one.
 
 ## What it will not touch
 
-- It only acts on mail that looks like an arrival notice or a port/agency bill.
-  Supplier threads, tax mail to your accountant, and newsletters are skipped, and
-  you can see the reason it skipped each one.
+- Mail with no bearing on your shipments — newsletters, recruitment, password
+  resets — is skipped, and you can see the reason for each one.
 - It never deletes, moves, marks read, or replies to anything. It only reads.
 - It never moves money.
 
