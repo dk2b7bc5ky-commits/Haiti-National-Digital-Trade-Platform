@@ -248,6 +248,9 @@ async function renamePlaceholderOrgs(): Promise<void> {
 async function main(): Promise<void> {
   const passwordHash = await bcrypt.hash(DEV_PASSWORD, 10);
 
+  // A requested clean slate runs before anything else.
+  await resetOperationalData();
+
   // Rename before seeding, so an existing workspace is updated in place instead
   // of gaining a second organization alongside the old "(Demo)" one.
   await renamePlaceholderOrgs();
@@ -411,6 +414,82 @@ async function removeAgentPracticeData(): Promise<void> {
     console.log('• No practice-inbox data present.');
   }
 }
+
+/**
+ * ONE-SHOT CLEAN SLATE. Deletes every shipment and every amount owed —
+ * containers, bills of lading, manifests, voyages, vessels, charges, documents,
+ * deadlines, alerts, payment records, trucking jobs, gate slots, and the email
+ * agent's ledger — leaving accounts, the payee registry, carrier routing and
+ * market configuration intact.
+ *
+ * Triggered by setting RESET_OPERATIONAL_DATA to any value on the API service.
+ * It runs ONCE PER VALUE: the value is recorded in the audit log, and a later
+ * deploy with the same value skips the wipe. So the variable can be left in
+ * place without repeatedly destroying data — to reset again, change the value
+ * (e.g. 1 → 2).
+ *
+ * The mailbox connection is kept but its read position is cleared, so the agent
+ * re-reads recent mail and refiles current shipments from scratch.
+ */
+async function resetOperationalData(): Promise<void> {
+  const token = process.env.RESET_OPERATIONAL_DATA?.trim();
+  if (!token) return;
+
+  const already = await prisma.auditLog.findFirst({
+    where: { action: 'data.reset', entityId: token },
+  });
+  if (already) {
+    console.log(`• Clean slate "${token}" already applied on ${already.createdAt.toISOString().slice(0, 10)} — skipping.`);
+    return;
+  }
+
+  const before = {
+    containers: await prisma.container.count(),
+    charges: await prisma.charge.count(),
+    documents: await prisma.document.count(),
+  };
+
+  // FK-safe order: children before parents.
+  await prisma.paymentRouting.deleteMany({});
+  await prisma.deadlineAlert.deleteMany({});
+  await prisma.deadline.deleteMany({});
+  await prisma.verificationTask.deleteMany({});
+  await prisma.notification.deleteMany({});
+  await prisma.charge.deleteMany({});
+  await prisma.paymentRequest.deleteMany({});
+  await prisma.document.deleteMany({});
+  await prisma.gateAppointment.deleteMany({});
+  await prisma.transportJob.deleteMany({});
+  await prisma.container.deleteMany({});
+  await prisma.billOfLading.deleteMany({});
+  await prisma.manifest.deleteMany({});
+  await prisma.voyage.deleteMany({});
+  await prisma.vessel.deleteMany({});
+  // Subscriptions are placeholder platform billing, not a real invoice.
+  await prisma.subscription.deleteMany({});
+  // The agent's memory of what it has read, so recent mail is read again.
+  await prisma.mailIntakeMessage.deleteMany({});
+  await prisma.mailboxConnection.updateMany({ data: { lastUid: null, lastError: null, lastCheckedAt: null } });
+
+  await prisma.auditLog.create({
+    data: {
+      action: 'data.reset',
+      entity: 'Workspace',
+      entityId: token,
+      after: {
+        removed: before,
+        kept: 'organizations, users, payees, carrier routing, market config, mailbox settings',
+      },
+    },
+  });
+
+  console.log(
+    `• CLEAN SLATE "${token}": removed ${before.containers} container(s), ` +
+    `${before.charges} charge(s), ${before.documents} document(s), and the agent's read history. ` +
+    'Accounts, payees and routing kept.',
+  );
+}
+
 
 /**
  * ONE RULE FOR WHAT MAY BE OWED: a charge survives only if it came from a

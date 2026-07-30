@@ -169,6 +169,25 @@ screen at all.
 **The agent never pays anything.** Confirming only makes a charge payable — you
 still choose when and what to pay.
 
+## Starting from zero
+
+To empty the platform completely — every container, every bill of lading, every
+charge, every document, and the agent's memory of what it has read — while keeping
+your login, the payee list and the carrier routing:
+
+1. Render → **rezo-api** → **Environment**
+2. Add `RESET_OPERATIONAL_DATA` with the value `1`
+3. **Save Changes** and wait for the redeploy
+
+The log will say `CLEAN SLATE "1": removed N container(s)…`.
+
+**It runs once per value.** Leaving the variable set does not keep wiping data on
+every deploy — the value is recorded, and the same value is skipped afterwards. To
+reset again later, change the value to `2`.
+
+Afterwards the agent re-reads the last 14 days of mail and refiles only current
+shipments, so the platform fills back up with what is actually moving now.
+
 ## Nothing on the platform is demo data
 
 Every deploy enforces three rules, so placeholder data cannot accumulate:
@@ -289,7 +308,8 @@ Set these on the rezo-api service only if you need to change the defaults.
 | `MAIL_INTAKE_BATCH` | `25` | max emails read per check |
 | `MAIL_INTAKE_FIRST_SYNC_DAYS` | `14` | on first connect, how far back to look |
 | `MAIL_INTAKE_BACKFILL_BATCH` | `8` | emails per "catch up" batch (it repeats automatically) |
-| `MAIL_INTAKE_MAX_SHIPMENT_AGE_DAYS` | `45` | notices about older shipments are filed as history, not new containers |
+| `MAIL_INTAKE_MAX_SHIPMENT_AGE_DAYS` | `30` | notices about older shipments are filed as history, not new containers |
 | `PURGE_CONTAINERS_OLDER_THAN_DAYS` | `60` | old containers with nothing owed are removed on deploy |
 | `IMPORTER_ORG_NAME` | `Alize Imports S.A.` | the name your workspace shows |
+| `RESET_OPERATIONAL_DATA` | *(unset)* | set to any value to empty the platform once; change the value to do it again |
 | `ANTHROPIC_MODEL` | `claude-opus-5` | the reader's model |

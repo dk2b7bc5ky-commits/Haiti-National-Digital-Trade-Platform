@@ -52,7 +52,7 @@ const BACKFILL_BATCH = Number(process.env.MAIL_INTAKE_BACKFILL_BATCH ?? '8');
  * up on a mailbox drags in months-old shipments that are long since settled, and
  * the container list stops reflecting current business.
  */
-const MAX_SHIPMENT_AGE_DAYS = Number(process.env.MAIL_INTAKE_MAX_SHIPMENT_AGE_DAYS ?? '45');
+const MAX_SHIPMENT_AGE_DAYS = Number(process.env.MAIL_INTAKE_MAX_SHIPMENT_AGE_DAYS ?? '30');
 /** Human-readable names for the reader's document kinds (alert titles). */
 const KIND_LABEL: Record<string, string> = {
   arrival_notice: 'Arrival notice',
@@ -78,6 +78,21 @@ function shipmentAgeDays(extraction: ExtractionResult): number | null {
   const t = new Date(iso).getTime();
   if (Number.isNaN(t)) return null;
   return Math.floor((Date.now() - t) / 86_400_000);
+}
+
+/**
+ * A date more than a year away in either direction is a misreading, not old
+ * business — mis-resolved two-digit years and day/month swaps are exactly how a
+ * current shipment ends up dated to a previous year. Such a date is discarded
+ * rather than written to a container, so the container list can never fill with
+ * shipments from years ago.
+ */
+const ABSURD_DAYS = 365;
+function plausibleDate(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return null;
+  return Math.abs(Date.now() - t) > ABSURD_DAYS * 86_400_000 ? null : iso;
 }
 
 export interface RunSummary {
@@ -489,6 +504,8 @@ export class MailIntakeService {
       // otherwise resurrects shipments that were settled months ago.
       const ageDays = shipmentAgeDays(extraction);
       if (ageDays !== null && ageDays > MAX_SHIPMENT_AGE_DAYS) {
+        // Note: a date beyond a year is caught by plausibleDate() before it can
+        // reach a container, so this branch only ever sees genuinely old mail.
         staleAgeDays = Math.max(staleAgeDays ?? 0, ageDays);
         continue;
       }
@@ -688,7 +705,7 @@ export class MailIntakeService {
       container_number: number,
       size_type: guessSize(extraction.rawText, msg.bodyText),
       bl_number: extraction.blNumber?.trim() || undefined,
-      arrival_date: firstDateIso(extraction) ?? undefined,
+      arrival_date: plausibleDate(extraction.arrivalDateIso) ?? plausibleDate(firstDateIso(extraction)) ?? undefined,
       vessel_name: guessVessel(extraction.rawText, msg.bodyText) ?? undefined,
       goods: extraction.goodsDescription?.trim() || undefined,
     };
