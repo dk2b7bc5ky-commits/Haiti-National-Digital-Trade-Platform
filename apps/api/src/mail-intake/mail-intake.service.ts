@@ -46,6 +46,13 @@ const FIRST_SYNC_DAYS = Number(process.env.MAIL_INTAKE_FIRST_SYNC_DAYS ?? '14');
  * timeout. The caller repeats until `remaining` hits zero.
  */
 const BACKFILL_BATCH = Number(process.env.MAIL_INTAKE_BACKFILL_BATCH ?? '8');
+/**
+ * A notice whose shipment is older than this is treated as history: summarized
+ * and filed, but it does NOT create a container or charges. Without it, catching
+ * up on a mailbox drags in months-old shipments that are long since settled, and
+ * the container list stops reflecting current business.
+ */
+const MAX_SHIPMENT_AGE_DAYS = Number(process.env.MAIL_INTAKE_MAX_SHIPMENT_AGE_DAYS ?? '45');
 /** Human-readable names for the reader's document kinds (alert titles). */
 const KIND_LABEL: Record<string, string> = {
   arrival_notice: 'Arrival notice',
@@ -60,6 +67,18 @@ const KIND_LABEL: Record<string, string> = {
 
 /** ISO 6346 container number. */
 const CONTAINER_RE = /\b([A-Z]{4}\d{7})\b/;
+
+/**
+ * How many days ago the shipment this document concerns was, or null when the
+ * document states no usable date. Uses the arrival date, else the last free day.
+ */
+function shipmentAgeDays(extraction: ExtractionResult): number | null {
+  const iso = extraction.arrivalDateIso ?? extraction.dueDateIso ?? null;
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return null;
+  return Math.floor((Date.now() - t) / 86_400_000);
+}
 
 export interface RunSummary {
   checked: number;
@@ -440,6 +459,8 @@ export class MailIntakeService {
      * silently dropping a bill is how a demurrage clock runs unnoticed.
      */
     let unmatchedBill = false;
+    /** Set when the document concerns a shipment too old to file. */
+    let staleAgeDays: number | null = null;
 
     for (const item of readables) {
       const extraction = await this.extractor.extract({
@@ -463,6 +484,14 @@ export class MailIntakeService {
       // Practice mode: read and summarize only. Nothing is stored against a
       // container, so the workspace stays exactly as the operator left it.
       if (readOnly) continue;
+
+      // Old business: summarize it, but don't file it. Catching up on a mailbox
+      // otherwise resurrects shipments that were settled months ago.
+      const ageDays = shipmentAgeDays(extraction);
+      if (ageDays !== null && ageDays > MAX_SHIPMENT_AGE_DAYS) {
+        staleAgeDays = Math.max(staleAgeDays ?? 0, ageDays);
+        continue;
+      }
 
       const doc = await this.documents.createEmailDocument({
         orgId: conn.orgId,
@@ -527,9 +556,10 @@ export class MailIntakeService {
     const summary = bestExtraction.summary || null;
     const demandsPayment = bestExtraction.demandsPayment && totalCharges > 0;
 
-    // A bill we could not place gets an explicit instruction, so it reads as
-    // something to act on rather than something already handled.
-    const actionRequired = unmatchedBill
+    // Stale notices are history, not something to chase.
+    const actionRequired = staleAgeDays !== null
+      ? `Not filed — this concerns a shipment from about ${staleAgeDays} days ago, outside the last ${MAX_SHIPMENT_AGE_DAYS} days.`
+      : unmatchedBill
       ? `Could not tell which container this bill is for — add the container, or check the container/B-L number. ${bestExtraction.actionRequired ?? ''}`.trim()
       : bestExtraction.actionRequired;
 
@@ -538,9 +568,11 @@ export class MailIntakeService {
     // filed and summarized, so "waiting for you" stays a list of real decisions
     // instead of a pile of things to acknowledge.
     const status: MailIntakeStatus =
-      totalTasks > 0 || (demandsPayment && autonomy !== 'AUTO_ALL') || unmatchedBill
-        ? 'NEEDS_REVIEW'
-        : 'PROCESSED';
+      staleAgeDays !== null
+        ? 'PROCESSED' // history: summarized and filed, nothing to do
+        : totalTasks > 0 || (demandsPayment && autonomy !== 'AUTO_ALL') || unmatchedBill
+          ? 'NEEDS_REVIEW'
+          : 'PROCESSED';
 
     await this.upsertIntake(already?.id, {
       ...base,
@@ -583,7 +615,7 @@ export class MailIntakeService {
       createdContainer,
       chargesCreated: totalCharges,
       needsConfirm: status === 'NEEDS_REVIEW',
-      unmatchedBill,
+      unmatchedBill: unmatchedBill && staleAgeDays === null,
       dueDateIso: bestExtraction.dueDateIso ?? null,
     });
 
@@ -890,6 +922,7 @@ export class MailIntakeService {
       container_number: containerNumber ?? extraction?.containerNumber ?? null,
       bl_number: extraction?.blNumber ?? null,
       goods: extraction?.goodsDescription ?? null,
+      arrival_date: extraction?.arrivalDateIso ?? null,
       doc_type: extraction?.docType ?? null,
       language: extraction?.language ?? null,
       container_created: containerCreated,

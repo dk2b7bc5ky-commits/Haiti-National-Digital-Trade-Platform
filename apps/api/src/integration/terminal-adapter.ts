@@ -38,6 +38,12 @@ export interface TerminalLookupInput {
 }
 
 export interface TerminalAdapter {
+  /**
+   * True when this is a stand-in rather than a real terminal system. A mock
+   * fabricates plausible charges from the tariff, which must never reach a real
+   * container — see ChargesService.syncTerminal.
+   */
+  readonly isMock: boolean;
   /** Fetch terminal-side charges for a container. */
   getContainerInfo(input: TerminalLookupInput): Promise<TerminalContainerInfo>;
 }

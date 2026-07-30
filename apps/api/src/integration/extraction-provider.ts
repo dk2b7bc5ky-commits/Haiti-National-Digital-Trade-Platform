@@ -60,6 +60,11 @@ export interface ExtractionResult {
   blNumber?: string | null;
   /** What the cargo actually is, in the document's words ("rice", "auto parts"). */
   goodsDescription?: string | null;
+  /**
+   * When the vessel arrived or is due, as stated in the document. Used to judge
+   * whether a notice concerns current business or is months-old history.
+   */
+  arrivalDateIso?: string | null;
   charges: ExtractedCharge[];
   overallConfidence: number;
 }

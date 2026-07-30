@@ -146,6 +146,8 @@ export interface MailIntakeExtracted {
   bl_number: string | null;
   /** What the reader says is inside the container, or null if not stated. */
   goods: string | null;
+  /** The arrival date the reader settled on, so a mis-read date is visible. */
+  arrival_date: string | null;
   doc_type: string | null;
   language: string | null;
   container_created: boolean;

@@ -122,11 +122,11 @@ export default function ContainerDetailPage() {
                         {t('detail.requestInspection')}
                       </button>
                     )}
-                    {canWrite && (
-                      <button onClick={() => action('charges/sync-terminal')} disabled={busy} className="rounded-lg border border-sky-300 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-50 disabled:opacity-50">
-                        {busy ? t('detail.syncing') : t('detail.syncTerminal')}
-                      </button>
-                    )}
+                    {/* "Sync terminal charges" is deliberately absent. No real
+                        terminal system is connected, and the stand-in invents
+                        amounts from the tariff — pressing it added charges nobody
+                        was owed, on top of the real ones read from documents.
+                        Charges come from documents only. */}
                   </div>
                 </div>
 

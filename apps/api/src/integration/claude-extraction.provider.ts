@@ -108,6 +108,16 @@ Also extract:
 - the container number and B/L number when present (if a document lists several containers use the first; null if no single number is clear);
 - \`goods_description\` — WHAT THE CARGO IS, in the document's own words, short and concrete: "rice", "auto parts", "assorted consumer electronics", "frozen chicken", "construction materials". Use the commodity/description/"marchandise"/"nature de la marchandise" field, the HS-code description, or the packing description. Do NOT put package counts, weights, or container sizes here, and do not guess — return null if the document never says what the goods are.
 
+## Dates — read them carefully
+
+TODAY IS {{TODAY}}. Every date you return must be a real calendar date resolved against today.
+
+- **Haitian and French documents are DAY-FIRST.** "05/01/2026" is 5 January 2026, not 5 May. English-language documents from US carriers are usually month-first. Use the document's language and any spelled-out month elsewhere on the page to decide, and if the two readings are both plausible and you cannot tell, return null rather than guessing.
+- **Two-digit years**: "05/01/26" means 2026. A bare day and month with no year ("ETA 04 AUG") means the occurrence nearest to today — normally the current year, but roll to next year if that date has clearly already passed by months.
+- **Never invent a date** that is not written or directly derivable from the document.
+- \`arrival_date\` is when the vessel arrived or is due. \`last_free_day\` is when free time expires. Do not use one for the other.
+- If a date you have read lands more than a year away from today in either direction, you have almost certainly misread it — return null instead.
+
 Amounts are decimal in the document's currency (e.g. 260.00 USD).`;
 
 const TOOL = {
@@ -204,7 +214,9 @@ export class ClaudeExtractionProvider implements ExtractionProvider {
       // the model must return the schema. (Disabled thinking is valid at the
       // default 'high' effort.)
       thinking: { type: 'disabled' },
-      system: SYSTEM_PROMPT,
+      // The model has no clock of its own: without today's date it cannot resolve
+      // "04 AUG" or a two-digit year, and silently mis-dates shipments.
+      system: SYSTEM_PROMPT.replace('{{TODAY}}', todayDescription()),
       tools: [TOOL],
       tool_choice: { type: 'tool', name: 'record_document' },
       messages: [{ role: 'user', content }],
@@ -258,6 +270,7 @@ export class ClaudeExtractionProvider implements ExtractionProvider {
       containerNumber: parsed.container_number ?? input.containerNumberHint ?? null,
       blNumber: parsed.bl_number ?? null,
       goodsDescription: parsed.goods_description?.trim() || null,
+      arrivalDateIso: this.toIso(parsed.arrival_date),
       charges,
       overallConfidence:
         parsed.overall_confidence != null
@@ -307,6 +320,13 @@ const CAN_DEMAND_PAYMENT = new Set<DocumentKind>(['invoice', 'arrival_notice', '
 
 function normalizeKind(v: string | undefined): DocumentKind {
   return (DOC_KINDS as readonly string[]).includes(v ?? '') ? (v as DocumentKind) : 'correspondence';
+}
+
+/** e.g. "Thursday 30 July 2026" — unambiguous, and states the year explicitly. */
+function todayDescription(): string {
+  return new Date().toLocaleDateString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
+  });
 }
 
 function clamp01(n: number): number {

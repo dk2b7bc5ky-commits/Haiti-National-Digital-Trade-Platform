@@ -22,6 +22,11 @@ describe('Container tracking & release (Step 12)', () => {
   const step = (d: { timeline: { key: string; reached: boolean }[] }, key: string) => d.timeline.find((s) => s.key === key)!.reached;
 
   beforeAll(async () => {
+    // This suite needs charges to exist so it can pay them and walk the release
+    // flow, and it gets them from the stand-in terminal adapter. That sync now
+    // refuses to run by default (it invents amounts, which must never reach a
+    // real container), so opt in deliberately here.
+    process.env.TERMINAL_SYNC_ENABLED = 'true';
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
     configureApp(app);
@@ -43,7 +48,10 @@ describe('Container tracking & release (Step 12)', () => {
     await http().post(`/api/v1/containers/${containerId}/charges/sync-terminal`).set(auth(tokens.admin)).send({});
   });
 
-  afterAll(async () => { await app?.close(); });
+  afterAll(async () => {
+    delete process.env.TERMINAL_SYNC_ENABLED;
+    await app?.close();
+  });
 
   it('advances the container from arrived through gated-out', async () => {
     // Release cannot be authorized before clearance/payment.

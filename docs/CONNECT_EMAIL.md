@@ -169,6 +169,32 @@ screen at all.
 **The agent never pays anything.** Confirming only makes a charge payable — you
 still choose when and what to pay.
 
+## Where the charges on a container come from
+
+**Only from documents the agent read.** Nothing is estimated, assumed, or pulled
+from a price list. If a charge is on a container, it is because a bill said so.
+
+Two things back that up:
+
+- **No duplicates.** The same charge (same type, same amount, same currency) is
+  never recorded twice on a container — so an email carrying the notice twice, or
+  an agency resending it, cannot double what you owe.
+- **No invented terminal charges.** There is no live connection to the terminal's
+  system, so Rezo will not pull terminal charges from anywhere. Any that were
+  created by the old "Sync terminal charges" button are removed automatically.
+
+## Only current business gets filed
+
+The reader is told today's date, and how to read dates the way Haitian and French
+documents write them (day first, so 05/01 is 5 January) — so a notice's dates are
+resolved correctly instead of guessed.
+
+A notice about a shipment **older than 45 days** is summarized and filed as
+history, but does **not** create a container or charges. That keeps the container
+list showing what is actually moving now rather than everything the mailbox has
+ever mentioned. Change the window with `MAIL_INTAKE_MAX_SHIPMENT_AGE_DAYS` on the
+rezo-api service if 45 days is wrong for you.
+
 ## Why a booking confirmation doesn't show as money
 
 This is the distinction the agent is built around. An e-booking, a quote, a rate
@@ -246,4 +272,5 @@ Set these on the rezo-api service only if you need to change the defaults.
 | `MAIL_INTAKE_BATCH` | `25` | max emails read per check |
 | `MAIL_INTAKE_FIRST_SYNC_DAYS` | `14` | on first connect, how far back to look |
 | `MAIL_INTAKE_BACKFILL_BATCH` | `8` | emails per "catch up" batch (it repeats automatically) |
+| `MAIL_INTAKE_MAX_SHIPMENT_AGE_DAYS` | `45` | notices about older shipments are filed as history, not new containers |
 | `ANTHROPIC_MODEL` | `claude-opus-5` | the reader's model |

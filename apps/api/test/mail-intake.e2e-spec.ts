@@ -184,8 +184,7 @@ describe('Email intake agent (Phase A2/A3)', () => {
     // The previous test confirmed this message, so re-reading it would short
     // circuit on the dedupe ledger. Clear the ledger and re-point the mailbox so
     // the agent ingests it fresh, giving us something to reject.
-    const org = (await http().get('/api/v1/auth/me').set(auth(tokens.importer))).body.data.org.id;
-    await prisma.mailIntakeMessage.deleteMany({ where: { orgId: org } });
+    await cleanupAgentData(prisma);
     await http().put('/api/v1/mail-intake/connection').set(auth(tokens.importer))
       .send({ address: 'traffic2@example.com', autonomy: 'AUTO_CONTAINER', active: true });
     const run = await http().post('/api/v1/mail-intake/run').set(auth(tokens.importer)).send({});
@@ -214,8 +213,12 @@ describe('Email intake agent (Phase A2/A3)', () => {
   describe('catch up on older mail', () => {
     beforeEach(async () => {
       // Fresh ledger + watermark so "history" exists to be caught up on.
+      // Clear the containers as well: charges already present would be correctly
+      // suppressed as duplicates, leaving nothing for these cases to observe.
+      await cleanupAgentData(prisma);
       const org = (await http().get('/api/v1/auth/me').set(auth(tokens.importer))).body.data.org.id;
-      await prisma.mailIntakeMessage.deleteMany({ where: { orgId: org } });
+      await http().put('/api/v1/mail-intake/connection').set(auth(tokens.importer))
+        .send({ address: 'backfill@example.com', autonomy: 'AUTO_CONTAINER', active: true });
       await prisma.mailboxConnection.updateMany({ where: { orgId: org }, data: { lastUid: 9999 } });
     });
 
@@ -334,6 +337,24 @@ describe('Email intake agent (Phase A2/A3)', () => {
       const detail = await http().get(`/api/v1/containers/${notice.container_id}`).set(auth(tokens.importer));
       expect(detail.body.data.container.goods).toBeTruthy();
       expect(detail.body.data.container.goods).toBe(notice.extracted.goods);
+    });
+
+    it('does not repeat a charge it has already recorded', async () => {
+      // An email can carry the same notice twice (PDF + covering text), and
+      // agencies resend notices. Neither may double what is owed.
+      await cleanupAgentData(prisma);
+      await http().put('/api/v1/mail-intake/connection').set(auth(tokens.importer))
+        .send({ address: 'dedupe@example.com', autonomy: 'AUTO_ALL', active: true });
+      await http().post('/api/v1/mail-intake/run').set(auth(tokens.importer)).send({});
+
+      const list = await http().get('/api/v1/mail-intake/messages').set(auth(tokens.importer));
+      const notice = list.body.data.find((m: { container_id: string | null }) => m.container_id);
+      const detail = await http().get(`/api/v1/containers/${notice.container_id}`).set(auth(tokens.importer));
+      const charges = detail.body.data.charges;
+
+      // No two unpaid charges share type + amount + currency.
+      const keys = charges.map((c: { type: string; amount: number; currency: string }) => `${c.type}|${c.amount}|${c.currency}`);
+      expect(new Set(keys).size).toBe(keys.length);
     });
 
     it('never files a bill quietly when it cannot tell which container it is for', async () => {

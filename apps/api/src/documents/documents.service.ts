@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { randomUUID, createHash } from 'crypto';
 import { ChargeStatus, DocType, ReviewState } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -32,6 +32,8 @@ const DOC_TYPE_MAP: Record<string, DocType> = {
 
 @Injectable()
 export class DocumentsService {
+  private readonly logger = new Logger(DocumentsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
@@ -92,7 +94,7 @@ export class DocumentsService {
 
     const ingest = container
       ? await this.ingestExtraction(doc.id, container, extraction)
-      : { created: 0, pendingReview: 0, tasks: 0, chargeIds: [] as string[] };
+      : { created: 0, pendingReview: 0, tasks: 0, chargeIds: [] as string[], duplicatesSkipped: 0 };
     const { created, pendingReview, tasks } = ingest;
 
     const updated = await this.prisma.document.update({
@@ -142,16 +144,36 @@ export class DocumentsService {
     container: { id: string; containerNumber: string; terminalOrgId: string | null },
     extraction: ExtractionResult,
     opts: { holdAllForReview?: boolean } = {},
-  ): Promise<{ created: number; pendingReview: number; tasks: number; chargeIds: string[] }> {
+  ): Promise<{ created: number; pendingReview: number; tasks: number; chargeIds: string[]; duplicatesSkipped: number }> {
     const threshold = await this.config.confidenceThreshold();
     let created = 0;
     let pendingReview = 0;
     let tasks = 0;
+    let duplicatesSkipped = 0;
     const chargeIds: string[] = [];
+
+    // Existing unpaid charges on this container, used to suppress duplicates.
+    // An email can carry the notice twice (a PDF plus the covering text), and
+    // agencies resend notices — neither should double the amount owed.
+    const existing = await this.prisma.charge.findMany({
+      where: {
+        containerId: container.id,
+        status: { in: ['PENDING', 'PENDING_REVIEW', 'OVERDUE', 'REQUESTED'] },
+      },
+      select: { type: true, amount: true, currency: true },
+    });
+    const seen = new Set(existing.map((c) => `${c.type}|${c.amount}|${c.currency}`));
 
     for (const line of extraction.charges) {
       const type = apiToChargeType(line.type);
       if (!type) continue;
+      // Same charge, same amount, same currency, still unpaid → already recorded.
+      const key = `${type}|${line.amount}|${line.currency}`;
+      if (seen.has(key)) {
+        duplicatesSkipped++;
+        continue;
+      }
+      seen.add(key);
       const payeeOrgId = await this.resolvePayeeOrgId(type, container.terminalOrgId);
       const belowThreshold = line.confidence < threshold;
       const hold = belowThreshold || opts.holdAllForReview === true;
@@ -203,7 +225,12 @@ export class DocumentsService {
         });
       }
     }
-    return { created, pendingReview, tasks, chargeIds };
+    if (duplicatesSkipped > 0) {
+      this.logger.log(
+        `${container.containerNumber}: skipped ${duplicatesSkipped} duplicate charge line(s) already recorded.`,
+      );
+    }
+    return { created, pendingReview, tasks, chargeIds, duplicatesSkipped };
   }
 
   /**

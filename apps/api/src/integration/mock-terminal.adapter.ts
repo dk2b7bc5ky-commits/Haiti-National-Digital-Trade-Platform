@@ -18,6 +18,9 @@ import {
  */
 @Injectable()
 export class MockTerminalAdapter implements TerminalAdapter {
+  /** Everything below is invented from config — never let it bill a real box. */
+  readonly isMock = true;
+
   constructor(private readonly config: MarketConfigService) {}
 
   async getContainerInfo(input: TerminalLookupInput): Promise<TerminalContainerInfo> {

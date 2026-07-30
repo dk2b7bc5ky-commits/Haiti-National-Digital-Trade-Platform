@@ -37,6 +37,7 @@ export class MockExtractionProvider implements ExtractionProvider {
         containerNumber: input.containerNumberHint ?? null,
         blNumber: null,
         goodsDescription: 'General merchandise (mock)',
+        arrivalDateIso: null,
         charges: [], // deliberately none — a booking is not a demand for payment
         overallConfidence: 0.93,
       };
@@ -78,6 +79,8 @@ export class MockExtractionProvider implements ExtractionProvider {
       containerNumber: input.containerNumberHint ?? null,
       blNumber: null,
       goodsDescription: 'Assorted dry goods (mock)',
+      // Recent, so the mock exercises the "current business" path.
+      arrivalDateIso: new Date(Date.now() - 2 * 86_400_000).toISOString(),
       charges,
       overallConfidence: Math.min(...charges.map((c) => c.confidence)),
     };

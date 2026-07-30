@@ -93,6 +93,15 @@ export class ChargesService {
    * terminal-sourced charges, returns them without duplicating.
    */
   async syncTerminal(principal: AuthPrincipal, containerId: string): Promise<ChargeSummary[]> {
+    // No real terminal system is connected in the beta, and the stand-in invents
+    // amounts from the tariff. Writing those onto a real container produces
+    // charges nobody is owed, on top of the real ones read from documents — so
+    // refuse outright unless someone deliberately enables it for a demo.
+    if (this.terminal.isMock && process.env.TERMINAL_SYNC_ENABLED !== 'true') {
+      throw new BadRequestException(
+        'No terminal system is connected, so terminal charges cannot be pulled. Charges come from the documents the agent reads.',
+      );
+    }
     const container = await this.requireVisibleContainer(principal, containerId);
 
     const existing = await this.prisma.charge.findMany({

@@ -223,6 +223,7 @@ async function main(): Promise<void> {
   // is removed on EVERY deploy, whatever the flags say. Those containers are
   // fictional and must never sit alongside real ones.
   await removeAgentPracticeData();
+  await removeFabricatedTerminalCharges();
 
   const orgCount = await prisma.organization.count();
   const userCount = await prisma.user.count();
@@ -302,6 +303,48 @@ async function removeAgentPracticeData(): Promise<void> {
   } else {
     console.log('• No practice-inbox data present.');
   }
+}
+
+/**
+ * Removes unpaid terminal-sourced (OCTOPI) charges.
+ *
+ * No real terminal system is connected, so every charge with that source was
+ * invented from the tariff by the stand-in adapter — plausible-looking terminal
+ * handling / port dues / scanning amounts that nobody is actually owed, sitting
+ * on top of the real figures read from documents. That is what made a container's
+ * "everything you owe" list look duplicated.
+ *
+ * Only ever touches unpaid charges that no payment request covers, and is a
+ * no-op once clean. The sync endpoint that created them now refuses to run
+ * unless TERMINAL_SYNC_ENABLED=true, so they cannot come back by accident.
+ */
+async function removeFabricatedTerminalCharges(): Promise<void> {
+  const rows = await prisma.charge.findMany({
+    where: {
+      source: 'OCTOPI',
+      status: { in: ['PENDING', 'PENDING_REVIEW', 'OVERDUE', 'REQUESTED'] },
+      paymentRequestId: null,
+    },
+    select: { id: true, containerId: true },
+  });
+  if (rows.length === 0) {
+    console.log('• No fabricated terminal charges present.');
+    return;
+  }
+  const ids = rows.map((r) => r.id);
+  await prisma.verificationTask.deleteMany({ where: { chargeId: { in: ids } } });
+  await prisma.charge.deleteMany({ where: { id: { in: ids } } });
+
+  // Deadlines are derived from charges, so drop any that no longer have one.
+  const containerIds = Array.from(new Set(rows.map((r) => r.containerId)));
+  for (const containerId of containerIds) {
+    const remaining = await prisma.charge.count({ where: { containerId, lastFreeDay: { not: null } } });
+    if (remaining === 0) {
+      await prisma.deadlineAlert.deleteMany({ where: { containerId } });
+      await prisma.deadline.deleteMany({ where: { containerId } });
+    }
+  }
+  console.log(`• Removed ${ids.length} fabricated terminal charge(s) across ${containerIds.length} container(s).`);
 }
 
 /**
