@@ -135,9 +135,9 @@ const en: Dict = {
   'agent.autonomy': 'How much it does on its own',
   'agent.autoReviewAll': 'Show me everything first (nothing is filed automatically)',
   'agent.autoContainer': 'File the container, hold the amounts for me to confirm',
-  'agent.autoAll': 'File everything automatically (still never pays)',
+  'agent.autoAll': 'Do everything for me — file the container and the charges (recommended)',
   'agent.autonomyHint':
-    'Whatever you pick, the agent never pays. Confirming only makes a charge payable — you still choose when to pay it.',
+    'Whatever you pick, the agent never pays. “Do everything for me” means notices are filed and their charges are ready to pay without you touching anything — you just review and pay. Anything the agent is unsure about still waits for you.',
   'agent.activeLabel': 'Check this mailbox automatically',
   'agent.passwordNote':
     'Your password is never entered here and never stored in Rezo. It lives only in the server’s secret settings.',
@@ -544,9 +544,9 @@ const fr: Dict = {
   'agent.autonomy': 'Ce qu’il fait tout seul',
   'agent.autoReviewAll': 'Tout me montrer d’abord (rien n’est enregistré automatiquement)',
   'agent.autoContainer': 'Enregistrer le conteneur, garder les montants pour ma confirmation',
-  'agent.autoAll': 'Tout enregistrer automatiquement (ne paie jamais)',
+  'agent.autoAll': 'Tout faire pour moi — enregistrer le conteneur et les frais (recommandé)',
   'agent.autonomyHint':
-    'Quel que soit votre choix, l’agent ne paie jamais. Confirmer rend seulement un frais payable — vous décidez encore quand payer.',
+    'Quel que soit votre choix, l’agent ne paie jamais. « Tout faire pour moi » enregistre les avis et prépare leurs frais sans que vous touchiez à rien — vous n’avez qu’à vérifier et payer. Ce dont l’agent n’est pas sûr vous attend quand même.',
   'agent.activeLabel': 'Vérifier cette boîte automatiquement',
   'agent.passwordNote':
     'Votre mot de passe n’est jamais saisi ici et n’est jamais stocké dans Rezo. Il reste uniquement dans les réglages secrets du serveur.',
@@ -938,9 +938,9 @@ const ht: Dict = {
   'agent.autonomy': 'Konbe li fè pou kont li',
   'agent.autoReviewAll': 'Montre m tout bagay anvan (pa enrejistre anyen otomatikman)',
   'agent.autoContainer': 'Enrejistre kontenè a, kenbe montan yo pou m konfime',
-  'agent.autoAll': 'Enrejistre tout bagay otomatikman (li p ap janm peye)',
+  'agent.autoAll': 'Fè tout bagay pou mwen — enrejistre kontenè a ak frè yo (rekòmande)',
   'agent.autonomyHint':
-    'Kèlkeswa sa w chwazi, ajan an pa janm peye. Konfime fè frè a vin peyab sèlman — se ou ki toujou deside kilè pou peye.',
+    'Kèlkeswa sa w chwazi, ajan an pa janm peye. « Fè tout bagay pou mwen » anrejistre avi yo epi pare frè yo san ou pa manyen anyen — ou jis verifye epi peye. Sa ajan an pa fin sèten de li ap tann ou kanmenm.',
   'agent.activeLabel': 'Tcheke bwat sa a otomatikman',
   'agent.passwordNote':
     'Modpas ou pa janm antre isit la e li pa janm sere nan Rezo. Li rete sèlman nan reglaj sekrè sèvè a.',

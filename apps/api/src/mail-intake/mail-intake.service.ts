@@ -434,6 +434,12 @@ export class MailIntakeService {
     let bestConfidence = 0;
     let bestExtraction: ExtractionResult | null = null;
     let createdContainer = false;
+    /**
+     * A document that demanded payment but which we could not attach to any
+     * container. Must never be filed quietly: with the agent running hands-off,
+     * silently dropping a bill is how a demurrage clock runs unnoticed.
+     */
+    let unmatchedBill = false;
 
     for (const item of readables) {
       const extraction = await this.extractor.extract({
@@ -502,6 +508,7 @@ export class MailIntakeService {
           await this.documents.finalizeEmailDocument(doc.id, resolved.container.id, extraction, 0);
         }
       } else {
+        if (extraction.demandsPayment) unmatchedBill = true;
         await this.documents.finalizeEmailDocument(doc.id, null, extraction, 0);
       }
     }
@@ -518,15 +525,22 @@ export class MailIntakeService {
     }
 
     const summary = bestExtraction.summary || null;
-    const actionRequired = bestExtraction.actionRequired;
     const demandsPayment = bestExtraction.demandsPayment && totalCharges > 0;
 
-    // ONLY money waits for a human. Informational mail is filed and summarized,
-    // so "waiting for you" stays a short list of real decisions instead of a
-    // pile of things to acknowledge.
-    const status: MailIntakeStatus = totalTasks > 0 || (demandsPayment && autonomy !== 'AUTO_ALL')
-      ? 'NEEDS_REVIEW'
-      : 'PROCESSED';
+    // A bill we could not place gets an explicit instruction, so it reads as
+    // something to act on rather than something already handled.
+    const actionRequired = unmatchedBill
+      ? `Could not tell which container this bill is for — add the container, or check the container/B-L number. ${bestExtraction.actionRequired ?? ''}`.trim()
+      : bestExtraction.actionRequired;
+
+    // ONLY things needing a human wait for one: money to confirm, a
+    // low-confidence amount, or a bill we could not place. Everything else is
+    // filed and summarized, so "waiting for you" stays a list of real decisions
+    // instead of a pile of things to acknowledge.
+    const status: MailIntakeStatus =
+      totalTasks > 0 || (demandsPayment && autonomy !== 'AUTO_ALL') || unmatchedBill
+        ? 'NEEDS_REVIEW'
+        : 'PROCESSED';
 
     await this.upsertIntake(already?.id, {
       ...base,
@@ -569,6 +583,7 @@ export class MailIntakeService {
       createdContainer,
       chargesCreated: totalCharges,
       needsConfirm: status === 'NEEDS_REVIEW',
+      unmatchedBill,
       dueDateIso: bestExtraction.dueDateIso ?? null,
     });
 
@@ -673,6 +688,7 @@ export class MailIntakeService {
       createdContainer: boolean;
       chargesCreated: number;
       needsConfirm: boolean;
+      unmatchedBill: boolean;
       dueDateIso: string | null;
     },
   ): Promise<void> {
@@ -697,10 +713,11 @@ export class MailIntakeService {
     }
     lines.push(`From ${msg.fromAddress}.`);
 
-    // Urgency: money to confirm or an explicit deadline outranks information.
-    const severity = info.needsConfirm
-      ? 'SOON'
-      : info.actionRequired
+    // Urgency: a bill nobody can place is the worst case — it is real money with
+    // no container tracking its deadline.
+    const severity = info.unmatchedBill
+      ? 'CRITICAL'
+      : info.needsConfirm || info.actionRequired
         ? 'SOON'
         : 'INFO';
 
@@ -739,9 +756,8 @@ export class MailIntakeService {
    */
   async confirm(principal: AuthPrincipal, id: string): Promise<{ confirmed: number }> {
     const msg = await this.ownedMessage(principal, id);
-    if (msg.chargeIds.length === 0 && !msg.containerId) {
-      throw new BadRequestException('Nothing to confirm on this message.');
-    }
+    // No throw when there are no held charges: an unplaced bill still needs to be
+    // dismissable once the operator has dealt with it by hand.
     const result = await this.prisma.charge.updateMany({
       where: { id: { in: msg.chargeIds }, status: 'PENDING_REVIEW' },
       data: { status: 'PENDING', reviewState: 'RESOLVED' },

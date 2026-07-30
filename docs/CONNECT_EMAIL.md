@@ -88,6 +88,44 @@ minutes. Leave it off and the agent only runs when you press **Check now**.
 
 ---
 
+## Running it hands-off
+
+If you don't want to touch the platform when notices arrive, set it up this way.
+
+**1. Autonomy → "Do everything for me".** On the Agent screen, set *How much it
+does on its own* to **Do everything for me — file the container and the charges**,
+then Save. Notices are filed and their amounts go straight into Billing ready to
+pay. You review and pay; you never type a container or an amount.
+
+**2. Automatic checking on.** `MAIL_INTAKE_ENABLED=true` must be set on the
+**rezo-api** service in Render, or the agent only runs when you press *Check now*.
+
+**3. Confirm the mailbox is real.** The Agent screen must show the green
+**"Connected to your real mailbox"** banner. Amber means it is still on the
+practice inbox and nothing is being filed.
+
+That's it. From then on: notices arrive → the agent files the container, records
+the cargo, and adds the charges with the correct payee → you get an Alerts entry
+summarizing each one → you check the container list and pay.
+
+### What still comes to you, and why
+
+Hands-off does not mean silent. Three things are deliberately escalated to
+**Waiting for you** rather than filed, because each one is money that could go
+wrong:
+
+- **An amount the reader wasn't sure about.** It is held out of the payable total
+  until you confirm it, so a misread figure can never be paid by mistake.
+- **A bill it could not match to a container.** It says so and asks you to add the
+  container or check the number, rather than filing a bill against nothing.
+- **Anything that failed to read.** Retried automatically on the next check.
+
+Everything else — arrival notices it understood, bookings, release orders, ETA
+changes — is filed with a summary and needs nothing from you.
+
+**The agent never pays.** Even on "Do everything for me", the last step is always
+a human authorizing the payment.
+
 ## Reading mail you already received
 
 A normal check only looks at **new** mail, so notices that were already sitting

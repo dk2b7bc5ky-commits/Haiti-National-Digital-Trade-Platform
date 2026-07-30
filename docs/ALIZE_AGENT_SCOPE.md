@@ -378,6 +378,19 @@ additionally removes any practice-inbox data on **every** deploy, whatever the
 flags say, matching on the mock's synthetic Message-IDs and container numbers, so
 a workspace that already got polluted cleans itself up.
 
+**Unplaceable bills are escalated, never filed.** With the agent running
+hands-off (`AUTO_ALL`), a document that demands payment but which cannot be
+attached to any container used to be filed quietly with a summary and no money —
+so a demurrage clock could run with nobody aware. Such a message now goes to
+NEEDS_REVIEW with an explicit instruction ("could not tell which container this
+bill is for — add the container, or check the container/B-L number") and raises a
+CRITICAL alert. `confirm()` no longer throws when there are no held charges, so an
+operator can dismiss it once handled by hand.
+
+That makes the escalation rule complete: a human is asked only for money reasons —
+an amount below the confidence threshold, charges awaiting confirmation below
+`AUTO_ALL`, or a bill that could not be placed. Everything else is filed.
+
 **Still to build:** Phase A4 (tuning thresholds and sender rules against real
 volume, then graduating autonomy), OAuth2 as an alternative to the App Password,
 OCR for scanned-image notices, and the `mateo@` purchase-confirmation inbox

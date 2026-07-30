@@ -336,11 +336,50 @@ describe('Email intake agent (Phase A2/A3)', () => {
       expect(detail.body.data.container.goods).toBe(notice.extracted.goods);
     });
 
+    it('never files a bill quietly when it cannot tell which container it is for', async () => {
+      // Hands-off is only safe if an unplaceable bill is escalated rather than
+      // filed. Simulate one: a notice whose container the agent cannot create
+      // (REVIEW_ALL forbids creation) and which matches nothing existing.
+      await cleanupAgentData(prisma); // FK-safe: clears the ledger and the containers
+      await http().put('/api/v1/mail-intake/connection').set(auth(tokens.importer))
+        .send({ address: 'unplaced@example.com', autonomy: 'REVIEW_ALL', active: true });
+
+      await http().post('/api/v1/mail-intake/run').set(auth(tokens.importer)).send({});
+      const list = await http().get('/api/v1/mail-intake/messages').set(auth(tokens.importer));
+      const bill = list.body.data.find((m: { doc_kind: string }) => m.doc_kind === 'arrival_notice');
+
+      expect(bill.container_id).toBeNull();
+      // Escalated, not filed away.
+      expect(bill.status).toBe('NEEDS_REVIEW');
+      expect(bill.action_required).toMatch(/could not tell which container/i);
+
+      // And it can still be dismissed once handled by hand, without erroring.
+      const ack = await http().post(`/api/v1/mail-intake/messages/${bill.id}/confirm`)
+        .set(auth(tokens.importer)).send({});
+      expect(ack.status).toBe(200);
+    });
+
     it('only queues money for review — informational mail is filed', async () => {
+      // Re-read from a clean slate so this asserts the general rule rather than
+      // whatever the preceding case happened to leave behind.
+      await cleanupAgentData(prisma);
+      await http().put('/api/v1/mail-intake/connection').set(auth(tokens.importer))
+        .send({ address: 'queueing@example.com', autonomy: 'AUTO_CONTAINER', active: true });
+      await http().post('/api/v1/mail-intake/run').set(auth(tokens.importer)).send({});
+
       const list = await http().get('/api/v1/mail-intake/messages').set(auth(tokens.importer));
       const waiting = list.body.data.filter((m: { status: string }) => m.status === 'NEEDS_REVIEW');
-      // Everything waiting on a human is waiting because of money.
-      for (const m of waiting) expect(m.demands_payment).toBe(true);
+      expect(waiting.length).toBeGreaterThan(0);
+      // Everything waiting on a human is waiting for a money reason: either it
+      // demands payment, or it is a bill we could not place. Never merely to be
+      // acknowledged.
+      for (const m of waiting) {
+        const moneyReason = m.demands_payment || /could not tell which container/i.test(m.action_required ?? '');
+        expect(moneyReason).toBe(true);
+      }
+      // …and informational mail is filed rather than queued.
+      const booking = list.body.data.find((m: { doc_kind: string }) => m.doc_kind === 'booking_confirmation');
+      expect(booking.status).toBe('PROCESSED');
     });
   });
 
